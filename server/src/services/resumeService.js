@@ -98,6 +98,12 @@ export const createResume = async (candidateId, fileData) => {
     }
   }
 
+  // Safe debug log: Step 10
+  console.log('[Resume DB Insert]');
+  console.log(`candidateId: ${candidateId}`);
+  console.log(`filename: ${fileData.originalname}`);
+  console.log(`storagePath: ${storagePathKey}`);
+
   // Extract text immediately from upload buffer
   let extractedResult = { text: '', status: 'Pending' };
   try {
@@ -108,17 +114,27 @@ export const createResume = async (candidateId, fileData) => {
   }
 
   // Insert or update metadata into resumes table
-  const { data: existingResume } = await supabase
+  const { data: existingResume, error: selectError } = await supabase
     .from('resumes')
     .select('id, storage_path')
     .eq('candidate_id', candidateId)
     .maybeSingle();
 
+  if (selectError) {
+    // Attempt Storage file cleanup on failure
+    await supabase.storage.from('resumes').remove([storagePathKey]).catch(() => {});
+    console.error('[Resume DB Insert Result]');
+    console.error('success: false');
+    console.error(`errorCode: ${selectError.code || 500}`);
+    console.error(`errorMessage: ${selectError.message}`);
+    throw new ApiError(500, `Database query failed: ${selectError.message}`);
+  }
+
   let result;
   if (existingResume) {
     const oldPath = extractStorageKey(existingResume.storage_path);
     if (oldPath) {
-      await supabase.storage.from('resumes').remove([oldPath]);
+      await supabase.storage.from('resumes').remove([oldPath]).catch(() => {});
     }
 
     const { data: updated, error: updateError } = await supabase
@@ -126,8 +142,8 @@ export const createResume = async (candidateId, fileData) => {
       .update({
         original_file_name: fileData.originalname,
         storage_path: publicUrl,
-        file_type: fileData.mimetype,
-        file_size: fileData.size,
+        file_type: fileData.mimetype || 'application/pdf',
+        file_size: fileData.size || fileData.buffer?.length || 0,
         parsed_text: extractedResult.text || '',
         parsing_status: extractedResult.status || 'Completed',
         screening_status: 'Pending',
@@ -137,7 +153,16 @@ export const createResume = async (candidateId, fileData) => {
       .select()
       .single();
 
-    if (updateError) throw updateError;
+    if (updateError || !updated) {
+      // Safe cleanup
+      await supabase.storage.from('resumes').remove([storagePathKey]).catch(() => {});
+      console.error('[Resume DB Insert Result]');
+      console.error('success: false');
+      console.error(`errorCode: ${updateError?.code || 500}`);
+      console.error(`errorMessage: ${updateError?.message || 'Update returned no record'}`);
+      throw new ApiError(500, `Database update failed: ${updateError?.message || 'Update returned no record'}`);
+    }
+
     result = updated;
   } else {
     const { data: inserted, error: insertError } = await supabase
@@ -146,8 +171,8 @@ export const createResume = async (candidateId, fileData) => {
         candidate_id: candidateId,
         original_file_name: fileData.originalname,
         storage_path: publicUrl,
-        file_type: fileData.mimetype,
-        file_size: fileData.size,
+        file_type: fileData.mimetype || 'application/pdf',
+        file_size: fileData.size || fileData.buffer?.length || 0,
         parsed_text: extractedResult.text || '',
         parsing_status: extractedResult.status || 'Completed',
         screening_status: 'Pending'
@@ -155,9 +180,22 @@ export const createResume = async (candidateId, fileData) => {
       .select()
       .single();
 
-    if (insertError) throw insertError;
+    if (insertError || !inserted) {
+      // Safe cleanup: delete orphaned uploaded file
+      await supabase.storage.from('resumes').remove([storagePathKey]).catch(() => {});
+      console.error('[Resume DB Insert Result]');
+      console.error('success: false');
+      console.error(`errorCode: ${insertError?.code || 500}`);
+      console.error(`errorMessage: ${insertError?.message || 'Insert returned no record'}`);
+      throw new ApiError(500, `Database insert failed: ${insertError?.message || 'Insert returned no record'}`);
+    }
+
     result = inserted;
   }
+
+  // Safe debug log success
+  console.log('[Resume DB Insert Result]');
+  console.log('success: true');
 
   return mapDbToResume(result);
 };
