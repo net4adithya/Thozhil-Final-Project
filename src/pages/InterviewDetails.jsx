@@ -41,14 +41,30 @@ export const InterviewDetails = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   useEffect(() => {
-    if (!loading && interviews.length > 0) {
-      const match = interviews.find((i) => i.id === id);
-      if (match) {
-        setInterview(match);
-      } else {
-        navigate('/recruiter/interviews');
+    let isMounted = true;
+    const fetchInterview = async () => {
+      if (id) {
+        try {
+          const directMatch = await interviewService.getInterviewById(id);
+          if (directMatch && isMounted) {
+            setInterview(directMatch);
+            return;
+          }
+        } catch (err) {
+          console.warn('Direct fetch interview error:', err.message);
+        }
       }
-    }
+      if (!loading && interviews.length > 0) {
+        const match = interviews.find((i) => i.id === id);
+        if (match && isMounted) {
+          setInterview(match);
+        } else if (isMounted && !interview) {
+          navigate('/recruiter/interviews');
+        }
+      }
+    };
+    fetchInterview();
+    return () => { isMounted = false; };
   }, [id, interviews, loading, navigate]);
 
   if (loading || !interview) {

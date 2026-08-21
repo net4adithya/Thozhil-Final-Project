@@ -17,6 +17,8 @@ import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { CameraFeed } from '../components/common/CameraFeed';
 import { VoiceWaveform } from '../components/common/VoiceWaveform';
+import { voiceService } from '../services/voiceService';
+import { VoiceLabModal } from '../components/voice/VoiceLabModal';
 
 export const CandidateDeviceCheck = () => {
   const { id } = useParams();
@@ -29,6 +31,7 @@ export const CandidateDeviceCheck = () => {
   const [micActive, setMicActive] = useState(true);
   const [speakerTestPlaying, setSpeakerTestPlaying] = useState(false);
   const [testingVoice, setTestingVoice] = useState(false);
+  const [voiceLabOpen, setVoiceLabOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && candidates.length > 0) {
@@ -51,16 +54,23 @@ export const CandidateDeviceCheck = () => {
     );
   }
 
-  const handleSpeakerTest = () => {
+  const handleSpeakerTest = async () => {
     setSpeakerTestPlaying(true);
-    // Simulate playing test tone or audio prompt
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance("Speaker configuration test successful.");
-      utterance.onend = () => setSpeakerTestPlaying(false);
-      window.speechSynthesis.speak(utterance);
-    } else {
-      setTimeout(() => setSpeakerTestPlaying(false), 2000);
+    try {
+      const result = await voiceService.synthesizeSpeech("Speaker configuration test successful.");
+      if (result?.audioBase64) {
+        await voiceService.playAudioFromBase64(result.audioBase64, result.format || 'audio/wav');
+      }
+    } catch (err) {
+      console.warn('Fallback speech playback:', err.message);
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance("Speaker configuration test successful.");
+        utterance.onend = () => setSpeakerTestPlaying(false);
+        window.speechSynthesis.speak(utterance);
+      }
+    } finally {
+      setSpeakerTestPlaying(false);
     }
   };
 
@@ -245,6 +255,21 @@ export const CandidateDeviceCheck = () => {
             </CardBody>
           </Card>
 
+          {/* Sarvam Voice Lab Test Trigger */}
+          <div className="p-3 bg-blue-50/50 border border-primary/20 rounded-xl flex items-center justify-between">
+            <div className="space-y-0.5">
+              <span className="text-xs font-bold text-brandHeading">Sarvam Voice Lab (STT & TTS)</span>
+              <p className="text-[10px] text-brandBody">Test speech-to-text recording and voice synthesis.</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setVoiceLabOpen(true)}
+            >
+              Launch Voice Lab
+            </Button>
+          </div>
+
           {/* Proced CTA */}
           <Button
             onClick={handleProceed}
@@ -259,6 +284,13 @@ export const CandidateDeviceCheck = () => {
         </div>
 
       </div>
+
+      <VoiceLabModal
+        isOpen={voiceLabOpen}
+        onClose={() => setVoiceLabOpen(false)}
+      />
     </div>
   );
 };
+
+export default CandidateDeviceCheck;

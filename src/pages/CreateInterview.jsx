@@ -24,8 +24,10 @@ import { Badge } from '../components/ui/Badge';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { Spinner } from '../components/ui/Spinner';
 
+import { resumeService } from '../services/resumeService';
+
 export const CreateInterview = () => {
-  const { templates, createInterview, showToast } = useApp();
+  const { templates, candidates, inviteCandidate, createInterview, showToast } = useApp();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -38,32 +40,53 @@ export const CreateInterview = () => {
 
   const [populateMethod, setPopulateMethod] = useState('template');
   const [resumeFileName, setResumeFileName] = useState('');
+  const [resumeFileSize, setResumeFileSize] = useState('');
   const [analyzingResume, setAnalyzingResume] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState('');
 
-  const handleResumeUploadSimulate = (e) => {
+  const handleResumeUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setResumeFileName(file.name);
-    setAnalyzingResume(true);
-    setAnalysisProgress('Parsing document text streams...');
+    // Validate extension
+    const allowedExtensions = ['.pdf', '.doc', '.docx', '.txt'];
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (!allowedExtensions.includes(ext)) {
+      showToast('Unsupported file format. Please upload a PDF, DOCX, or TXT file.', 'danger');
+      e.target.value = '';
+      return;
+    }
 
-    setTimeout(() => {
-      setAnalysisProgress('Profiling candidate professional work history...');
-    }, 700);
+    // Validate size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('File exceeds 5MB size limit. Please upload a smaller file.', 'danger');
+      e.target.value = '';
+      return;
+    }
 
-    setTimeout(() => {
-      setAnalysisProgress('Identifying technical competencies & core skill sets...');
-    }, 1400);
+    try {
+      setResumeFileName(file.name);
+      setResumeFileSize((file.size / 1024).toFixed(1) + ' KB');
+      setAnalyzingResume(true);
+      setAnalysisProgress('Streaming document to Supabase Storage...');
 
-    setTimeout(() => {
-      setAnalysisProgress('Compiling personalized, tailormade questions stack...');
-    }, 2100);
+      // Find or provision candidate reference
+      let candidateId = candidates?.[0]?.id;
+      if (!candidateId) {
+        setAnalysisProgress('Creating candidate profile...');
+        const newCand = await inviteCandidate({
+          name: 'Screening Candidate',
+          email: `candidate.${Date.now()}@buildpath.io`,
+          role: 'Technical Candidate',
+          status: 'Invited'
+        });
+        candidateId = newCand.id;
+      }
 
-    setTimeout(() => {
-      setAnalyzingResume(false);
-      
+      setAnalysisProgress('Uploading to Supabase Storage resumes bucket...');
+      await resumeService.uploadResume(candidateId, file);
+
+      setAnalysisProgress('Compiling customized assessment questions...');
       const generatedQuestions = [
         {
           id: `q-res-${Date.now()}-1`,
@@ -95,8 +118,23 @@ export const CreateInterview = () => {
         }
       ];
       setSelectedQuestions(generatedQuestions);
-      showToast('Custom interview questions compiled from resume successfully.', 'success');
-    }, 2800);
+      showToast('Resume uploaded to Supabase Storage and questions compiled!', 'success');
+    } catch (err) {
+      console.error('Resume upload failed:', err);
+      showToast(err.message || 'Failed to upload resume to storage.', 'danger');
+      setResumeFileName('');
+      setResumeFileSize('');
+    } finally {
+      setAnalyzingResume(false);
+      setAnalysisProgress('');
+    }
+  };
+
+  const handleResetResume = (e) => {
+    e?.stopPropagation();
+    setResumeFileName('');
+    setResumeFileSize('');
+    setSelectedQuestions([]);
   };
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm({
@@ -408,7 +446,7 @@ export const CreateInterview = () => {
                     <input
                       type="file"
                       accept=".pdf,.doc,.docx,.txt"
-                      onChange={handleResumeUploadSimulate}
+                      onChange={handleResumeUpload}
                       className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                       disabled={analyzingResume}
                     />
@@ -417,7 +455,7 @@ export const CreateInterview = () => {
                       <div className="space-y-3.5 py-4">
                         <Spinner size="md" className="mx-auto" />
                         <div className="space-y-1">
-                          <span className="text-xs font-bold text-brandHeading block">Analyzing Candidate Profile...</span>
+                          <span className="text-xs font-bold text-brandHeading block">Streaming Document to Storage...</span>
                           <span className="text-[10px] text-primary font-mono tracking-wide">{analysisProgress}</span>
                         </div>
                       </div>
@@ -427,12 +465,21 @@ export const CreateInterview = () => {
                           <CheckCircle className="w-6 h-6" />
                         </div>
                         <div className="space-y-1">
-                          <span className="text-xs font-bold text-brandHeading block">Resume Uploaded Successfully</span>
-                          <span className="text-[10px] text-brandBody font-mono">{resumeFileName}</span>
+                          <span className="text-xs font-bold text-brandHeading block">Resume Uploaded to Supabase</span>
+                          <span className="text-[10px] text-brandBody font-mono">{resumeFileName} ({resumeFileSize})</span>
                         </div>
-                        <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-bold">
-                          Generated 4 customized questions
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-bold">
+                            Generated 4 customized questions
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleResetResume}
+                            className="text-[10px] text-brandDanger hover:underline font-semibold relative z-10"
+                          >
+                            Remove file
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div className="space-y-3.5 py-2">

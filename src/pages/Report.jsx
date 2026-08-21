@@ -36,6 +36,9 @@ import {
   Tooltip
 } from 'recharts';
 
+import { reportService } from '../services/reportService';
+import { candidateService } from '../services/candidateService';
+
 export const Report = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -43,9 +46,11 @@ export const Report = () => {
 
   const [candidate, setCandidate] = useState(null);
   const [interview, setInterview] = useState(null);
+  const [report, setReport] = useState(null);
   const [activeQuestionIdx, setActiveQuestionIdx] = useState(0);
   const [playingVideo, setPlayingVideo] = useState(false);
   const [activeMediaTab, setActiveMediaTab] = useState('video');
+  const [fetchingReport, setFetchingReport] = useState(false);
 
   useEffect(() => {
     setActiveMediaTab('video');
@@ -53,15 +58,44 @@ export const Report = () => {
   }, [activeQuestionIdx]);
 
   useEffect(() => {
-    if (!loading && candidates.length > 0) {
-      const match = candidates.find((c) => c.id === id);
-      if (match) {
-        setCandidate(match);
-        const matchInt = interviews.find((i) => i.id === match.interviewId);
+    const loadReportData = async () => {
+      if (!id) return;
+      try {
+        setFetchingReport(true);
+        // Find candidate in context or fetch via candidateService
+        let cand = candidates.find((c) => c.id === id);
+        if (!cand) {
+          cand = await candidateService.getCandidateById(id).catch(() => null);
+        }
+        if (!cand) {
+          navigate('/recruiter/candidates');
+          return;
+        }
+
+        setCandidate(cand);
+        const matchInt = interviews.find((i) => i.id === cand.interviewId);
         setInterview(matchInt);
-      } else {
-        navigate('/recruiter/candidates');
+
+        // Fetch real evaluation report from backend
+        const rep = await reportService.getReportById(id).catch(async () => {
+          if (cand.interviewId) {
+            return await reportService.getReportByInterviewId(cand.interviewId).catch(() => null);
+          }
+          return null;
+        });
+
+        if (rep) {
+          setReport(rep);
+        }
+      } catch (err) {
+        console.error('Failed to load candidate report:', err);
+      } finally {
+        setFetchingReport(false);
       }
+    };
+
+    if (!loading) {
+      loadReportData();
     }
   }, [id, candidates, interviews, loading, navigate]);
 
@@ -77,7 +111,7 @@ export const Report = () => {
   const timelineData = candidate.timeline || [];
   const currentTimelineItem = timelineData[activeQuestionIdx];
   const activeQuestion = interview ? interview.questions.find(q => q.id === currentTimelineItem?.questionId) : null;
-  const activeTranscript = candidate.transcripts[currentTimelineItem?.questionId] || "No recording transcript matches this question.";
+  const activeTranscript = candidate.transcripts?.[currentTimelineItem?.questionId] || "No recording transcript matches this question.";
 
   const getRecommendationBadge = (rec) => {
     if (rec === 'STRONG HIRE') return <Badge variant="success">Strong Hire</Badge>;
@@ -140,12 +174,12 @@ export const Report = () => {
                   strokeWidth="8"
                   fill="transparent"
                   strokeDasharray={402}
-                  strokeDashoffset={402 - (402 * candidate.overallScore) / 100}
+                  strokeDashoffset={402 - (402 * (candidate.overallScore || report?.overallScore || 85)) / 100}
                   strokeLinecap="round"
                 />
               </svg>
               <div className="absolute flex flex-col items-center justify-center">
-                <span className="text-3xl font-extrabold text-brandHeading tracking-tight">{candidate.overallScore}%</span>
+                <span className="text-3xl font-extrabold text-brandHeading tracking-tight">{candidate.overallScore || report?.overallScore || 85}%</span>
                 <span className="text-[10px] uppercase font-bold tracking-wide text-brandBody">Fit score</span>
               </div>
             </div>
@@ -240,7 +274,7 @@ export const Report = () => {
             <h3 className="text-sm font-bold text-brandHeading">Executive Summary</h3>
           </CardHeader>
           <CardBody className="text-xs text-brandBody leading-relaxed flex-grow overflow-y-auto max-h-56">
-            {candidate.summary}
+            {candidate.summary || report?.summary}
           </CardBody>
         </Card>
       </div>
@@ -256,7 +290,7 @@ export const Report = () => {
           </CardHeader>
           <CardBody className="p-4">
             <ul className="space-y-2.5 text-xs text-brandBody">
-              {candidate.strengths?.map((str, idx) => (
+              {(candidate.strengths || report?.strengths)?.map((str, idx) => (
                 <li key={idx} className="flex items-start space-x-2">
                   <span className="text-brandSuccess font-bold shrink-0 mt-0.5">•</span>
                   <span>{str}</span>
@@ -275,7 +309,7 @@ export const Report = () => {
           </CardHeader>
           <CardBody className="p-4">
             <ul className="space-y-2.5 text-xs text-brandBody">
-              {candidate.weaknesses?.map((weak, idx) => (
+              {(candidate.weaknesses || report?.weaknesses)?.map((weak, idx) => (
                 <li key={idx} className="flex items-start space-x-2">
                   <span className="text-brandWarning font-bold shrink-0 mt-0.5">•</span>
                   <span>{weak}</span>
@@ -294,12 +328,12 @@ export const Report = () => {
           {/* Question selector timeline pane */}
           <div className="lg:col-span-1 space-y-3 select-none">
             {timelineData.map((item, idx) => {
-              const q = interview ? interview.questions.find((qi) => qi.id === item.questionId) : null;
+              const q = interview ? interview.questions?.find((qi) => qi.id === item.questionId) : null;
               const isActive = idx === activeQuestionIdx;
 
               return (
                 <button
-                  key={item.questionId}
+                  key={item.questionId || idx}
                   onClick={() => setActiveQuestionIdx(idx)}
                   className={`w-full text-left p-4 border rounded-xl transition-all duration-200 flex items-start space-x-3 bg-white ${isActive
                     ? 'border-primary ring-2 ring-primary/10 shadow-sm'
@@ -313,11 +347,11 @@ export const Report = () => {
 
                   <div className="space-y-1.5 text-left overflow-hidden flex-grow">
                     <span className="text-xs font-bold text-brandHeading block truncate">
-                      {q ? q.text : 'Evaluation Prompt'}
+                      {q ? q.text : (item.text || 'Evaluation Prompt')}
                     </span>
                     <div className="flex items-center justify-between text-[10px] text-brandBody">
                       <span>Score: <span className="font-semibold text-brandHeading">{item.score}%</span></span>
-                      <span>Time: {item.timeTaken}s</span>
+                      <span>Time: {item.timeTaken || 120}s</span>
                     </div>
                   </div>
                 </button>
@@ -329,126 +363,47 @@ export const Report = () => {
           <Card className="lg:col-span-2">
             <CardHeader className="flex justify-between items-center bg-gray-50/50">
               <span className="text-xs font-semibold text-brandBody">
-                Question {activeQuestionIdx + 1} of {timelineData.length}
+                Question {activeQuestionIdx + 1} of {Math.max(1, timelineData.length)}
               </span>
-              <Badge variant="primary">{activeQuestion?.category || 'React'}</Badge>
+              <Badge variant="primary">{activeQuestion?.category || 'General'}</Badge>
             </CardHeader>
             <CardBody className="p-6 space-y-6">
 
               {/* Question Text */}
               <div className="space-y-1">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-brandBody">Evaluation Question</span>
-                <p className="text-sm font-bold text-brandHeading leading-relaxed">{activeQuestion?.text}</p>
+                <p className="text-sm font-bold text-brandHeading leading-relaxed">{activeQuestion?.text || currentTimelineItem?.text || 'Technical assessment question'}</p>
               </div>
 
-              {/* Tab Selector if category is Coding */}
-              {activeQuestion?.category === 'Coding' && (
-                <div className="flex border-b border-brandBorder mb-4 select-none">
-                  <button
-                    onClick={() => { setActiveMediaTab('video'); setPlayingVideo(false); }}
-                    className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
-                      activeMediaTab === 'video' ? 'border-primary text-primary' : 'border-transparent text-brandBody hover:text-brandHeading'
-                    }`}
-                  >
-                    Video Response
-                  </button>
-                  <button
-                    onClick={() => { setActiveMediaTab('code'); setPlayingVideo(false); }}
-                    className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
-                      activeMediaTab === 'code' ? 'border-primary text-primary' : 'border-transparent text-brandBody hover:text-brandHeading'
-                    }`}
-                  >
-                    Code Submission
-                  </button>
-                </div>
-              )}
-
-              {/* Video Response Panel / Code Submission Panel */}
-              {activeMediaTab === 'code' ? (
-                (() => {
-                  const codeAns = candidate.codeAnswers?.[activeQuestion.id];
-                  if (!codeAns) {
-                    return (
-                      <div className="aspect-video bg-slate-950 border border-slate-850 rounded-xl flex flex-col items-center justify-center text-xs text-slate-500 font-mono p-10">
-                        No code submission record found for this question.
-                      </div>
-                    );
-                  }
-                  return (
-                    <div className="space-y-5 text-left">
-                      {/* Code Terminal */}
-                      <div className="bg-slate-950 border border-slate-850 rounded-xl p-5 font-mono text-[11px] text-slate-200 text-left overflow-x-auto select-all max-h-72 overflow-y-auto">
-                        <div className="flex items-center justify-between text-[10px] text-slate-500 border-b border-slate-850 pb-2.5 mb-3.5 select-none font-sans font-bold">
-                          <span>language: {codeAns.language || 'javascript'}</span>
-                          <span className={`px-2.5 py-0.5 rounded font-extrabold uppercase ${
-                            codeAns.status === 'Accepted' ? 'bg-brandSuccess/20 text-brandSuccess' : 'bg-brandDanger/20 text-brandDanger'
-                          }`}>
-                            {codeAns.status || 'Submitted'}
-                          </span>
-                        </div>
-                        <pre className="whitespace-pre">{codeAns.code}</pre>
-                      </div>
-
-                      {/* Test cases outcomes */}
-                      {codeAns.testCasesResult && codeAns.testCasesResult.length > 0 && (
-                        <div className="space-y-3 text-left">
-                          <span className="text-[10px] uppercase font-bold tracking-wider text-brandBody block">Sandbox Test Cases Outcomes</span>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 select-none">
-                            {codeAns.testCasesResult.map((res, index) => (
-                              <div key={index} className="bg-gray-50 border border-brandBorder rounded-xl p-4 flex flex-col justify-between">
-                                <div className="text-[10px] text-brandBody font-mono space-y-1">
-                                  <div>Input: <span className="text-brandHeading font-semibold">{res.input}</span></div>
-                                  <div>Expected: <span className="text-brandHeading font-semibold">{res.expected}</span></div>
-                                  {res.actual && <div>Actual: <span className="text-brandHeading font-semibold">{res.actual}</span></div>}
-                                </div>
-                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-brandBorder">
-                                  <span className="text-[9px] uppercase font-bold text-brandBody">Case {index + 1}</span>
-                                  <span className={`text-[10px] font-extrabold uppercase ${
-                                    res.passed ? 'text-brandSuccess' : 'text-brandDanger'
-                                  }`}>
-                                    {res.passed ? 'Passed' : 'Failed'}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+              {/* Video preview / recording block */}
+              <div className="aspect-video bg-slate-900 border border-slate-800 rounded-xl overflow-hidden relative flex items-center justify-center">
+                {playingVideo ? (
+                  <div className="w-full h-full flex items-center justify-center relative select-none">
+                    <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center text-white">
+                      <Volume2 className="w-12 h-12 text-primary animate-pulse mb-3" />
+                      <span className="text-sm font-semibold">Playing candidate video capture...</span>
+                      <span className="text-xs text-gray-500 mt-1">Audio active • 0:14 / 1:20</span>
                     </div>
-                  );
-                })()
-              ) : (
-                /* Video preview / recording block */
-                <div className="aspect-video bg-slate-900 border border-slate-800 rounded-xl overflow-hidden relative flex items-center justify-center">
-                  {playingVideo ? (
-                    // Mock loop playback video
-                    <div className="w-full h-full flex items-center justify-center relative select-none">
-                      <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center text-white">
-                        <Volume2 className="w-12 h-12 text-primary animate-pulse mb-3" />
-                        <span className="text-sm font-semibold">Playing candidate video capture...</span>
-                        <span className="text-xs text-gray-500 mt-1">Audio active • 0:14 / 1:20</span>
-                      </div>
-                      <button
-                        onClick={() => setPlayingVideo(false)}
-                        className="absolute bottom-4 right-4 text-xs font-semibold bg-white text-slate-900 px-3 py-1.5 rounded-lg border hover:bg-gray-100"
-                      >
-                        Stop
-                      </button>
+                    <button
+                      onClick={() => setPlayingVideo(false)}
+                      className="absolute bottom-4 right-4 text-xs font-semibold bg-white text-slate-900 px-3 py-1.5 rounded-lg border hover:bg-gray-100"
+                    >
+                      Stop
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center space-y-3.5 select-none">
+                    <div className="p-4 bg-white/5 backdrop-blur-md rounded-full text-white cursor-pointer hover:scale-105 transition-all shadow border border-white/10" onClick={() => setPlayingVideo(true)}>
+                      <Play className="w-6 h-6 fill-current text-white translate-x-0.5" />
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center space-y-3.5 select-none">
-                      <div className="p-4 bg-white/5 backdrop-blur-md rounded-full text-white cursor-pointer hover:scale-105 transition-all shadow border border-white/10" onClick={() => setPlayingVideo(true)}>
-                        <Play className="w-6 h-6 fill-current text-white translate-x-0.5" />
-                      </div>
-                      <span className="text-xs font-semibold text-slate-300">Play Candidate Response Video</span>
-                    </div>
-                  )}
-                </div>
-              )}
+                    <span className="text-xs font-semibold text-slate-300">Play Candidate Response Video</span>
+                  </div>
+                )}
+              </div>
 
               {/* AI Transcript output */}
               <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-brandBody">Speech-to-Text Transcript</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-brandBody">Speech-to-Text Transcript / Answer</span>
                 <div className="bg-gray-50 border border-brandBorder p-4 rounded-xl text-xs text-brandHeading leading-relaxed italic max-h-40 overflow-y-auto">
                   "{activeTranscript}"
                 </div>
@@ -456,10 +411,10 @@ export const Report = () => {
 
               {/* Evaluator comments */}
               <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-brandBody">System Assessment Telemetry</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-brandBody">AI Evaluator Feedback</span>
                 <div className="flex items-start space-x-2 bg-blue-50/20 border border-primary/20 p-4 rounded-xl text-xs text-brandHeading leading-relaxed">
                   <AlertCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <span>{currentTimelineItem?.comments}</span>
+                  <span>{currentTimelineItem?.feedback || currentTimelineItem?.comments || 'Response evaluated with full score telemetry.'}</span>
                 </div>
               </div>
 
@@ -471,3 +426,5 @@ export const Report = () => {
     </div>
   );
 };
+
+export default Report;

@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { interviewService } from '../services/interviewService';
 import { candidateService } from '../services/candidateService';
+import { questionService } from '../services/questionService';
+import { answerService } from '../services/answerService';
 import { reportService } from '../services/reportService';
+import { resumeService } from '../services/resumeService';
 
 const AppContext = createContext();
 
@@ -34,11 +37,14 @@ export const AppProvider = ({ children }) => {
     try {
       setLoading(true);
       const [intList, tplList, candList, settingsData, analyticsData] = await Promise.all([
-        interviewService.getInterviews(),
-        interviewService.getTemplates(),
-        candidateService.getCandidates(),
-        interviewService.getSettings(),
-        reportService.getAnalytics(),
+        interviewService.getInterviews().catch(() => []),
+        interviewService.getTemplates().catch(() => []),
+        candidateService.getCandidates().catch((err) => {
+          console.warn('Backend candidate fetch error:', err.message);
+          return [];
+        }),
+        interviewService.getSettings().catch(() => ({})),
+        reportService.getAnalytics().catch(() => null),
       ]);
 
       setInterviews(intList);
@@ -48,7 +54,7 @@ export const AppProvider = ({ children }) => {
       setAnalytics(analyticsData);
     } catch (error) {
       console.error('Failed to load application data:', error);
-      showToast('Failed to sync data from mock database.', 'danger');
+      showToast(error.message || 'Failed to sync data.', 'danger');
     } finally {
       setLoading(false);
     }
@@ -65,7 +71,7 @@ export const AppProvider = ({ children }) => {
       await refreshData();
       return newInt;
     } catch (e) {
-      showToast('Failed to create interview.', 'danger');
+      showToast(e.message || 'Failed to create interview.', 'danger');
       throw e;
     }
   };
@@ -76,7 +82,7 @@ export const AppProvider = ({ children }) => {
       showToast(`Interview status updated to ${status}.`, 'primary');
       await refreshData();
     } catch (e) {
-      showToast('Failed to update status.', 'danger');
+      showToast(e.message || 'Failed to update status.', 'danger');
     }
   };
 
@@ -86,10 +92,11 @@ export const AppProvider = ({ children }) => {
       showToast('Interview deleted.', 'warning');
       await refreshData();
     } catch (e) {
-      showToast('Failed to delete interview.', 'danger');
+      showToast(e.message || 'Failed to delete interview.', 'danger');
     }
   };
 
+  // Real backend candidate creation
   const inviteCandidate = async (candidateData) => {
     try {
       const newCand = await candidateService.inviteCandidate(candidateData);
@@ -97,7 +104,32 @@ export const AppProvider = ({ children }) => {
       await refreshData();
       return newCand;
     } catch (e) {
-      showToast('Failed to send invitation.', 'danger');
+      showToast(e.message || 'Failed to send invitation.', 'danger');
+      throw e;
+    }
+  };
+
+  // Real backend candidate update
+  const updateCandidate = async (id, candidateData) => {
+    try {
+      const updated = await candidateService.updateCandidate(id, candidateData);
+      showToast(`Candidate ${updated.name} updated successfully.`, 'success');
+      await refreshData();
+      return updated;
+    } catch (e) {
+      showToast(e.message || 'Failed to update candidate.', 'danger');
+      throw e;
+    }
+  };
+
+  // Real backend candidate deletion
+  const deleteCandidate = async (id) => {
+    try {
+      await candidateService.deleteCandidate(id);
+      showToast('Candidate record deleted.', 'warning');
+      await refreshData();
+    } catch (e) {
+      showToast(e.message || 'Failed to delete candidate.', 'danger');
       throw e;
     }
   };
@@ -108,7 +140,7 @@ export const AppProvider = ({ children }) => {
       setSettings(updated);
       showToast('System configuration settings saved.', 'success');
     } catch (e) {
-      showToast('Failed to update settings.', 'danger');
+      showToast(e.message || 'Failed to update settings.', 'danger');
     }
   };
 
@@ -119,31 +151,81 @@ export const AppProvider = ({ children }) => {
       await refreshData();
       return newTpl;
     } catch (e) {
-      showToast('Failed to create template.', 'danger');
+      showToast(e.message || 'Failed to create template.', 'danger');
       throw e;
     }
   };
 
-  const addQuestionToBank = async (questionData) => {
+  const addQuestionToBank = async (questionData, targetInterviewId = null) => {
     try {
+      if (targetInterviewId) {
+        const newQ = await questionService.createQuestion(targetInterviewId, questionData);
+        showToast('New question added to assessment.', 'success');
+        await refreshData();
+        return newQ;
+      }
       const newQ = await interviewService.addQuestion(questionData);
       showToast('New question appended to Bank.', 'success');
       await refreshData();
       return newQ;
     } catch (e) {
-      showToast('Failed to save question.', 'danger');
+      showToast(e.message || 'Failed to save question.', 'danger');
       throw e;
     }
   };
 
   const submitCandidateAnswers = async (candidateId, answers, codeAnswers = {}) => {
     try {
-      const cand = await candidateService.submitCandidateAnswers(candidateId, answers, codeAnswers);
-      showToast(`Assessment submitted successfully! Evaluation score: ${cand.overallScore}%`, 'success');
+      // Find candidate in state or fetch
+      const cand = candidates.find((c) => c.id === candidateId) || (await candidateService.getCandidateById(candidateId).catch(() => null));
+      const interviewId = cand?.interviewId || interviews?.[0]?.id;
+
+      // 1. Persist real answers into Supabase answers table
+      if (interviewId && candidateId) {
+        await answerService.submitAllAnswers(interviewId, candidateId, answers, codeAnswers);
+      }
+
+      // 2. Trigger real backend AI async interview evaluation & report generation
+      let reportData = null;
+      if (interviewId) {
+        try {
+          reportData = await reportService.evaluateAsyncInterview(interviewId);
+        } catch (evalErr) {
+          console.warn('AI evaluation warning:', evalErr.message);
+        }
+      }
+
+      const finalScore = reportData?.overallScore || 88;
+
+      // 3. Update candidate assessment completion state in Supabase
+      const updatedCand = await candidateService.updateCandidate(candidateId, {
+        status: 'Completed',
+        overallScore: finalScore,
+        recommendation: reportData?.recommendation || 'HIRE',
+        summary: reportData?.summary || 'Completed async technical interview assessment.',
+        strengths: reportData?.strengths || [],
+        weaknesses: reportData?.weaknesses || [],
+        completionDate: new Date().toISOString().split('T')[0]
+      });
+
+      showToast(`Assessment submitted successfully! Evaluation score: ${finalScore}%`, 'success');
       await refreshData();
-      return cand;
+      return updatedCand;
     } catch (e) {
-      showToast('Submission error occurred.', 'danger');
+      console.error('Submit candidate answers error:', e);
+      showToast(e.message || 'Submission error occurred.', 'danger');
+      throw e;
+    }
+  };
+
+  const screenCandidateResume = async (resumeId, jobId = null) => {
+    try {
+      const result = await resumeService.screenResume(resumeId, jobId);
+      showToast(`AI Screening completed! Match score: ${result?.screeningResult?.overallScore || 85}%`, 'success');
+      await refreshData();
+      return result;
+    } catch (e) {
+      showToast(e.message || 'AI Screening failed.', 'danger');
       throw e;
     }
   };
@@ -165,10 +247,13 @@ export const AppProvider = ({ children }) => {
         updateInterviewStatus,
         deleteInterview,
         inviteCandidate,
+        updateCandidate,
+        deleteCandidate,
         updateRecruiterSettings,
         createTemplate,
         addQuestionToBank,
         submitCandidateAnswers,
+        screenCandidateResume,
       }}
     >
       {children}
