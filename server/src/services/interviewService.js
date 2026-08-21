@@ -99,6 +99,14 @@ export const createInterview = async (interviewBody) => {
 
   if (intError) throw intError;
 
+  // Link candidate record to interview if provided
+  if (candidate) {
+    await supabase
+      .from('candidates')
+      .update({ interview_id: insertedInt.id })
+      .eq('id', candidate);
+  }
+
   // Insert questions if present
   if (questions && questions.length > 0) {
     const qDbData = questions.map((q, idx) => ({

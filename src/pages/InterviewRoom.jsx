@@ -26,6 +26,9 @@ import { CameraFeed } from '../components/common/CameraFeed';
 import { VoiceWaveform } from '../components/common/VoiceWaveform';
 import { Timer } from '../components/common/Timer';
 
+import { candidateService } from '../services/candidateService';
+import { interviewService } from '../services/interviewService';
+
 export const InterviewRoom = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -33,6 +36,7 @@ export const InterviewRoom = () => {
 
   const [candidate, setCandidate] = useState(null);
   const [interview, setInterview] = useState(null);
+  const [resolving, setResolving] = useState(true);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [micMuted, setMicMuted] = useState(false);
   const [camOff, setCamOff] = useState(false);
@@ -67,15 +71,50 @@ export const InterviewRoom = () => {
 
   // Load candidate and interview
   useEffect(() => {
-    if (!loading && candidates.length > 0) {
-      const match = candidates.find((c) => c.id === id);
-      if (match) {
-        setCandidate(match);
-        const matchInt = interviews.find((i) => i.id === match.interviewId);
-        setInterview(matchInt);
-      } else {
-        navigate('/candidate');
+    const resolveData = async () => {
+      if (!id) return;
+      setResolving(true);
+      try {
+        let cand = (candidates || []).find((c) => c.id === id);
+        let matchInt = null;
+
+        if (cand) {
+          matchInt = (interviews || []).find((i) => i.id === cand.interviewId || i.candidate?.id === cand.id);
+          if (!matchInt && cand.interviewId) {
+            matchInt = await interviewService.getInterviewById(cand.interviewId).catch(() => null);
+          }
+          if (!matchInt && interviews?.length > 0) {
+            matchInt = interviews[0];
+          }
+        } else {
+          matchInt = (interviews || []).find((i) => i.id === id);
+          if (!matchInt) {
+            matchInt = await interviewService.getInterviewById(id).catch(() => null);
+          }
+          if (matchInt) {
+            cand = (candidates || []).find((c) => c.interviewId === matchInt.id || c.id === matchInt.candidate?.id) || candidates?.[0];
+            if (!cand) {
+              const candList = await candidateService.getCandidates().catch(() => []);
+              cand = candList.find((c) => c.interviewId === matchInt.id) || candList[0];
+            }
+          }
+        }
+
+        if (cand) setCandidate(cand);
+        if (matchInt) setInterview(matchInt);
+
+        if (!cand && !matchInt && !loading) {
+          navigate('/candidate');
+        }
+      } catch (err) {
+        console.error('Failed to resolve interview room:', err);
+      } finally {
+        setResolving(false);
       }
+    };
+
+    if (!loading) {
+      resolveData();
     }
   }, [id, candidates, interviews, loading, navigate]);
 
@@ -598,3 +637,5 @@ export const InterviewRoom = () => {
     </div>
   );
 };
+
+export default InterviewRoom;

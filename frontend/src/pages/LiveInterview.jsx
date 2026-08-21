@@ -75,20 +75,39 @@ export const LiveInterview = () => {
     const loadSessionData = async () => {
       if (!id) return;
       try {
-        let cand = candidates.find((c) => c.id === id);
-        if (!cand) {
-          cand = await candidateService.getCandidateById(id).catch(() => null);
-        }
-        if (!cand) {
-          navigate('/candidate');
-          return;
+        let cand = (candidates || []).find((c) => c.id === id);
+        let matchInt = null;
+
+        if (cand) {
+          matchInt = (interviews || []).find((i) => i.id === cand.interviewId || i.candidate?.id === cand.id);
+          if (!matchInt && cand.interviewId) {
+            matchInt = await interviewService.getInterviewById(cand.interviewId).catch(() => null);
+          }
+          if (!matchInt && interviews?.length > 0) {
+            matchInt = interviews[0];
+          }
+        } else {
+          matchInt = (interviews || []).find((i) => i.id === id);
+          if (!matchInt) {
+            matchInt = await interviewService.getInterviewById(id).catch(() => null);
+          }
+          if (matchInt) {
+            cand = (candidates || []).find((c) => c.interviewId === matchInt.id || c.id === matchInt.candidate?.id) || candidates?.[0];
+            if (!cand) {
+              const candList = await candidateService.getCandidates().catch(() => []);
+              cand = candList.find((c) => c.interviewId === matchInt.id) || candList[0];
+            }
+          }
         }
 
-        setCandidate(cand);
-        const matchInt = interviews.find((i) => i.id === cand.interviewId);
-        setInterview(matchInt);
+        if (cand) setCandidate(cand);
+        if (matchInt) setInterview(matchInt);
+
+        if (!cand && !matchInt && !loading) {
+          navigate('/candidate');
+        }
       } catch (err) {
-        console.error('Failed to load session data:', err);
+        console.error('Failed to load live session data:', err);
       }
     };
 

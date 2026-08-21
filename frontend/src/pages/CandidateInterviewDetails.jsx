@@ -6,6 +6,8 @@ import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Spinner } from '../components/ui/Spinner';
+import { candidateService } from '../services/candidateService';
+import { interviewService } from '../services/interviewService';
 
 export const CandidateInterviewDetails = () => {
   const { id } = useParams();
@@ -14,21 +16,58 @@ export const CandidateInterviewDetails = () => {
 
   const [candidate, setCandidate] = useState(null);
   const [interview, setInterview] = useState(null);
+  const [resolving, setResolving] = useState(true);
 
   useEffect(() => {
-    if (!loading && candidates.length > 0) {
-      const match = candidates.find((c) => c.id === id);
-      if (match) {
-        setCandidate(match);
-        const matchInt = interviews.find((i) => i.id === match.interviewId);
-        setInterview(matchInt);
-      } else {
-        navigate('/candidate');
+    const resolveData = async () => {
+      if (!id) return;
+      setResolving(true);
+      try {
+        let cand = (candidates || []).find((c) => c.id === id);
+        let matchInt = null;
+
+        if (cand) {
+          matchInt = (interviews || []).find((i) => i.id === cand.interviewId || i.candidate?.id === cand.id);
+          if (!matchInt && cand.interviewId) {
+            matchInt = await interviewService.getInterviewById(cand.interviewId).catch(() => null);
+          }
+          if (!matchInt && interviews?.length > 0) {
+            matchInt = interviews[0];
+          }
+        } else {
+          // Check if id is an interview UUID
+          matchInt = (interviews || []).find((i) => i.id === id);
+          if (!matchInt) {
+            matchInt = await interviewService.getInterviewById(id).catch(() => null);
+          }
+          if (matchInt) {
+            cand = (candidates || []).find((c) => c.interviewId === matchInt.id || c.id === matchInt.candidate?.id) || candidates?.[0];
+            if (!cand) {
+              const candList = await candidateService.getCandidates().catch(() => []);
+              cand = candList.find((c) => c.interviewId === matchInt.id) || candList[0];
+            }
+          }
+        }
+
+        if (cand) setCandidate(cand);
+        if (matchInt) setInterview(matchInt);
+
+        if (!cand && !matchInt && !loading) {
+          navigate('/candidate');
+        }
+      } catch (err) {
+        console.error('Failed to resolve interview details:', err);
+      } finally {
+        setResolving(false);
       }
+    };
+
+    if (!loading) {
+      resolveData();
     }
   }, [id, candidates, interviews, loading, navigate]);
 
-  if (loading || !candidate || !interview) {
+  if (loading || resolving || !candidate || !interview) {
     return (
       <div className="flex-grow flex items-center justify-center">
         <Spinner size="lg" />
@@ -36,7 +75,8 @@ export const CandidateInterviewDetails = () => {
     );
   }
 
-  const isLive = interview.interviewType === 'live';
+  const isLive = (interview.type || interview.interviewType) === 'live';
+  const companyInitial = ((interview.company || interview.title || 'I')[0] || 'I').toUpperCase();
 
   return (
     <div className="space-y-8 flex-grow flex flex-col max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8 text-left select-none">
@@ -58,19 +98,21 @@ export const CandidateInterviewDetails = () => {
           <div className="flex justify-between items-start gap-4">
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
-                <Badge variant={isLive ? 'primary' : 'primary'}>
+                <Badge variant="primary">
                   {isLive ? 'Live Interview' : 'Async Interview'}
                 </Badge>
-                <span className="text-[10px] text-brandBody font-semibold uppercase">{interview.company}</span>
+                <span className="text-[10px] text-brandBody font-semibold uppercase">{interview.company || 'InterviewX'}</span>
               </div>
               <h1 className="text-xl md:text-2xl font-extrabold text-brandHeading tracking-tight leading-tight">
                 {interview.title}
               </h1>
-              <p className="text-xs text-brandBody">Assigned Job Position: <span className="font-semibold text-brandHeading">{interview.jobRole}</span></p>
+              <p className="text-xs text-brandBody">
+                Candidate: <span className="font-semibold text-brandHeading">{candidate.name}</span> • Assigned Role: <span className="font-semibold text-brandHeading">{interview.jobRole || 'Engineering'}</span>
+              </p>
             </div>
             
             <div className="shrink-0 bg-primary/10 text-primary w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl border border-primary/20">
-              {interview.company[0].toUpperCase()}
+              {companyInitial}
             </div>
           </div>
 
@@ -80,7 +122,7 @@ export const CandidateInterviewDetails = () => {
           <div className="grid grid-cols-3 gap-4 text-center bg-gray-50 border border-brandBorder rounded-xl p-4">
             <div>
               <span className="text-[10px] uppercase font-bold text-brandBody block">Format</span>
-              <span className="text-xs font-bold text-brandHeading">{isLive ? 'Live Conversation' : 'Pre-recorded'}</span>
+              <span className="text-xs font-bold text-brandHeading">{isLive ? 'Live Conversation (Sarvam Voice)' : 'Pre-recorded'}</span>
             </div>
             <div>
               <span className="text-[10px] uppercase font-bold text-brandBody block">Questions</span>
@@ -88,7 +130,7 @@ export const CandidateInterviewDetails = () => {
             </div>
             <div>
               <span className="text-[10px] uppercase font-bold text-brandBody block">Time Limit</span>
-              <span className="text-xs font-bold text-brandHeading">{interview.duration} Mins</span>
+              <span className="text-xs font-bold text-brandHeading">{interview.duration || 30} Mins</span>
             </div>
           </div>
 
@@ -102,8 +144,8 @@ export const CandidateInterviewDetails = () => {
             <div className="space-y-3.5 text-xs text-brandBody leading-relaxed">
               <p>
                 {isLive 
-                  ? "You are entering a Live Interview experience. You will engage in an interactive real-time vocal conversation with our virtual interviewer host. The system will ask role-specific questions and dynamically construct custom follow-up prompts based on your responses. Expect a natural conversation, rather than a fixed question sheet." 
-                  : "You are entering an Async Pre-recorded Interview experience. You will face a predefined series of questions. For each question, you will be allocated preparation time followed by automated recording limits. You can review your transcribed answers and optionally retake before submitting."
+                  ? "You are entering a Live AI Interview experience. You will engage in an interactive real-time vocal conversation with our virtual interviewer host Ava (powered by Sarvam STT & TTS). The system will ask role-specific questions and dynamically construct custom follow-up prompts based on your responses." 
+                  : "You are entering an Async Pre-recorded Interview experience. You will face a predefined series of questions. For each question, you will be allocated preparation time followed by automated recording limits. You can review your transcribed answers and code submissions before submitting."
                 }
               </p>
 
@@ -113,7 +155,7 @@ export const CandidateInterviewDetails = () => {
                   <li>Find a quiet space with minimal background noise levels.</li>
                   <li>Ensure your face is clearly visible inside the camera bounds.</li>
                   <li>Do not leave, reload, or navigate away from the browser window once inside.</li>
-                  <li>Use the Device Check wizard on the next step to confirm your microphone levels.</li>
+                  <li>Use the Device Check wizard on the next step to confirm your camera & microphone levels.</li>
                 </ul>
               </div>
             </div>
@@ -122,9 +164,9 @@ export const CandidateInterviewDetails = () => {
           {/* Action trigger */}
           <div className="pt-2">
             <Button
-              onClick={() => navigate(`/candidate/interviews/${id}/device-check`)}
+              onClick={() => navigate(`/candidate/interviews/${candidate.id}/device-check`)}
               variant="primary"
-              className="w-full py-3"
+              className="w-full py-3 text-sm font-bold"
               icon={ArrowRight}
               iconPosition="right"
             >
@@ -138,3 +180,5 @@ export const CandidateInterviewDetails = () => {
     </div>
   );
 };
+
+export default CandidateInterviewDetails;

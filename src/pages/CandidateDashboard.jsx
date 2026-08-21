@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   GraduationCap, 
@@ -10,7 +10,9 @@ import {
   Layers, 
   HelpCircle,
   CheckCircle2,
-  Calendar
+  Calendar,
+  Sparkles,
+  Play
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
@@ -23,9 +25,17 @@ export const CandidateDashboard = () => {
   const { candidates, interviews, loading } = useApp();
   const navigate = useNavigate();
 
-  // Switch between candidates to simulate different dashboard views
-  const [activeCandId, setActiveCandId] = useState('cand-6'); // Default to Kyle Reese (Invited to Live)
+  // Dynamic candidate selection
+  const [activeCandId, setActiveCandId] = useState('');
   const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'async' | 'live'
+
+  useEffect(() => {
+    if (candidates && candidates.length > 0) {
+      if (!activeCandId || !candidates.find((c) => c.id === activeCandId)) {
+        setActiveCandId(candidates[0].id);
+      }
+    }
+  }, [candidates, activeCandId]);
 
   if (loading) {
     return (
@@ -35,66 +45,61 @@ export const CandidateDashboard = () => {
     );
   }
 
-  const activeCandidate = candidates.find((c) => c.id === activeCandId) || candidates[0];
-  
-  // Find associated interview details
+  const activeCandidate = (candidates && candidates.find((c) => c.id === activeCandId)) || candidates?.[0] || null;
+
+  // Find associated interview details for a candidate
   const getInterviewForCandidate = (cand) => {
-    return interviews.find((i) => i.id === cand.interviewId);
+    if (!cand) return null;
+    return interviews.find((i) => i.id === cand.interviewId || i.candidate?.id === cand.id || i.candidate_id === cand.id);
   };
 
-  // Filter candidates list for dashboard demonstration
-  const upcomingAssessments = candidates.filter((c) => {
-    if (c.status !== 'Invited') return false;
-    const interview = getInterviewForCandidate(c);
-    if (!interview) return false;
-    
-    // Apply type filter
-    if (activeFilter === 'async' && interview.interviewType !== 'async') return false;
-    if (activeFilter === 'live' && interview.interviewType !== 'live') return false;
-    
+  // Find assigned upcoming assessments for active candidate
+  const assignedInterview = activeCandidate ? getInterviewForCandidate(activeCandidate) : null;
+
+  // Filter available system interviews for general practice
+  const availableInterviews = (interviews || []).filter((int) => {
+    const intFormat = int.type || int.interviewType || 'async';
+    if (activeFilter === 'async' && intFormat !== 'async') return false;
+    if (activeFilter === 'live' && intFormat !== 'live') return false;
     return true;
   });
 
-  const completedAssessments = candidates.filter((c) => {
+  // Filter completed candidates
+  const completedCandidates = (candidates || []).filter((c) => {
     if (c.status !== 'Completed' && c.status !== 'Reviewing') return false;
-    const interview = getInterviewForCandidate(c);
-    if (!interview) return false;
-    
-    // Apply type filter
-    if (activeFilter === 'async' && interview.interviewType !== 'async') return false;
-    if (activeFilter === 'live' && interview.interviewType !== 'live') return false;
-    
     return true;
   });
 
   return (
     <div className="space-y-8 flex-grow flex flex-col max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8 text-left select-none">
       
-      {/* Simulation Selector Bar */}
-      <div className="bg-blue-50/50 border border-primary/20 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-        <span className="font-semibold text-brandHeading flex items-center space-x-1.5">
-          <Layers className="w-4 h-4 text-primary" />
-          <span>Candidate Persona Simulation:</span>
-        </span>
-        <div className="flex items-center space-x-2">
-          <span className="text-[10px] text-brandBody">Logged in as:</span>
-          <select
-            value={activeCandId}
-            onChange={(e) => setActiveCandId(e.target.value)}
-            className="bg-white border border-brandBorder rounded px-2.5 py-1 font-semibold text-brandHeading outline-none"
-          >
-            {candidates.map((c) => {
-              const int = getInterviewForCandidate(c);
-              const intType = int ? `(${int.interviewType.toUpperCase()})` : '';
-              return (
-                <option key={c.id} value={c.id}>
-                  {c.name} - {c.status} {intType}
-                </option>
-              );
-            })}
-          </select>
+      {/* Simulation / Persona Selector Bar */}
+      {candidates && candidates.length > 0 && (
+        <div className="bg-blue-50/50 border border-primary/20 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <span className="font-semibold text-brandHeading flex items-center space-x-1.5">
+            <Layers className="w-4 h-4 text-primary" />
+            <span>Candidate Persona:</span>
+          </span>
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] text-brandBody">Logged in as:</span>
+            <select
+              value={activeCandId || ''}
+              onChange={(e) => setActiveCandId(e.target.value)}
+              className="bg-white border border-brandBorder rounded px-2.5 py-1 font-semibold text-brandHeading outline-none"
+            >
+              {candidates.map((c) => {
+                const int = getInterviewForCandidate(c);
+                const format = int ? `(${((int.type || int.interviewType || 'async')).toUpperCase()})` : '';
+                return (
+                  <option key={c.id} value={c.id}>
+                    {c.name} - {c.status || 'Invited'} {format}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Welcome Banner */}
       <div className="bg-white border border-brandBorder rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 select-none shadow-sm">
@@ -107,7 +112,7 @@ export const CandidateDashboard = () => {
               Welcome, {activeCandidate?.name || 'Candidate'}
             </h1>
             <p className="text-xs text-brandBody leading-relaxed">
-              Access your upcoming job screenings, test hardware device capture feeds, and review completed logs.
+              Access your role assessments, practice live & async AI interviews, verify device hardware, and review scorecards.
             </p>
           </div>
         </div>
@@ -139,124 +144,189 @@ export const CandidateDashboard = () => {
       {/* Interviews Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         
-        {/* Left side: Upcoming/In Progress Assessments */}
-        <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-base font-bold text-brandHeading">Upcoming & In Progress Interviews</h3>
+        {/* Left side: Assigned & Available Interviews */}
+        <div className="lg:col-span-2 space-y-6">
           
-          {upcomingAssessments.filter(c => c.id === activeCandId).length === 0 ? (
-            <EmptyState
-              icon={Video}
-              title="No upcoming interviews"
-              description={`There are no active invitations for ${activeCandidate?.name} matching this format filter.`}
-            />
-          ) : (
-            <div className="space-y-4">
-              {upcomingAssessments.filter(c => c.id === activeCandId).map((cand) => {
-                const int = getInterviewForCandidate(cand);
-                if (!int) return null;
-                const isLive = int.interviewType === 'live';
+          {/* Active Assigned Interview (if any) */}
+          {assignedInterview && activeCandidate?.status === 'Invited' && (
+            <div className="space-y-3">
+              <h3 className="text-base font-bold text-brandHeading flex items-center space-x-2">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span>Your Assigned Assessment</span>
+              </h3>
+              
+              <Card className="border-primary/30 bg-gradient-to-r from-white to-blue-50/20 shadow-md">
+                <CardBody className="p-5 space-y-4">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="space-y-1">
+                      <Badge variant="primary" className="bg-primary/10 text-primary border-primary/20">
+                        {(assignedInterview.type || assignedInterview.interviewType || 'async').toUpperCase()} Assessment
+                      </Badge>
+                      <h4 className="text-base font-bold text-brandHeading leading-snug pt-1">
+                        {assignedInterview.title}
+                      </h4>
+                      <div className="text-xs text-brandBody font-semibold">
+                        <span>{assignedInterview.company || 'InterviewX AI'}</span> • <span>{assignedInterview.jobRole || 'Engineering'}</span>
+                      </div>
+                    </div>
 
-                return (
-                  <Card key={cand.id} className="hover:shadow-md transition-shadow">
-                    <CardBody className="p-5 space-y-4">
-                      
-                      {/* Badge and title header */}
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="space-y-1">
-                          {/* Visual badges treatments based on type */}
-                          {isLive ? (
-                            <div className="space-y-1">
-                              <Badge variant="primary" className="bg-indigo-50 text-indigo-700 border-indigo-150">
-                                Live Interview
-                              </Badge>
-                              <span className="text-[10px] text-brandBody block font-semibold">Real-time conversational interview</span>
-                            </div>
-                          ) : (
-                            <div className="space-y-1">
-                              <Badge variant="primary" className="bg-blue-50 text-blue-700 border-blue-150">
-                                Async Interview
-                              </Badge>
-                              <span className="text-[10px] text-brandBody block font-semibold">Recorded interview</span>
-                            </div>
-                          )}
+                    <div className="shrink-0 bg-primary/10 text-primary w-11 h-11 rounded-lg flex items-center justify-center font-bold text-lg">
+                      {((assignedInterview.company || assignedInterview.title || 'I')[0] || 'I').toUpperCase()}
+                    </div>
+                  </div>
 
-                          <h4 className="text-base font-bold text-brandHeading leading-snug pt-1">{int.title}</h4>
-                          <div className="text-xs text-brandBody font-semibold">
-                            <span>{int.company}</span> • <span>{int.jobRole}</span>
+                  <div className="flex items-center space-x-4 text-[10px] text-brandBody font-semibold border-t border-brandBorder pt-3">
+                    <span className="flex items-center space-x-1">
+                      <Clock className="w-3.5 h-3.5 text-brandBody" />
+                      <span>Duration: {assignedInterview.duration || 30} mins</span>
+                    </span>
+                    <span className="flex items-center space-x-1">
+                      <FileText className="w-3.5 h-3.5 text-brandBody" />
+                      <span>Questions: {assignedInterview.questions?.length || 0} items</span>
+                    </span>
+                  </div>
+
+                  <div className="flex justify-end pt-2 border-t border-brandBorder/50">
+                    <Button
+                      onClick={() => navigate(`/candidate/interviews/${activeCandidate.id}`)}
+                      variant="primary"
+                      size="sm"
+                      icon={ArrowRight}
+                      iconPosition="right"
+                    >
+                      Start Assessment
+                    </Button>
+                  </div>
+                </CardBody>
+              </Card>
+            </div>
+          )}
+
+          {/* All Available Practice Interviews */}
+          <div className="space-y-3">
+            <h3 className="text-base font-bold text-brandHeading">Available Practice Interviews</h3>
+            
+            {availableInterviews.length === 0 ? (
+              <EmptyState
+                icon={Video}
+                title="No interviews found"
+                description="Create an interview in the recruiter dashboard to practice."
+              />
+            ) : (
+              <div className="space-y-4">
+                {availableInterviews.map((int) => {
+                  const isLive = (int.type || int.interviewType) === 'live';
+                  const candidateTargetId = activeCandidate?.id || int.candidate?.id || int.id;
+
+                  return (
+                    <Card key={int.id} className="hover:shadow-md transition-shadow">
+                      <CardBody className="p-5 space-y-4">
+                        
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="space-y-1">
+                            {isLive ? (
+                              <div className="space-y-1">
+                                <Badge variant="primary" className="bg-indigo-50 text-indigo-700 border-indigo-150">
+                                  Live Interview
+                                </Badge>
+                                <span className="text-[10px] text-brandBody block font-semibold">Real-time conversational interview (Sarvam Voice)</span>
+                              </div>
+                            ) : (
+                              <div className="space-y-1">
+                                <Badge variant="primary" className="bg-blue-50 text-blue-700 border-blue-150">
+                                  Async Interview
+                                </Badge>
+                                <span className="text-[10px] text-brandBody block font-semibold">Recorded interview & AI evaluation</span>
+                              </div>
+                            )}
+
+                            <h4 className="text-base font-bold text-brandHeading leading-snug pt-1">{int.title}</h4>
+                            <div className="text-xs text-brandBody font-semibold">
+                              <span>{int.company || 'InterviewX'}</span> • <span>{int.jobRole || 'Technical Candidate'}</span>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 bg-primary/10 text-primary w-11 h-11 rounded-lg flex items-center justify-center font-bold text-lg">
+                            {((int.company || int.title || 'I')[0] || 'I').toUpperCase()}
                           </div>
                         </div>
 
-                        <div className="shrink-0 bg-primary/10 text-primary w-11 h-11 rounded-lg flex items-center justify-center font-bold text-lg">
-                          {int.company[0].toUpperCase()}
+                        <div className="flex items-center space-x-4 text-[10px] text-brandBody font-semibold border-t border-brandBorder pt-3">
+                          <span className="flex items-center space-x-1">
+                            <Clock className="w-3.5 h-3.5 text-brandBody" />
+                            <span>Duration: {int.duration || 30} mins</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <FileText className="w-3.5 h-3.5 text-brandBody" />
+                            <span>Questions: {int.questions?.length || 0} items</span>
+                          </span>
                         </div>
-                      </div>
 
-                      {/* Mini metadata layout */}
-                      <div className="flex items-center space-x-4 text-[10px] text-brandBody font-semibold border-t border-brandBorder pt-3">
-                        <span className="flex items-center space-x-1">
-                          <Clock className="w-3.5 h-3.5 text-brandBody" />
-                          <span>Duration: {int.duration} mins</span>
-                        </span>
-                        <span className="flex items-center space-x-1">
-                          <FileText className="w-3.5 h-3.5 text-brandBody" />
-                          <span>Questions: {int.questions?.length || 0} items</span>
-                        </span>
-                      </div>
+                        <div className="flex justify-end pt-2 border-t border-brandBorder/50">
+                          <Button
+                            onClick={() => navigate(`/candidate/interviews/${candidateTargetId}`)}
+                            variant="primary"
+                            size="sm"
+                            icon={ArrowRight}
+                            iconPosition="right"
+                          >
+                            Practice Interview
+                          </Button>
+                        </div>
 
-                      {/* Action Row */}
-                      <div className="flex justify-end pt-2 border-t border-brandBorder/50">
-                        <Button
-                          onClick={() => navigate(`/candidate/interviews/${cand.id}`)}
-                          variant="primary"
-                          size="sm"
-                          icon={ArrowRight}
-                          iconPosition="right"
-                        >
-                          Start Interview
-                        </Button>
-                      </div>
+                      </CardBody>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-                    </CardBody>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
         </div>
 
-        {/* Right side: Completed Attempts log */}
+        {/* Right side: Completed Attempts & Scorecards */}
         <div className="space-y-4">
-          <h3 className="text-base font-bold text-brandHeading">Completed Interviews</h3>
+          <h3 className="text-base font-bold text-brandHeading">Completed Assessments</h3>
           
-          {completedAssessments.filter(c => c.id === activeCandId).length === 0 ? (
+          {completedCandidates.length === 0 ? (
             <Card>
               <CardBody className="text-center py-10 text-xs text-brandBody space-y-2">
                 <CheckCircle2 className="w-8 h-8 text-gray-300 mx-auto" />
                 <p className="font-bold text-brandHeading">No completed attempts</p>
-                <p className="text-[10px] text-brandBody">Completed reports will appear here once submitted.</p>
+                <p className="text-[10px] text-brandBody">Completed evaluations will appear here once submitted.</p>
               </CardBody>
             </Card>
           ) : (
             <div className="space-y-3">
-              {completedAssessments.filter(c => c.id === activeCandId).map((cand) => {
+              {completedCandidates.map((cand) => {
                 const int = getInterviewForCandidate(cand);
-                if (!int) return null;
-                const isLive = int.interviewType === 'live';
+                const isLive = (int?.type || int?.interviewType) === 'live';
 
                 return (
-                  <Card key={cand.id}>
+                  <Card key={cand.id} className="hover:shadow-sm transition-shadow">
                     <CardBody className="p-4 space-y-2.5">
                       <div className="flex justify-between items-start">
                         <div className="overflow-hidden space-y-0.5">
-                          <span className="text-xs font-bold text-brandHeading truncate block leading-tight">{int.title}</span>
-                          <span className="text-[10px] text-brandBody block font-semibold">{int.company}</span>
+                          <span className="text-xs font-bold text-brandHeading truncate block leading-tight">
+                            {int?.title || cand.name}
+                          </span>
+                          <span className="text-[10px] text-brandBody block font-semibold">
+                            {cand.name} • {cand.role || 'Candidate'}
+                          </span>
                         </div>
-                        <Badge variant="success">Completed</Badge>
+                        <Badge variant="success">
+                          {cand.overallScore !== null && cand.overallScore !== undefined ? `${cand.overallScore}%` : 'Completed'}
+                        </Badge>
                       </div>
 
                       <div className="flex justify-between items-center text-[9px] text-brandBody font-mono pt-2 border-t border-brandBorder">
                         <span>Format: {isLive ? 'LIVE' : 'ASYNC'}</span>
-                        <span>Date: {cand.completionDate || '2026-08-08'}</span>
+                        <button
+                          onClick={() => navigate(`/recruiter/candidates/${cand.id}/report`)}
+                          className="text-primary font-bold hover:underline"
+                        >
+                          View Report →
+                        </button>
                       </div>
                     </CardBody>
                   </Card>
@@ -270,3 +340,5 @@ export const CandidateDashboard = () => {
     </div>
   );
 };
+
+export default CandidateDashboard;

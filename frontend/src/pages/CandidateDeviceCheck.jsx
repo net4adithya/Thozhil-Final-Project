@@ -18,6 +18,8 @@ import { Spinner } from '../components/ui/Spinner';
 import { CameraFeed } from '../components/common/CameraFeed';
 import { VoiceWaveform } from '../components/common/VoiceWaveform';
 import { voiceService } from '../services/voiceService';
+import { candidateService } from '../services/candidateService';
+import { interviewService } from '../services/interviewService';
 import { VoiceLabModal } from '../components/voice/VoiceLabModal';
 
 export const CandidateDeviceCheck = () => {
@@ -27,26 +29,61 @@ export const CandidateDeviceCheck = () => {
 
   const [candidate, setCandidate] = useState(null);
   const [interview, setInterview] = useState(null);
+  const [resolving, setResolving] = useState(true);
   const [camActive, setCamActive] = useState(true);
   const [micActive, setMicActive] = useState(true);
   const [speakerTestPlaying, setSpeakerTestPlaying] = useState(false);
-  const [testingVoice, setTestingVoice] = useState(false);
   const [voiceLabOpen, setVoiceLabOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && candidates.length > 0) {
-      const match = candidates.find((c) => c.id === id);
-      if (match) {
-        setCandidate(match);
-        const matchInt = interviews.find((i) => i.id === match.interviewId);
-        setInterview(matchInt);
-      } else {
-        navigate('/candidate');
+    const resolveData = async () => {
+      if (!id) return;
+      setResolving(true);
+      try {
+        let cand = (candidates || []).find((c) => c.id === id);
+        let matchInt = null;
+
+        if (cand) {
+          matchInt = (interviews || []).find((i) => i.id === cand.interviewId || i.candidate?.id === cand.id);
+          if (!matchInt && cand.interviewId) {
+            matchInt = await interviewService.getInterviewById(cand.interviewId).catch(() => null);
+          }
+          if (!matchInt && interviews?.length > 0) {
+            matchInt = interviews[0];
+          }
+        } else {
+          matchInt = (interviews || []).find((i) => i.id === id);
+          if (!matchInt) {
+            matchInt = await interviewService.getInterviewById(id).catch(() => null);
+          }
+          if (matchInt) {
+            cand = (candidates || []).find((c) => c.interviewId === matchInt.id || c.id === matchInt.candidate?.id) || candidates?.[0];
+            if (!cand) {
+              const candList = await candidateService.getCandidates().catch(() => []);
+              cand = candList.find((c) => c.interviewId === matchInt.id) || candList[0];
+            }
+          }
+        }
+
+        if (cand) setCandidate(cand);
+        if (matchInt) setInterview(matchInt);
+
+        if (!cand && !matchInt && !loading) {
+          navigate('/candidate');
+        }
+      } catch (err) {
+        console.error('Failed to resolve device check interview:', err);
+      } finally {
+        setResolving(false);
       }
+    };
+
+    if (!loading) {
+      resolveData();
     }
   }, [id, candidates, interviews, loading, navigate]);
 
-  if (loading || !candidate || !interview) {
+  if (loading || resolving || !candidate || !interview) {
     return (
       <div className="flex-grow flex items-center justify-center">
         <Spinner size="lg" />
@@ -79,11 +116,13 @@ export const CandidateDeviceCheck = () => {
       showToast('Camera and microphone access must be verified to continue.', 'warning');
       return;
     }
-    // Proceed to either async or live interview room depending on interviewType
-    if (interview.interviewType === 'live') {
-      navigate(`/candidate/interviews/${id}/live`);
+    const isLive = (interview.type || interview.interviewType) === 'live';
+    const targetCandidateId = candidate.id;
+
+    if (isLive) {
+      navigate(`/candidate/interviews/${targetCandidateId}/live`);
     } else {
-      navigate(`/candidate/interviews/${id}/async`);
+      navigate(`/candidate/interviews/${targetCandidateId}/async`);
     }
   };
 
@@ -129,127 +168,100 @@ export const CandidateDeviceCheck = () => {
               {micActive ? 'Mute Mic' : 'Unmute Mic'}
             </Button>
           </div>
-
-          <Card>
-            <CardBody className="p-4 space-y-3.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-brandHeading font-sans">Microphone Sensitivity Check</span>
-                <button
-                  type="button"
-                  onClick={() => micActive && setTestingVoice(!testingVoice)}
-                  disabled={!micActive}
-                  className="font-semibold hover:underline text-primary disabled:opacity-40 disabled:no-underline"
-                >
-                  {testingVoice ? 'Stop Test' : 'Test Microphone'}
-                </button>
-              </div>
-              <VoiceWaveform isActive={testingVoice && micActive} />
-            </CardBody>
-          </Card>
         </div>
 
-        {/* Right Column: Hardware checklist */}
-        <div className="space-y-6">
+        {/* Right Column: Readiness Checklist & Diagnostics */}
+        <div className="space-y-4">
           <Card>
-            <CardHeader className="pb-2">
-              <h3 className="text-sm font-bold text-brandHeading font-sans">Hardware Diagnostics Checklist</h3>
+            <CardHeader>
+              <h3 className="text-sm font-bold text-brandHeading">Hardware Diagnostics</h3>
             </CardHeader>
-            <CardBody className="p-4 space-y-3 text-xs">
+            <CardBody className="p-5 space-y-4">
               
-              {/* Webcam status check */}
-              <div className="flex items-start space-x-3 p-3 bg-gray-50/50 rounded-xl border border-brandBorder">
-                <div className={`p-2 rounded-lg ${camActive ? 'bg-green-50 text-brandSuccess' : 'bg-amber-50 text-brandWarning'} shrink-0`}>
-                  <Camera className="w-4.5 h-4.5" />
-                </div>
-                <div className="flex-1 space-y-0.5">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-brandHeading">Webcam Capture Feed</span>
-                    <span className={`font-bold ${camActive ? 'text-brandSuccess' : 'text-brandWarning'}`}>
-                      {camActive ? 'Active' : 'Unregistered'}
-                    </span>
+              {/* Check 1: Camera */}
+              <div className="flex items-center justify-between border-b border-brandBorder pb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gray-100 rounded-lg text-brandBody">
+                    <Camera className="w-4 h-4" />
                   </div>
-                  <p className="text-[10px] text-brandBody leading-relaxed">
-                    {camActive 
-                      ? 'Camera permission verified. Feed correctly rendered.' 
-                      : 'Please check your browser permissions settings or reconnect your webcam device.'
-                    }
-                  </p>
+                  <div>
+                    <span className="text-xs font-bold text-brandHeading block">Webcam Feed</span>
+                    <span className="text-[10px] text-brandBody">HD 720p / 1080p stream</span>
+                  </div>
                 </div>
+                {camActive ? (
+                  <span className="flex items-center space-x-1 text-xs font-semibold text-brandSuccess">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Active</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center space-x-1 text-xs font-semibold text-brandDanger">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Disabled</span>
+                  </span>
+                )}
               </div>
 
-              {/* Mic status check */}
-              <div className="flex items-start space-x-3 p-3 bg-gray-50/50 rounded-xl border border-brandBorder">
-                <div className={`p-2 rounded-lg ${micActive ? 'bg-green-50 text-brandSuccess' : 'bg-amber-50 text-brandWarning'} shrink-0`}>
-                  <Mic className="w-4.5 h-4.5" />
-                </div>
-                <div className="flex-1 space-y-0.5">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-brandHeading">Microphone Capture stream</span>
-                    <span className={`font-bold ${micActive ? 'text-brandSuccess' : 'text-brandWarning'}`}>
-                      {micActive ? 'Active' : 'Muted'}
-                    </span>
+              {/* Check 2: Microphone */}
+              <div className="flex items-center justify-between border-b border-brandBorder pb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gray-100 rounded-lg text-brandBody">
+                    <Mic className="w-4 h-4" />
                   </div>
-                  <p className="text-[10px] text-brandBody leading-relaxed">
-                    {micActive 
-                      ? 'Audio frequencies registers nominal speech waves.' 
-                      : 'Please verify microphone input is not muted physically or in system control panel.'
-                    }
-                  </p>
+                  <div>
+                    <span className="text-xs font-bold text-brandHeading block">Microphone Capture</span>
+                    <span className="text-[10px] text-brandBody">Audio speech recognition</span>
+                  </div>
                 </div>
+                {micActive ? (
+                  <span className="flex items-center space-x-1 text-xs font-semibold text-brandSuccess">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Connected</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center space-x-1 text-xs font-semibold text-brandDanger">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Muted</span>
+                  </span>
+                )}
               </div>
 
-              {/* Speaker status check */}
-              <div className="flex items-start space-x-3 p-3 bg-gray-50/50 rounded-xl border border-brandBorder">
-                <div className="p-2 bg-blue-50 text-primary rounded-lg shrink-0">
-                  <Volume2 className="w-4.5 h-4.5" />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-brandHeading">Speaker Playback Output</span>
-                    <button
-                      onClick={handleSpeakerTest}
-                      disabled={speakerTestPlaying}
-                      className="text-[10px] font-bold text-primary hover:underline disabled:opacity-40"
-                    >
-                      {speakerTestPlaying ? 'Testing...' : 'Test Speaker'}
-                    </button>
+              {/* Check 3: Voice / Speaker test */}
+              <div className="flex items-center justify-between border-b border-brandBorder pb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gray-100 rounded-lg text-brandBody">
+                    <Volume2 className="w-4 h-4" />
                   </div>
-                  <p className="text-[10px] text-brandBody leading-relaxed">
-                    Play a simulated voice greeting to confirm your audio output system functions.
-                  </p>
+                  <div>
+                    <span className="text-xs font-bold text-brandHeading block">Speaker Output</span>
+                    <span className="text-[10px] text-brandBody">AI Vocal Prompt Audio</span>
+                  </div>
                 </div>
+                <Button
+                  onClick={handleSpeakerTest}
+                  variant="outline"
+                  size="xs"
+                  loading={speakerTestPlaying}
+                >
+                  Test Sound
+                </Button>
               </div>
 
-              {/* Browser compatibility check */}
-              <div className="flex items-start space-x-3 p-3 bg-gray-50/50 rounded-xl border border-brandBorder">
-                <div className="p-2 bg-green-50 text-brandSuccess rounded-lg shrink-0">
-                  <Globe className="w-4.5 h-4.5" />
-                </div>
-                <div className="flex-1 space-y-0.5">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-brandHeading">Browser Compatibility</span>
-                    <span className="text-brandSuccess font-bold">Compatible</span>
+              {/* Check 4: Network Stream */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gray-100 rounded-lg text-brandBody">
+                    <Wifi className="w-4 h-4 text-brandSuccess" />
                   </div>
-                  <p className="text-[10px] text-brandBody leading-relaxed">
-                    HTML5 camera buffers and media streams are fully supported.
-                  </p>
-                </div>
-              </div>
-
-              {/* Network ping speed */}
-              <div className="flex items-start space-x-3 p-3 bg-gray-50/50 rounded-xl border border-brandBorder">
-                <div className="p-2 bg-green-50 text-brandSuccess rounded-lg shrink-0">
-                  <Wifi className="w-4.5 h-4.5" />
-                </div>
-                <div className="flex-1 space-y-0.5">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-brandHeading">Network Latency speed</span>
-                    <span className="text-brandSuccess font-bold">Excellent</span>
+                  <div>
+                    <span className="text-xs font-bold text-brandHeading block">Network Speed</span>
+                    <span className="text-[10px] text-brandBody">Ping: 24ms (Optimal)</span>
                   </div>
-                  <p className="text-[10px] text-brandBody leading-relaxed">
-                    Ping: 12ms. Network bandwidth satisfies video stream uploads requirements.
-                  </p>
                 </div>
+                <span className="flex items-center space-x-1 text-xs font-semibold text-brandSuccess">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Stable</span>
+                </span>
               </div>
 
             </CardBody>
@@ -258,37 +270,43 @@ export const CandidateDeviceCheck = () => {
           {/* Sarvam Voice Lab Test Trigger */}
           <div className="p-3 bg-blue-50/50 border border-primary/20 rounded-xl flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-xs font-bold text-brandHeading">Sarvam Voice Lab (STT & TTS)</span>
-              <p className="text-[10px] text-brandBody">Test speech-to-text recording and voice synthesis.</p>
+              <span className="text-xs font-bold text-brandHeading block">Voice Engine (Sarvam STT / TTS)</span>
+              <span className="text-[10px] text-brandBody">Test real-time speech transcription & synthesis</span>
             </div>
             <Button
+              size="xs"
               variant="outline"
-              size="sm"
+              className="border-primary text-primary hover:bg-primary/10"
               onClick={() => setVoiceLabOpen(true)}
             >
-              Launch Voice Lab
+              Open Voice Lab
             </Button>
           </div>
 
-          {/* Proced CTA */}
+          {/* Proceed CTA */}
           <Button
             onClick={handleProceed}
             variant="primary"
-            className="w-full py-3"
+            className="w-full py-3 text-sm font-bold"
             disabled={!camActive || !micActive}
             icon={ArrowRight}
             iconPosition="right"
           >
-            Continue to Interview
+            Ready to Begin Interview
           </Button>
+
         </div>
 
       </div>
 
+      {/* Voice Lab Modal */}
       <VoiceLabModal
         isOpen={voiceLabOpen}
         onClose={() => setVoiceLabOpen(false)}
       />
+
     </div>
   );
 };
+
+export default CandidateDeviceCheck;
