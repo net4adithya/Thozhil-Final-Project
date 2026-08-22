@@ -1,11 +1,11 @@
 import http from 'http';
 import { WebSocket } from 'ws';
-import app from './src/app.js';
-import supabase from './src/config/supabase.js';
-import { initLiveWebSocket } from './src/realtime/liveWebSocketGateway.js';
-import { createCandidate, deleteCandidateById } from './src/services/candidateService.js';
-import { createInterview, deleteInterviewById } from './src/services/interviewService.js';
-import { ALLOWED_PROCTORING_EVENTS } from './src/services/proctoringService.js';
+import app from '../src/app.js';
+import supabase from '../src/config/supabase.js';
+import { initLiveWebSocket } from '../src/realtime/liveWebSocketGateway.js';
+import { createCandidate, deleteCandidateById } from '../src/services/candidateService.js';
+import { createInterview, deleteInterviewById } from '../src/services/interviewService.js';
+import { ALLOWED_PROCTORING_EVENTS } from '../src/services/proctoringService.js';
 
 let server;
 const testPort = 5003;

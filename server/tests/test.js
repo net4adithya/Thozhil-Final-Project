@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import supabase from './src/config/supabase.js';
-import app from './src/app.js';
+import supabase from '../src/config/supabase.js';
+import app from '../src/app.js';
 
 const PORT = 5001;
 

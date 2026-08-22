@@ -6,8 +6,13 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "node test.js",
-    "verify": "node test.js"
+    "test": "node tests/test_sprint13_complete_e2e_integration.js",
+    "test:all": "node tests/test_sprint9_realtime_live.js && node tests/test_sprint10_recording_proctoring.js && node tests/test_sprint11_evaluation_engine.js && node tests/test_sprint12_sarvam_adaptive_interviewer.js && node tests/test_sprint13_complete_e2e_integration.js",
+    "test:sprint9": "node tests/test_sprint9_realtime_live.js",
+    "test:sprint10": "node tests/test_sprint10_recording_proctoring.js",
+    "test:sprint11": "node tests/test_sprint11_evaluation_engine.js",
+    "test:sprint12": "node tests/test_sprint12_sarvam_adaptive_interviewer.js",
+    "test:sprint13": "node tests/test_sprint13_complete_e2e_integration.js"
   },
   "dependencies": {
     "@supabase/server": "^1.4.1",

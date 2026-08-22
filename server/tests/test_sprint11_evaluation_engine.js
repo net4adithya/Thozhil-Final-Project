@@ -1,13 +1,13 @@
 import http from 'http';
-import app from './src/app.js';
-import supabase from './src/config/supabase.js';
-import { createCandidate, deleteCandidateById } from './src/services/candidateService.js';
-import { createInterview, deleteInterviewById } from './src/services/interviewService.js';
-import { createQuestion } from './src/services/questionService.js';
-import { createAnswer } from './src/services/answerService.js';
-import { evaluateAnswerById, evaluateAnswerDeterministic } from './src/services/ai/answerEvaluationService.js';
-import { validateAnswerEvaluation } from './src/services/ai/answerEvaluationValidator.js';
-import { evaluateInterview } from './src/services/ai/interviewEvaluationService.js';
+import app from '../src/app.js';
+import supabase from '../src/config/supabase.js';
+import { createCandidate, deleteCandidateById } from '../src/services/candidateService.js';
+import { createInterview, deleteInterviewById } from '../src/services/interviewService.js';
+import { createQuestion } from '../src/services/questionService.js';
+import { createAnswer } from '../src/services/answerService.js';
+import { evaluateAnswerById, evaluateAnswerDeterministic } from '../src/services/ai/answerEvaluationService.js';
+import { validateAnswerEvaluation } from '../src/services/ai/answerEvaluationValidator.js';
+import { evaluateInterview } from '../src/services/ai/interviewEvaluationService.js';
 
 let server;
 const testPort = 5004;

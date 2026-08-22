@@ -1,4 +1,4 @@
-import supabase from './src/config/supabase.js';
+import supabase from '../src/config/supabase.js';
 
 const testResumeDbInsert = async () => {
   try {

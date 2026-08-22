@@ -1,12 +1,12 @@
 import http from 'http';
 import { WebSocket } from 'ws';
-import app from './src/app.js';
-import supabase from './src/config/supabase.js';
-import { initLiveWebSocket } from './src/realtime/liveWebSocketGateway.js';
-import { createCandidate, deleteCandidateById } from './src/services/candidateService.js';
-import { createInterview, deleteInterviewById } from './src/services/interviewService.js';
-import { createQuestion } from './src/services/questionService.js';
-import liveSessionManager, { SESSION_STATES } from './src/realtime/liveSessionManager.js';
+import app from '../src/app.js';
+import supabase from '../src/config/supabase.js';
+import { initLiveWebSocket } from '../src/realtime/liveWebSocketGateway.js';
+import { createCandidate, deleteCandidateById } from '../src/services/candidateService.js';
+import { createInterview, deleteInterviewById } from '../src/services/interviewService.js';
+import { createQuestion } from '../src/services/questionService.js';
+import liveSessionManager, { SESSION_STATES } from '../src/realtime/liveSessionManager.js';
 
 let server;
 let testPort = 5002;
