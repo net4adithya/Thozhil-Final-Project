@@ -164,7 +164,7 @@ export const CandidateInterviewDetails = () => {
           {/* Action trigger */}
           <div className="pt-2">
             <Button
-              onClick={() => navigate(`/candidate/interviews/${candidate.id}/device-check`)}
+              onClick={() => navigate(`/candidate/interviews/${interview.id}/device-check`)}
               variant="primary"
               className="w-full py-3 text-sm font-bold"
               icon={ArrowRight}
