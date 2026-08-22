@@ -142,4 +142,77 @@ router.post('/:id/evaluate', validateObjectId, async (req, res, next) => {
   }
 });
 
+// Multer memory storage configuration for recording uploads
+import multer from 'multer';
+const recordingUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 500 * 1024 * 1024 // 500 MB maximum for high-quality video sessions
+  }
+});
+
+// Recording Endpoints
+router.post(
+  '/:id/recordings',
+  validateObjectId,
+  recordingUpload.single('file'),
+  async (req, res, next) => {
+    try {
+      const file = req.file || (req.files && req.files[0]);
+      const { uploadInterviewRecording } = await import('../services/recordingService.js');
+      const recording = await uploadInterviewRecording(req.params.id, req.body, file);
+      res.status(201).json({
+        success: true,
+        data: recording,
+        message: 'Interview recording uploaded and stored successfully'
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get('/:id/recordings', validateObjectId, async (req, res, next) => {
+  try {
+    const { getInterviewRecordings } = await import('../services/recordingService.js');
+    const recordings = await getInterviewRecordings(req.params.id);
+    res.status(200).json({
+      success: true,
+      data: recordings,
+      message: 'Interview recordings retrieved successfully'
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Proctoring Observation Endpoints
+router.post('/:id/proctoring-events', validateObjectId, async (req, res, next) => {
+  try {
+    const { logProctoringEvents } = await import('../services/proctoringService.js');
+    const result = await logProctoringEvents(req.params.id, req.body);
+    res.status(200).json({
+      success: true,
+      data: result,
+      message: 'Proctoring observation events logged successfully'
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:id/proctoring-events', validateObjectId, async (req, res, next) => {
+  try {
+    const { getProctoringEvents } = await import('../services/proctoringService.js');
+    const result = await getProctoringEvents(req.params.id);
+    res.status(200).json({
+      success: true,
+      data: result,
+      message: 'Proctoring observation events retrieved successfully'
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

@@ -101,6 +101,31 @@ export const interviewService = {
     return response.data?.data;
   },
 
+  // Sprint 10 Recording & Proctoring APIs
+  uploadRecording: async (interviewId, formData) => {
+    const response = await apiClient.post(`/interviews/${interviewId}/recordings`, formData, {
+      headers: {
+        'Content-Type': undefined // Let browser/Axios set boundary
+      }
+    });
+    return response.data?.data;
+  },
+
+  getRecordings: async (interviewId) => {
+    const response = await apiClient.get(`/interviews/${interviewId}/recordings`);
+    return response.data?.data || [];
+  },
+
+  logProctoringEvents: async (interviewId, payload) => {
+    const response = await apiClient.post(`/interviews/${interviewId}/proctoring-events`, payload);
+    return response.data?.data;
+  },
+
+  getProctoringEvents: async (interviewId) => {
+    const response = await apiClient.get(`/interviews/${interviewId}/proctoring-events`);
+    return response.data?.data;
+  },
+
   // Templates, settings, question bank preserved in mockApi for subsequent sprints
   getTemplates: () => mockApi.getTemplates(),
   getTemplateById: (id) => mockApi.getTemplateById(id),

@@ -21,7 +21,10 @@ import {
   Play,
   Send,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Maximize2,
+  Minimize2,
+  CircleDot
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
@@ -33,6 +36,8 @@ import { interviewService } from '../services/interviewService';
 import { candidateService } from '../services/candidateService';
 import { voiceService } from '../services/voiceService';
 import { useLiveInterviewSession, LIVE_STATES } from '../hooks/useLiveInterviewSession';
+import { useInterviewRecording, RECORDING_STATES } from '../hooks/useInterviewRecording';
+import { useProctoringObserver } from '../hooks/useProctoringObserver';
 
 export const LiveInterview = () => {
   const { id } = useParams();
@@ -52,11 +57,11 @@ export const LiveInterview = () => {
 
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [manualAnswerText, setManualAnswerText] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
+  const [isRecordingAnswer, setIsRecordingAnswer] = useState(false);
   const [localAudioProcessing, setLocalAudioProcessing] = useState(false);
 
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  const answerMediaRecorderRef = useRef(null);
+  const answerAudioChunksRef = useRef([]);
   const transcriptEndRef = useRef(null);
   const currentAudioRef = useRef(null);
   const speakerMutedRef = useRef(speakerMuted);
@@ -108,12 +113,14 @@ export const LiveInterview = () => {
     }
   }, []);
 
-  // Initialize Real-Time Live Session Hook
+  // Initialize Real-Time Live Session Hook (WebSocket Gateway)
   const liveSession = useLiveInterviewSession({
     interviewId: interview?.id || id,
     candidateId: candidate?.id,
     onAiSpeaking: handleAiSpeakingPlayback,
-    onCompleted: (data) => {
+    onCompleted: async (data) => {
+      // Stop interview video recording and finalize upload
+      await sessionRecording.stopRecording();
       showToast('Live interview completed and evaluated successfully!', 'success');
       setTimeout(() => {
         navigate(`/candidate/interviews/${id}/completed`);
@@ -132,14 +139,48 @@ export const LiveInterview = () => {
     currentAiPhrase,
     transcripts,
     errorMessage,
-    isCompleted,
     connect,
-    disconnect,
     submitAnswer,
     endSession,
     retryConnection,
     setErrorMessage
   } = liveSession;
+
+  // Initialize Proctoring Observer Hook (Visibility & Fullscreen observation)
+  const proctoring = useProctoringObserver({
+    interviewId: interview?.id || id,
+    candidateId: candidate?.id,
+    sessionId,
+    onEventLogged: (event) => {
+      if (event.eventType === 'TAB_HIDDEN') {
+        showToast('Notice: Please keep your interview tab active during the assessment.', 'warning');
+      }
+    }
+  });
+
+  const { isFullscreen, toggleFullscreen, tabSwitchCount } = proctoring;
+
+  // Initialize Continuous Video/Audio Session Recording Hook (Sprint 10)
+  const sessionRecording = useInterviewRecording({
+    interviewId: interview?.id || id,
+    candidateId: candidate?.id,
+    sessionId,
+    autoUpload: true,
+    onUploadSuccess: (meta) => {
+      console.log('[LiveInterview] Continuous session recording uploaded successfully:', meta?.publicUrl);
+    },
+    onUploadFailed: (err) => {
+      console.warn('[LiveInterview] Continuous recording upload notice:', err.message);
+    }
+  });
+
+  const {
+    recordingState,
+    recordingDuration,
+    startRecording: startSessionRecording,
+    stopRecording: stopSessionRecording,
+    stopAllMediaTracks
+  } = sessionRecording;
 
   // Load Candidate & Interview records
   useEffect(() => {
@@ -196,6 +237,20 @@ export const LiveInterview = () => {
     return () => clearInterval(interval);
   }, [started, endingSession, sessionState]);
 
+  // Auto-start video recording when live session is connected & ready
+  useEffect(() => {
+    if (started && sessionState === LIVE_STATES.CONNECTED && recordingState === RECORDING_STATES.IDLE) {
+      startSessionRecording();
+    }
+  }, [started, sessionState, recordingState, startSessionRecording]);
+
+  // Clean up all streams and recordings on unmount
+  useEffect(() => {
+    return () => {
+      stopAllMediaTracks();
+    };
+  }, [stopAllMediaTracks]);
+
   // Scroll transcript to bottom
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -205,45 +260,46 @@ export const LiveInterview = () => {
   const handleStartAssessment = () => {
     setStarted(true);
     connect(false);
+    startSessionRecording();
   };
 
-  // Start Microphone Recording
+  // Start Microphone Recording for single answer turn
   const startMicRecording = async () => {
     setErrorMessage('');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunksRef.current = [];
+      answerAudioChunksRef.current = [];
       const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/wav';
       const recorder = new MediaRecorder(stream, { mimeType });
 
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
+          answerAudioChunksRef.current.push(e.data);
         }
       };
 
       recorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        const audioBlob = new Blob(answerAudioChunksRef.current, { type: mimeType });
         stream.getTracks().forEach((track) => track.stop());
-        setIsRecording(false);
+        setIsRecordingAnswer(false);
 
         // Transcribe via Sarvam STT
         await handleAudioTranscribeAndSubmit(audioBlob);
       };
 
       recorder.start();
-      mediaRecorderRef.current = recorder;
-      setIsRecording(true);
+      answerMediaRecorderRef.current = recorder;
+      setIsRecordingAnswer(true);
     } catch (err) {
       setErrorMessage(`Microphone access error: ${err.message}. You can also type your response below.`);
-      setIsRecording(false);
+      setIsRecordingAnswer(false);
     }
   };
 
-  // Stop Microphone Recording
+  // Stop Microphone Recording for single answer turn
   const stopMicRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    if (answerMediaRecorderRef.current && isRecordingAnswer) {
+      answerMediaRecorderRef.current.stop();
     }
   };
 
@@ -292,8 +348,9 @@ export const LiveInterview = () => {
     setShowEndModal(false);
     setEndingSession(true);
     try {
+      await stopSessionRecording();
       endSession();
-      showToast('Interview session completed.', 'success');
+      showToast('Interview session completed and recording submitted.', 'success');
       navigate(`/candidate/interviews/${id}/completed`);
     } catch (err) {
       console.error('Error ending live assessment:', err);
@@ -337,7 +394,7 @@ export const LiveInterview = () => {
               <span className="text-[10px] text-primary font-bold uppercase tracking-widest block">Live Real-Time AI Interviewer</span>
               <h1 className="text-xl font-extrabold text-slate-100 leading-snug">Meet Ava, your Live AI Host</h1>
               <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed mt-1">
-                Ava is powered by Sarvam STT & TTS and real-time state orchestration. She will speak role-specific technical questions aloud and evaluate your responses in real time.
+                Ava is powered by Sarvam STT & TTS, real-time WebSocket state orchestration, and automated session video recording.
               </p>
             </div>
 
@@ -356,6 +413,10 @@ export const LiveInterview = () => {
               <div className="flex justify-between">
                 <span className="text-slate-400">Real-Time Gateway:</span>
                 <span className="font-semibold text-green-400 font-mono">WebSocket Active</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Session Proctoring:</span>
+                <span className="font-semibold text-indigo-400 font-mono">Media & Visibility Active</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Voice Engine:</span>
@@ -414,11 +475,39 @@ export const LiveInterview = () => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
+          {/* Continuous Video Recording Badge */}
+          {recordingState === RECORDING_STATES.RECORDING && (
+            <div className="flex items-center space-x-1.5 bg-red-950/80 border border-red-800/80 px-2.5 py-1.5 rounded-lg select-none">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-[10px] font-mono font-bold text-red-300">
+                REC {formatTimer(recordingDuration)}
+              </span>
+            </div>
+          )}
+
+          {recordingState === RECORDING_STATES.UPLOADING && (
+            <div className="flex items-center space-x-1.5 bg-blue-950/80 border border-blue-800/80 px-2.5 py-1.5 rounded-lg select-none">
+              <Loader2 className="w-3 h-3 text-blue-400 animate-spin" />
+              <span className="text-[10px] font-mono font-bold text-blue-300">Storing Video...</span>
+            </div>
+          )}
+
+          {/* Session Timer */}
           <div className="flex items-center space-x-2 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg select-none">
             <span className="text-xs font-mono font-bold text-primary">{formatTimer(timerSeconds)}</span>
           </div>
 
+          {/* Fullscreen Mode Toggle */}
+          <button
+            onClick={toggleFullscreen}
+            className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-850 transition-colors"
+            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          >
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Connection Status Badge */}
           <div className="flex items-center space-x-1.5 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg select-none">
             <span className={`w-2 h-2 rounded-full ${
               connectionStatus === 'connected' ? 'bg-brandSuccess' :
@@ -542,7 +631,7 @@ export const LiveInterview = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Candidate Voice / Text Response</span>
                   <div className="flex items-center space-x-2">
-                    {!isRecording ? (
+                    {!isRecordingAnswer ? (
                       <Button
                         size="sm"
                         variant="primary"
@@ -574,14 +663,14 @@ export const LiveInterview = () => {
                     onKeyDown={(e) => e.key === 'Enter' && handleManualAnswerSubmit()}
                     placeholder="Or type your technical answer here..."
                     className="flex-grow bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-primary"
-                    disabled={isRecording || localAudioProcessing}
+                    disabled={isRecordingAnswer || localAudioProcessing}
                   />
                   <Button
                     size="sm"
                     variant="outline"
                     icon={Send}
                     onClick={handleManualAnswerSubmit}
-                    disabled={!manualAnswerText.trim() || isRecording || localAudioProcessing}
+                    disabled={!manualAnswerText.trim() || isRecordingAnswer || localAudioProcessing}
                   >
                     Submit
                   </Button>
@@ -595,12 +684,18 @@ export const LiveInterview = () => {
         {/* Right Column: Candidate Camera & Live Transcripts (Spans 5 columns) */}
         <div className="lg:col-span-5 flex flex-col space-y-4 overflow-hidden">
           
-          {/* Candidate camera */}
+          {/* Candidate camera with live recording overlay */}
           <div className="aspect-video bg-slate-950 rounded-xl overflow-hidden relative border border-slate-850 shrink-0 select-none">
-            <CameraFeed cameraActive={!camOff} muted={micMuted} isRecording={isRecording} className="w-full h-full object-cover" />
+            <CameraFeed cameraActive={!camOff} muted={micMuted} isRecording={recordingState === RECORDING_STATES.RECORDING} className="w-full h-full object-cover" />
             <div className="absolute top-2 left-2 bg-slate-950/70 border border-slate-800 px-2 py-0.5 rounded text-[8px] uppercase tracking-wider text-slate-400 font-bold select-none">
               Candidate Feed
             </div>
+            {recordingState === RECORDING_STATES.RECORDING && (
+              <div className="absolute top-2 right-2 bg-red-950/90 border border-red-800 px-2 py-0.5 rounded text-[8px] uppercase tracking-wider text-red-300 font-bold flex items-center space-x-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                <span>RECORDING</span>
+              </div>
+            )}
           </div>
 
           {/* Scrolling Transcript Panel */}
@@ -643,12 +738,21 @@ export const LiveInterview = () => {
       {/* Footer controls drawer */}
       <footer className="h-20 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-6 shrink-0 z-20 select-none">
         
-        {/* Connection status badge */}
-        <div className="flex items-center space-x-2">
-          <span className="text-[9px] text-slate-400 font-bold uppercase">Real-Time Gateway:</span>
-          <span className={`text-[10px] font-bold font-mono ${connectionStatus === 'connected' ? 'text-brandSuccess' : 'text-amber-400'}`}>
-            {connectionStatus === 'connected' ? 'WebSocket Active' : 'Connecting...'}
-          </span>
+        {/* Connection & Proctoring status indicators */}
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1.5">
+            <span className="text-[9px] text-slate-400 font-bold uppercase">Gateway:</span>
+            <span className={`text-[10px] font-bold font-mono ${connectionStatus === 'connected' ? 'text-brandSuccess' : 'text-amber-400'}`}>
+              {connectionStatus === 'connected' ? 'WebSocket Active' : 'Connecting...'}
+            </span>
+          </div>
+          <span className="text-slate-700">|</span>
+          <div className="flex items-center space-x-1.5">
+            <span className="text-[9px] text-slate-400 font-bold uppercase">Proctoring:</span>
+            <span className="text-[10px] font-bold font-mono text-indigo-400">
+              {tabSwitchCount > 0 ? `${tabSwitchCount} Tab Change${tabSwitchCount > 1 ? 's' : ''}` : 'Observed'}
+            </span>
+          </div>
         </div>
 
         {/* Media hardware controls */}
@@ -707,7 +811,7 @@ export const LiveInterview = () => {
             </div>
             
             <p className="text-xs text-slate-400 leading-normal">
-              You will complete and submit your live interview assessment. Are you ready to finalize?
+              You will complete and submit your live interview assessment and video recording. Are you ready to finalize?
             </p>
 
             <div className="flex space-x-3.5 pt-2 select-none">
@@ -726,7 +830,7 @@ export const LiveInterview = () => {
                 size="sm"
                 loading={endingSession}
               >
-                End & Evaluate
+                End & Submit
               </Button>
             </div>
           </div>

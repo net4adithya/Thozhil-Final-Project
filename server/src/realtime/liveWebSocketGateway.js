@@ -340,6 +340,28 @@ export const initLiveWebSocket = (server) => {
             break;
           }
 
+          // 8. Proctoring Observation Event
+          case 'proctoring:event': {
+            const activeSessionId = sessionId || data.sessionId || socketToSession.get(ws);
+            const { eventType, timestamp, details } = data;
+            const session = liveSessionManager.getSession(activeSessionId);
+            if (session) {
+              if (!Array.isArray(session.proctoringEvents)) session.proctoringEvents = [];
+              session.proctoringEvents.push({
+                eventType: eventType || 'GENERIC_OBSERVATION',
+                timestamp: timestamp || new Date().toISOString(),
+                details: details || {}
+              });
+              console.log(`[LiveGateway] Proctoring observation [${eventType}] logged for session: ${activeSessionId}`);
+            }
+
+            sendEvent(ws, 'proctoring:ack', {
+              eventType,
+              receivedAt: new Date().toISOString()
+            }, activeSessionId, eventId);
+            break;
+          }
+
           default:
             console.warn(`[LiveGateway] Unrecognized event received: ${event}`);
             sendEvent(ws, 'session:error', {
