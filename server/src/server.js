@@ -1,12 +1,20 @@
+import http from 'http';
 import app from './app.js';
 import { config } from './config/env.js';
+import { initLiveWebSocket } from './realtime/liveWebSocketGateway.js';
 
 let server;
 
-// Start server and bind port listener
+// Start server and bind port listener with WebSocket gateway
 const startServer = async () => {
-  server = app.listen(config.port, () => {
+  const httpServer = http.createServer(app);
+  
+  // Attach Live Interview WebSocket gateway
+  initLiveWebSocket(httpServer);
+
+  server = httpServer.listen(config.port, () => {
     console.log(`Server running in [${config.env}] mode on port: ${config.port}`);
+    console.log(`Live WebSocket gateway ready on: ws://localhost:${config.port}/ws/live`);
   });
 };
 
@@ -16,7 +24,7 @@ const gracefulShutdown = async (signal) => {
   
   if (server) {
     server.close(async () => {
-      console.log('HTTP server listener closed.');
+      console.log('HTTP server and WebSocket listeners closed.');
       process.exit(0);
     });
   } else {

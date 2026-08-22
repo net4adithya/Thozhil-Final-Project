@@ -32,11 +32,12 @@ import { CameraFeed } from '../components/common/CameraFeed';
 import { interviewService } from '../services/interviewService';
 import { candidateService } from '../services/candidateService';
 import { voiceService } from '../services/voiceService';
+import { useLiveInterviewSession, LIVE_STATES } from '../hooks/useLiveInterviewSession';
 
 export const LiveInterview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { candidates, interviews, submitCandidateAnswers, showToast, loading } = useApp();
+  const { candidates, interviews, showToast, loading } = useApp();
 
   const [candidate, setCandidate] = useState(null);
   const [interview, setInterview] = useState(null);
@@ -48,29 +49,99 @@ export const LiveInterview = () => {
   const [micMuted, setMicMuted] = useState(false);
   const [camOff, setCamOff] = useState(false);
   const [speakerMuted, setSpeakerMuted] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState('connected');
 
-  // State Machine: 'INITIALIZING' | 'INTRODUCTION' | 'ASKING' | 'LISTENING' | 'TRANSCRIBING' | 'EVALUATING' | 'FOLLOW_UP' | 'NEXT_QUESTION' | 'COMPLETED' | 'ERROR'
-  const [sessionState, setSessionState] = useState('INITIALIZING');
-  const [liveSession, setLiveSession] = useState(null);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [followUpCount, setFollowUpCount] = useState(0);
-  const [isFollowUp, setIsFollowUp] = useState(false);
-  const [currentAiPhrase, setCurrentAiPhrase] = useState('');
-  const [transcripts, setTranscripts] = useState([]);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [manualAnswerText, setManualAnswerText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [submittingTurn, setSubmittingTurn] = useState(false);
+  const [localAudioProcessing, setLocalAudioProcessing] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const transcriptEndRef = useRef(null);
   const currentAudioRef = useRef(null);
+  const speakerMutedRef = useRef(speakerMuted);
 
-  // Load Candidate & Interview
+  useEffect(() => {
+    speakerMutedRef.current = speakerMuted;
+  }, [speakerMuted]);
+
+  // Handle Sarvam Voice TTS Audio Playback
+  const handleAiSpeakingPlayback = useCallback(async (data) => {
+    const { phrase, phraseType } = data;
+    if (!phrase) return;
+
+    if (speakerMutedRef.current) {
+      setTimeout(() => {
+        liveSession.notifyFinishedSpeaking(phraseType);
+      }, 1500);
+      return;
+    }
+
+    try {
+      const result = await voiceService.synthesizeSpeech(phrase, { speaker: 'meera' });
+      if (result?.audioBase64) {
+        const audio = await voiceService.playAudioFromBase64(result.audioBase64, result.format || 'audio/wav');
+        currentAudioRef.current = audio;
+        audio.onended = () => {
+          liveSession.notifyFinishedSpeaking(phraseType);
+        };
+      } else {
+        throw new Error('No audio returned from synthesis');
+      }
+    } catch (err) {
+      console.warn('[LiveInterview] Sarvam TTS playback notice, using speech synthesis fallback:', err.message);
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(phrase);
+        utterance.onend = () => {
+          liveSession.notifyFinishedSpeaking(phraseType);
+        };
+        utterance.onerror = () => {
+          liveSession.notifyFinishedSpeaking(phraseType);
+        };
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setTimeout(() => {
+          liveSession.notifyFinishedSpeaking(phraseType);
+        }, 3000);
+      }
+    }
+  }, []);
+
+  // Initialize Real-Time Live Session Hook
+  const liveSession = useLiveInterviewSession({
+    interviewId: interview?.id || id,
+    candidateId: candidate?.id,
+    onAiSpeaking: handleAiSpeakingPlayback,
+    onCompleted: (data) => {
+      showToast('Live interview completed and evaluated successfully!', 'success');
+      setTimeout(() => {
+        navigate(`/candidate/interviews/${id}/completed`);
+      }, 1500);
+    }
+  });
+
+  const {
+    connectionStatus,
+    sessionState,
+    sessionId,
+    currentQuestion,
+    currentQuestionIndex,
+    totalQuestions,
+    isFollowUp,
+    currentAiPhrase,
+    transcripts,
+    errorMessage,
+    isCompleted,
+    connect,
+    disconnect,
+    submitAnswer,
+    endSession,
+    retryConnection,
+    setErrorMessage
+  } = liveSession;
+
+  // Load Candidate & Interview records
   useEffect(() => {
     const loadSessionData = async () => {
       if (!id) return;
@@ -118,7 +189,7 @@ export const LiveInterview = () => {
 
   // Elapsed timer hook
   useEffect(() => {
-    if (!started || endingSession || sessionState === 'COMPLETED') return;
+    if (!started || endingSession || sessionState === LIVE_STATES.COMPLETED) return;
     const interval = setInterval(() => {
       setTimerSeconds((prev) => prev + 1);
     }, 1000);
@@ -130,87 +201,10 @@ export const LiveInterview = () => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcripts]);
 
-  // Helper to speak AI text aloud via Sarvam TTS with browser speech fallback
-  const speakAIPhrase = useCallback(async (phraseText, onFinished) => {
-    setCurrentAiPhrase(phraseText);
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    setTranscripts((prev) => [...prev, { speaker: 'Ava (AI Interviewer)', text: phraseText, timestamp }]);
-
-    if (speakerMuted) {
-      if (onFinished) onFinished();
-      return;
-    }
-
-    try {
-      const result = await voiceService.synthesizeSpeech(phraseText, { speaker: 'meera' });
-      if (result?.audioBase64) {
-        const audio = await voiceService.playAudioFromBase64(result.audioBase64, result.format || 'audio/wav');
-        currentAudioRef.current = audio;
-        audio.onended = () => {
-          if (onFinished) onFinished();
-        };
-      } else {
-        throw new Error('No audio returned from synthesis');
-      }
-    } catch (err) {
-      console.warn('Sarvam TTS playback fallback:', err.message);
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(phraseText);
-        utterance.onend = () => {
-          if (onFinished) onFinished();
-        };
-        utterance.onerror = () => {
-          if (onFinished) onFinished();
-        };
-        window.speechSynthesis.speak(utterance);
-      } else {
-        setTimeout(() => {
-          if (onFinished) onFinished();
-        }, 3000);
-      }
-    }
-  }, [speakerMuted]);
-
-  // Initialize Live Session
-  const handleStartAssessment = async () => {
-    try {
-      setStarted(true);
-      setSessionState('INITIALIZING');
-      const session = await interviewService.initLiveSession(interview?.id || id, candidate?.id);
-      setLiveSession(session);
-      setCurrentQuestion(session.currentQuestion);
-      setCurrentQuestionIndex(session.currentQuestionIndex || 0);
-
-      // Speak Introduction
-      setSessionState('INTRODUCTION');
-      await speakAIPhrase(session.introPhrase, () => {
-        // Move to first question
-        askQuestion(session.currentQuestion, 0, false);
-      });
-    } catch (err) {
-      console.error('Failed to initialize live session:', err);
-      setErrorMessage('Failed to connect to Live Interview service.');
-      setSessionState('ERROR');
-    }
-  };
-
-  // Ask Question
-  const askQuestion = (question, index, followUp = false) => {
-    if (!question) return;
-    setSessionState('ASKING');
-    setIsFollowUp(followUp);
-    setCurrentQuestion(question);
-    setCurrentQuestionIndex(index);
-    setManualAnswerText('');
-
-    const questionPhrase = followUp 
-      ? question.text
-      : `Question ${index + 1}: ${question.text}`;
-
-    speakAIPhrase(questionPhrase, () => {
-      setSessionState('LISTENING');
-    });
+  // Start Assessment trigger
+  const handleStartAssessment = () => {
+    setStarted(true);
+    connect(false);
   };
 
   // Start Microphone Recording
@@ -253,84 +247,53 @@ export const LiveInterview = () => {
     }
   };
 
-  // Process Transcribed Audio Blob
+  // Process Transcribed Audio Blob via Sarvam STT
   const handleAudioTranscribeAndSubmit = async (audioBlob) => {
-    setSessionState('TRANSCRIBING');
+    setLocalAudioProcessing(true);
     try {
       const sttResult = await voiceService.transcribeAudio(audioBlob, 'en-IN');
       const transcriptText = sttResult.transcript || '';
       if (!transcriptText.trim()) {
-        setErrorMessage('No speech was detected. Please try recording again or type your answer.');
-        setSessionState('LISTENING');
+        setErrorMessage('No clear speech was detected. Please try recording again or type your answer.');
+        setLocalAudioProcessing(false);
         return;
       }
 
-      await handleAnswerSubmit(transcriptText);
-    } catch (err) {
-      console.error('STT Transcription Error:', err);
-      setErrorMessage('Speech transcription failed. You can type your response manually.');
-      setSessionState('LISTENING');
-    }
-  };
-
-  // Process Turn Submission
-  const handleAnswerSubmit = async (answerTextContent) => {
-    const cleanAnswer = (answerTextContent || manualAnswerText).trim();
-    if (!cleanAnswer || submittingTurn) return;
-
-    setSubmittingTurn(true);
-    setSessionState('EVALUATING');
-    setErrorMessage('');
-
-    // Append candidate answer to transcript
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    setTranscripts((prev) => [...prev, { speaker: 'You (Candidate)', text: cleanAnswer, timestamp }]);
-    setManualAnswerText('');
-
-    try {
-      const turnPayload = {
-        candidateId: candidate?.id,
+      submitAnswer({
         questionId: currentQuestion?.id,
-        transcript: cleanAnswer,
-        answerText: cleanAnswer,
-        duration: 60,
-        followUpCount,
-        isFollowUp,
-        currentQuestionIndex
-      };
-
-      const result = await interviewService.processLiveTurn(interview?.id || id, turnPayload);
-
-      if (result.nextAction === 'FOLLOW_UP') {
-        setFollowUpCount((prev) => prev + 1);
-        askQuestion(result.followUpQuestion, currentQuestionIndex, true);
-      } else if (result.nextAction === 'NEXT_QUESTION') {
-        setFollowUpCount(0);
-        askQuestion(result.nextQuestion, result.nextQuestionIndex, false);
-      } else if (result.nextAction === 'COMPLETE') {
-        setSessionState('COMPLETED');
-        const endPhrase = result.message || 'You have completed all live assessment questions. Thank you!';
-        await speakAIPhrase(endPhrase, async () => {
-          await handleEndAssessment();
-        });
-      }
+        transcript: transcriptText,
+        answerText: transcriptText,
+        duration: 60
+      });
     } catch (err) {
-      console.error('Live turn processing failed:', err);
-      setErrorMessage('Failed to evaluate answer. Please try submitting again.');
-      setSessionState('LISTENING');
+      console.error('[LiveInterview] STT Transcription Error:', err);
+      setErrorMessage('Speech transcription encountered an error. You can type your response manually.');
     } finally {
-      setSubmittingTurn(false);
+      setLocalAudioProcessing(false);
     }
   };
 
+  // Submit typed response
+  const handleManualAnswerSubmit = () => {
+    const cleanAnswer = manualAnswerText.trim();
+    if (!cleanAnswer) return;
+
+    setManualAnswerText('');
+    submitAnswer({
+      questionId: currentQuestion?.id,
+      transcript: cleanAnswer,
+      answerText: cleanAnswer,
+      duration: 60
+    });
+  };
+
+  // Manual End Assessment
   const handleEndAssessment = async () => {
     setShowEndModal(false);
     setEndingSession(true);
     try {
-      if (interview?.id && candidate?.id) {
-        await interviewService.completeLiveSession(interview.id, candidate.id);
-      }
-      showToast('Live interview completed and evaluated successfully!', 'success');
+      endSession();
+      showToast('Interview session completed.', 'success');
       navigate(`/candidate/interviews/${id}/completed`);
     } catch (err) {
       console.error('Error ending live assessment:', err);
@@ -348,7 +311,7 @@ export const LiveInterview = () => {
 
   if (loading || !candidate || !interview) {
     return (
-      <div className="flex-grow flex items-center justify-center bg-slate-950 text-white">
+      <div className="flex-grow flex items-center justify-center bg-slate-950 text-white min-h-screen">
         <Spinner size="lg" color="white" />
       </div>
     );
@@ -371,10 +334,10 @@ export const LiveInterview = () => {
 
             {/* Title */}
             <div className="text-center space-y-1">
-              <span className="text-[10px] text-primary font-bold uppercase tracking-widest block">Live AI Voice Interviewer</span>
+              <span className="text-[10px] text-primary font-bold uppercase tracking-widest block">Live Real-Time AI Interviewer</span>
               <h1 className="text-xl font-extrabold text-slate-100 leading-snug">Meet Ava, your Live AI Host</h1>
               <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed mt-1">
-                Ava is powered by Sarvam STT & TTS. She will speak role-specific technical questions aloud and transcribe and evaluate your responses in real time.
+                Ava is powered by Sarvam STT & TTS and real-time state orchestration. She will speak role-specific technical questions aloud and evaluate your responses in real time.
               </p>
             </div>
 
@@ -391,7 +354,11 @@ export const LiveInterview = () => {
                 <span className="font-semibold text-slate-200">{candidate.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Audio Engine:</span>
+                <span className="text-slate-400">Real-Time Gateway:</span>
+                <span className="font-semibold text-green-400 font-mono">WebSocket Active</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Voice Engine:</span>
                 <span className="font-semibold text-primary">Sarvam AI (STT / TTS)</span>
               </div>
               <div className="flex justify-between">
@@ -415,21 +382,34 @@ export const LiveInterview = () => {
     );
   }
 
-  // --- RENDERING FOLD 2: ACTIVE LIVE INTERVIEW ROOM ---
+  // --- RENDERING FOLD 2: ACTIVE REAL-TIME LIVE INTERVIEW ROOM ---
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden">
       
+      {/* Reconnecting banner if disconnected */}
+      {connectionStatus === 'reconnecting' && (
+        <div className="bg-amber-500/20 border-b border-amber-500/40 px-4 py-2 flex items-center justify-between text-xs text-amber-300 z-30">
+          <div className="flex items-center space-x-2">
+            <RefreshCw className="w-4 h-4 animate-spin" />
+            <span className="font-bold">Connection lost. Reconnecting to live interview session...</span>
+          </div>
+          <Button size="xs" variant="outline" onClick={retryConnection} className="text-amber-200 border-amber-400/50">
+            Retry Now
+          </Button>
+        </div>
+      )}
+
       {/* Top Session Header */}
       <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-6 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center space-x-3 text-left">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+          <div className={`w-2.5 h-2.5 rounded-full ${connectionStatus === 'connected' ? 'bg-red-500 animate-ping' : 'bg-amber-500'}`} />
           <div>
             <h2 className="text-xs font-bold text-slate-100 flex items-center space-x-2">
               <span>{interview.title || 'Live Technical Assessment'}</span>
-              {isFollowUp && <Badge variant="warning" className="text-[8px]">Follow-Up</Badge>}
+              {isFollowUp && <Badge variant="warning" className="text-[8px]">Follow-Up Question</Badge>}
             </h2>
             <span className="text-[10px] text-slate-400 font-mono">
-              Candidate: {candidate.name} • Session Active
+              Candidate: {candidate.name} • Session: {sessionId || 'Live'}
             </span>
           </div>
         </div>
@@ -440,8 +420,12 @@ export const LiveInterview = () => {
           </div>
 
           <div className="flex items-center space-x-1.5 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg select-none">
-            <span className="w-2 h-2 rounded-full bg-brandSuccess" />
-            <span className="text-[10px] text-slate-300 capitalize">{connectionStatus} Connection</span>
+            <span className={`w-2 h-2 rounded-full ${
+              connectionStatus === 'connected' ? 'bg-brandSuccess' :
+              connectionStatus === 'reconnecting' ? 'bg-amber-400 animate-pulse' :
+              'bg-red-500'
+            }`} />
+            <span className="text-[10px] text-slate-300 capitalize font-mono">{connectionStatus}</span>
           </div>
         </div>
       </header>
@@ -459,7 +443,7 @@ export const LiveInterview = () => {
             {/* State indicators header */}
             <div className="flex items-center justify-between z-10">
               <div className="flex items-center space-x-2">
-                <Avatar name="Ava Interviewer" initials="AV" size="sm" className="border-slate-800" />
+                <Avatar initials="AV" className="border-slate-800" />
                 <div className="text-left">
                   <h4 className="text-xs font-bold text-slate-200">Ava (AI Interviewer)</h4>
                   <span className="text-[9px] text-slate-400 font-semibold block uppercase">Powered by Sarvam Voice</span>
@@ -470,19 +454,20 @@ export const LiveInterview = () => {
               <Badge 
                 variant="primary" 
                 className={`text-[9px] px-2 py-0.5 font-extrabold uppercase select-none ${
-                  sessionState === 'ASKING' || sessionState === 'INTRODUCTION' ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' :
-                  sessionState === 'LISTENING' ? 'bg-green-500/20 text-green-400 border-green-500/30 animate-pulse' :
-                  sessionState === 'TRANSCRIBING' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 animate-pulse' :
-                  sessionState === 'EVALUATING' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse' :
+                  sessionState === LIVE_STATES.AI_SPEAKING || sessionState === LIVE_STATES.INTRODUCTION || sessionState === LIVE_STATES.NEXT_QUESTION ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' :
+                  sessionState === LIVE_STATES.LISTENING ? 'bg-green-500/20 text-green-400 border-green-500/30 animate-pulse' :
+                  sessionState === LIVE_STATES.PROCESSING || localAudioProcessing ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 animate-pulse' :
+                  sessionState === LIVE_STATES.AI_THINKING ? 'bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse' :
+                  sessionState === LIVE_STATES.COMPLETED ? 'bg-green-600/20 text-green-300 border-green-500/30' :
                   'bg-slate-800 text-slate-400 border-slate-700'
                 }`}
               >
-                {sessionState === 'ASKING' || sessionState === 'INTRODUCTION' ? 'Ava Speaking' :
-                 sessionState === 'LISTENING' ? 'Listening...' :
-                 sessionState === 'TRANSCRIBING' ? 'Transcribing (Sarvam STT)...' :
-                 sessionState === 'EVALUATING' ? 'Evaluating Response...' :
-                 sessionState === 'COMPLETED' ? 'Session Complete' :
-                 'Standby'}
+                {sessionState === LIVE_STATES.AI_SPEAKING || sessionState === LIVE_STATES.INTRODUCTION || sessionState === LIVE_STATES.NEXT_QUESTION ? 'Ava Speaking' :
+                 sessionState === LIVE_STATES.LISTENING ? 'Your Turn — Listening...' :
+                 sessionState === LIVE_STATES.PROCESSING || localAudioProcessing ? 'Transcribing Audio...' :
+                 sessionState === LIVE_STATES.AI_THINKING ? 'AI Evaluating Response...' :
+                 sessionState === LIVE_STATES.COMPLETED ? 'Session Complete' :
+                 'Connecting...'}
               </Badge>
             </div>
 
@@ -491,21 +476,21 @@ export const LiveInterview = () => {
               <div className="relative flex items-center justify-center">
                 
                 {/* Visual Speaking Wave ripples */}
-                {(sessionState === 'ASKING' || sessionState === 'INTRODUCTION') && (
+                {(sessionState === LIVE_STATES.AI_SPEAKING || sessionState === LIVE_STATES.INTRODUCTION || sessionState === LIVE_STATES.NEXT_QUESTION) && (
                   <>
                     <span className="absolute w-32 h-32 rounded-full border border-primary/20 animate-ping" />
                     <span className="absolute w-24 h-24 rounded-full border border-primary/45 animate-pulse" />
                   </>
                 )}
                 
-                {(sessionState === 'EVALUATING' || sessionState === 'TRANSCRIBING') && (
+                {(sessionState === LIVE_STATES.AI_THINKING || sessionState === LIVE_STATES.PROCESSING || localAudioProcessing) && (
                   <span className="absolute w-24 h-24 rounded-full border border-amber-500/30 animate-spin border-t-transparent" />
                 )}
 
                 <div className={`w-20 h-20 rounded-full flex items-center justify-center text-white font-black text-2xl transition-all duration-300 ${
-                  sessionState === 'ASKING' || sessionState === 'INTRODUCTION' ? 'bg-primary shadow-lg shadow-primary/30 scale-105' :
-                  sessionState === 'EVALUATING' || sessionState === 'TRANSCRIBING' ? 'bg-amber-600 shadow-lg shadow-amber-600/30' :
-                  sessionState === 'LISTENING' ? 'bg-green-600 shadow-lg shadow-green-600/30 scale-95' :
+                  sessionState === LIVE_STATES.AI_SPEAKING || sessionState === LIVE_STATES.INTRODUCTION || sessionState === LIVE_STATES.NEXT_QUESTION ? 'bg-primary shadow-lg shadow-primary/30 scale-105' :
+                  sessionState === LIVE_STATES.AI_THINKING || sessionState === LIVE_STATES.PROCESSING ? 'bg-amber-600 shadow-lg shadow-amber-600/30' :
+                  sessionState === LIVE_STATES.LISTENING ? 'bg-green-600 shadow-lg shadow-green-600/30 scale-95' :
                   'bg-slate-800'
                 }`}>
                   AV
@@ -514,38 +499,48 @@ export const LiveInterview = () => {
 
               {/* Status helper text block */}
               <div className="mt-4 text-center">
-                <span className="text-[10px] text-slate-400 uppercase font-mono tracking-wider block">Ava Status</span>
+                <span className="text-[10px] text-slate-400 uppercase font-mono tracking-wider block">Live Status</span>
                 <p className="text-xs font-bold text-slate-200 mt-0.5">
-                  {(sessionState === 'ASKING' || sessionState === 'INTRODUCTION') && "Speaking question aloud via Sarvam TTS..."}
-                  {sessionState === 'LISTENING' && "Ready. Speak into microphone or submit text response below."}
-                  {sessionState === 'TRANSCRIBING' && "Transcribing voice capture via Sarvam STT..."}
-                  {sessionState === 'EVALUATING' && "Evaluating technical accuracy & persisting to database..."}
-                  {sessionState === 'COMPLETED' && "Interview completed! Preparing final scorecard."}
+                  {(sessionState === LIVE_STATES.AI_SPEAKING || sessionState === LIVE_STATES.INTRODUCTION || sessionState === LIVE_STATES.NEXT_QUESTION) && "Ava is speaking question aloud via Sarvam TTS..."}
+                  {sessionState === LIVE_STATES.LISTENING && "Your turn! Speak into your microphone or submit text below."}
+                  {(sessionState === LIVE_STATES.PROCESSING || localAudioProcessing) && "Transcribing voice capture via Sarvam STT..."}
+                  {sessionState === LIVE_STATES.AI_THINKING && "Evaluating technical accuracy & updating real-time session..."}
+                  {sessionState === LIVE_STATES.COMPLETED && "Interview completed! Preparing final evaluation report."}
+                  {sessionState === LIVE_STATES.CONNECTING && "Establishing real-time WebSocket connection..."}
                 </p>
               </div>
             </div>
 
             {/* Current vocal prompt bubble */}
             <div className="bg-slate-950 border border-slate-850 p-4.5 rounded-xl text-left z-10 select-all">
-              <span className="text-[8px] uppercase tracking-widest font-extrabold text-slate-500 block mb-1">Active Interview Question</span>
+              <span className="text-[8px] uppercase tracking-widest font-extrabold text-slate-500 block mb-1">
+                Active Interview Prompt {currentQuestionIndex !== undefined ? `(Q${currentQuestionIndex + 1})` : ''}
+              </span>
               <p className="text-xs font-bold text-slate-100 leading-relaxed font-mono">
-                "{currentAiPhrase || 'Initializing interview session...'}"
+                "{currentAiPhrase || currentQuestion?.text || 'Initializing real-time session...'}"
               </p>
             </div>
 
             {/* Error banner if any */}
             {errorMessage && (
-              <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400 text-left flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{errorMessage}</span>
+              <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400 text-left flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+                {connectionStatus === 'error' && (
+                  <Button size="xs" variant="outline" onClick={retryConnection} className="text-red-300 border-red-500/40">
+                    Reconnect
+                  </Button>
+                )}
               </div>
             )}
 
             {/* Candidate Speaking & Input Controls */}
-            {sessionState === 'LISTENING' && (
+            {sessionState === LIVE_STATES.LISTENING && (
               <div className="mt-4 p-4 bg-slate-950/90 border border-slate-800 rounded-xl space-y-3 z-10">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Candidate Response</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Candidate Voice / Text Response</span>
                   <div className="flex items-center space-x-2">
                     {!isRecording ? (
                       <Button
@@ -553,7 +548,7 @@ export const LiveInterview = () => {
                         variant="primary"
                         icon={Mic}
                         onClick={startMicRecording}
-                        disabled={submittingTurn}
+                        disabled={localAudioProcessing}
                       >
                         Start Speaking
                       </Button>
@@ -576,17 +571,17 @@ export const LiveInterview = () => {
                     type="text"
                     value={manualAnswerText}
                     onChange={(e) => setManualAnswerText(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAnswerSubmit()}
+                    onKeyDown={(e) => e.key === 'Enter' && handleManualAnswerSubmit()}
                     placeholder="Or type your technical answer here..."
                     className="flex-grow bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-primary"
-                    disabled={isRecording || submittingTurn}
+                    disabled={isRecording || localAudioProcessing}
                   />
                   <Button
                     size="sm"
                     variant="outline"
                     icon={Send}
-                    onClick={() => handleAnswerSubmit()}
-                    disabled={!manualAnswerText.trim() || submittingTurn}
+                    onClick={handleManualAnswerSubmit}
+                    disabled={!manualAnswerText.trim() || isRecording || localAudioProcessing}
                   >
                     Submit
                   </Button>
@@ -612,7 +607,7 @@ export const LiveInterview = () => {
           <Card className="flex-1 bg-slate-900 border-slate-800 flex flex-col overflow-hidden text-left">
             <div className="px-4 py-2.5 border-b border-slate-800 flex items-center justify-between select-none">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">Live Transcript Stream</span>
-              <Badge variant="primary" className="text-[9px]">Persisted</Badge>
+              <Badge variant="primary" className="text-[9px]">Real-Time Sync</Badge>
             </div>
             
             <CardBody className="p-4 flex-grow overflow-y-auto space-y-4 text-xs max-h-[300px] lg:max-h-none">
@@ -620,7 +615,7 @@ export const LiveInterview = () => {
                 <div className="h-full flex flex-col items-center justify-center text-slate-600 text-center py-20 select-none space-y-2">
                   <FileText className="w-8 h-8 mx-auto" />
                   <p className="font-bold text-[10px]">No transcripts yet</p>
-                  <p className="text-[9px] max-w-xs">Speech logs will register here as conversation starts.</p>
+                  <p className="text-[9px] max-w-xs">Speech logs will stream here as conversation progresses.</p>
                 </div>
               ) : (
                 transcripts.map((t, idx) => (
@@ -650,8 +645,10 @@ export const LiveInterview = () => {
         
         {/* Connection status badge */}
         <div className="flex items-center space-x-2">
-          <span className="text-[9px] text-slate-400 font-bold uppercase">System Status:</span>
-          <span className="text-[10px] text-brandSuccess font-bold font-mono">Live Engine Online</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase">Real-Time Gateway:</span>
+          <span className={`text-[10px] font-bold font-mono ${connectionStatus === 'connected' ? 'text-brandSuccess' : 'text-amber-400'}`}>
+            {connectionStatus === 'connected' ? 'WebSocket Active' : 'Connecting...'}
+          </span>
         </div>
 
         {/* Media hardware controls */}
