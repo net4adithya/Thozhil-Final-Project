@@ -272,19 +272,63 @@ class LiveSessionManager {
       feedback: evalResult.feedback
     });
 
-    // 3. Decision Engine: Controlled Follow-Up vs Next Question vs Complete
-    const canFollowUp = !session.isFollowUp && Number(session.followUpCount) < MAX_FOLLOWUPS_PER_QUESTION;
+    // 3. Sarvam AI Adaptive Live Decision Engine
+    const previouslyAskedQuestions = session.conversationHistory
+      .filter((h) => h.role === 'ai')
+      .map((h) => h.text);
 
-    if (canFollowUp && rawAnswer.length > 20) {
+    let adaptiveDecision;
+    try {
+      const { generateAdaptiveInterviewResponse } = await import('../services/ai/sarvamProvider.js');
+      adaptiveDecision = await generateAdaptiveInterviewResponse({
+        roleTitle: session.roleTitle,
+        jobDescription: session.roleTitle,
+        requiredSkills: [currentQ.category || 'General'],
+        currentQuestion: currentQ,
+        candidateTranscript: rawAnswer,
+        conversationHistory: session.conversationHistory,
+        previouslyAskedQuestions,
+        currentQuestionIndex: session.currentQuestionIndex,
+        totalQuestionsLimit: session.totalQuestions,
+        remainingTimeSeconds: 1200,
+        difficulty: currentQ.difficulty || 'MEDIUM',
+        isFollowUp: session.isFollowUp
+      });
+    } catch (decisionErr) {
+      console.warn('[LiveSession] Adaptive decision engine notice:', decisionErr.message);
+      adaptiveDecision = {
+        action: session.currentQuestionIndex + 1 < session.totalQuestions ? 'NEW_TOPIC' : 'CONCLUDE',
+        question: session.currentQuestionIndex + 1 < session.totalQuestions
+          ? `Question ${session.currentQuestionIndex + 2}: ${session.questions[session.currentQuestionIndex + 1]?.text || 'Could you explain your next architectural approach?'}`
+          : 'Thank you for completing your live AI interview. All responses have been recorded.',
+        reason: 'Fallback transition to next scheduled topic.',
+        topic: 'General',
+        difficulty: 'MEDIUM',
+        competency: 'Technical Knowledge'
+      };
+    }
+
+    console.log(`[AdaptiveInterview] Action: ${adaptiveDecision.action} | Reason: ${adaptiveDecision.reason}`);
+
+    // Handle Decision Actions:
+    // Action A: FOLLOW_UP, CLARIFY, INCREASE_DIFFICULTY, or DECREASE_DIFFICULTY (Probe deeper into candidate answer)
+    const isProbingAction = ['FOLLOW_UP', 'CLARIFY', 'INCREASE_DIFFICULTY', 'DECREASE_DIFFICULTY'].includes(adaptiveDecision.action);
+    if (
+      isProbingAction &&
+      !session.isFollowUp &&
+      Number(session.followUpCount) < MAX_FOLLOWUPS_PER_QUESTION &&
+      rawAnswer.length > 20
+    ) {
       session.isFollowUp = true;
       session.followUpCount += 1;
-      const followUpText = this.generateFollowUpQuestion(currentQ.text, rawAnswer, currentQ.category);
-      
+      const followUpText = adaptiveDecision.question;
+
       const followUpQuestion = {
         id: `fu-${currentQ.id || 'curr'}`,
         parentQuestionId: currentQ.id,
         text: followUpText,
-        category: currentQ.category || 'Technical',
+        category: adaptiveDecision.topic || currentQ.category || 'Technical',
+        difficulty: adaptiveDecision.difficulty || 'MEDIUM',
         isFollowUp: true
       };
 
@@ -315,17 +359,25 @@ class LiveSessionManager {
       };
     }
 
-    // Advance to next configured question
+    // Action B: Advance to next question / topic
     session.isFollowUp = false;
     session.followUpCount = 0;
     const nextIdx = Number(session.currentQuestionIndex) + 1;
 
-    if (nextIdx < session.questions.length) {
+    if (nextIdx < session.questions.length && adaptiveDecision.action !== 'CONCLUDE') {
       session.currentQuestionIndex = nextIdx;
-      session.currentQuestion = session.questions[nextIdx];
+      
+      // Use configured question text or adaptive question
+      const nextQObj = session.questions[nextIdx] || {
+        id: `q-${nextIdx + 1}`,
+        text: adaptiveDecision.question,
+        category: adaptiveDecision.topic || 'Technical'
+      };
+      
+      session.currentQuestion = nextQObj;
       this.transitionState(sessionId, SESSION_STATES.NEXT_QUESTION);
 
-      const nextQuestionPhrase = `Question ${nextIdx + 1}: ${session.currentQuestion.text}`;
+      const nextQuestionPhrase = `Question ${nextIdx + 1}: ${nextQObj.text}`;
       session.conversationHistory.push({
         role: 'ai',
         text: nextQuestionPhrase,
@@ -350,7 +402,7 @@ class LiveSessionManager {
       };
     }
 
-    // All questions finished -> Complete interview
+    // Action C: All questions finished or CONCLUDE -> Complete interview
     return await this.completeSession(sessionId);
   }
 

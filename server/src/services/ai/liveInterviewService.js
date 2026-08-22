@@ -98,20 +98,36 @@ export const processLiveTurn = async (interviewId, payload) => {
     }
   }
 
-  // 4. Decision Engine (Controlled Follow-Up vs Next Question vs Complete)
-  // Check if a follow-up question should be triggered
+  // 4. Sarvam AI Adaptive Decision Engine
+  const { generateAdaptiveInterviewResponse } = await import('./sarvamProvider.js');
+  const adaptiveDecision = await generateAdaptiveInterviewResponse({
+    roleTitle: interview.jobRole || interview.title || 'Software Engineering Position',
+    jobDescription: interview.title || 'Technical Assessment',
+    requiredSkills: [currentQ.category || 'General'],
+    currentQuestion: currentQ,
+    candidateTranscript: rawAnswer,
+    currentQuestionIndex: Number(currentQuestionIndex),
+    totalQuestionsLimit: questions.length,
+    remainingTimeSeconds: 1200,
+    difficulty: currentQ.difficulty || 'MEDIUM'
+  });
+
   const canFollowUp = !isFollowUp && Number(followUpCount) < MAX_FOLLOWUPS_PER_QUESTION;
 
-  if (canFollowUp && rawAnswer.length > 20) {
-    // Generate contextual follow-up question
-    const followUpText = generateFollowUpQuestion(currentQ.text, rawAnswer, currentQ.category);
+  if (
+    (adaptiveDecision.action === 'FOLLOW_UP' || adaptiveDecision.action === 'CLARIFY') &&
+    canFollowUp &&
+    rawAnswer.length > 20
+  ) {
+    const followUpText = adaptiveDecision.question;
     return {
       nextAction: 'FOLLOW_UP',
       followUpQuestion: {
         id: `fu-${currentQ.id || questionId}`,
         parentQuestionId: currentQ.id || questionId,
         text: followUpText,
-        category: currentQ.category || 'Technical',
+        category: adaptiveDecision.topic || currentQ.category || 'Technical',
+        difficulty: adaptiveDecision.difficulty || 'MEDIUM',
         isFollowUp: true
       },
       evaluation: {
@@ -128,7 +144,7 @@ export const processLiveTurn = async (interviewId, payload) => {
   // Move to next configured question
   const nextIdx = Number(currentQuestionIndex) + 1;
 
-  if (nextIdx < questions.length) {
+  if (nextIdx < questions.length && adaptiveDecision.action !== 'CONCLUDE') {
     const nextQ = questions[nextIdx];
     return {
       nextAction: 'NEXT_QUESTION',
