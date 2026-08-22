@@ -127,15 +127,29 @@ router.post('/:id/live/complete', validateObjectId, async (req, res, next) => {
   }
 });
 
-// AI Evaluation endpoint
+// Centralized AI Evaluation endpoints
 router.post('/:id/evaluate', validateObjectId, async (req, res, next) => {
   try {
-    const { evaluateAsyncInterview } = await import('../services/ai/interviewEvaluationService.js');
-    const report = await evaluateAsyncInterview(req.params.id);
+    const { evaluateInterview } = await import('../services/ai/interviewEvaluationService.js');
+    const report = await evaluateInterview(req.params.id);
     res.status(200).json({
       success: true,
       data: report,
-      message: 'Async interview AI evaluation completed successfully'
+      message: 'Interview AI evaluation completed successfully'
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:id/evaluation', validateObjectId, async (req, res, next) => {
+  try {
+    const { getReportByIdOrInterviewId } = await import('../services/reportService.js');
+    const report = await getReportByIdOrInterviewId(req.params.id);
+    res.status(200).json({
+      success: true,
+      data: report,
+      message: 'Interview evaluation report retrieved successfully'
     });
   } catch (err) {
     next(err);

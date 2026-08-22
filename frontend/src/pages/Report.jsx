@@ -99,7 +99,7 @@ export const Report = () => {
     }
   }, [id, candidates, interviews, loading, navigate]);
 
-  if (loading || !candidate) {
+  if (loading || (!candidate && !report)) {
     return (
       <div className="flex-grow flex items-center justify-center">
         <Spinner size="lg" />
@@ -107,11 +107,50 @@ export const Report = () => {
     );
   }
 
-  const skillsData = candidate.skills || [];
-  const timelineData = candidate.timeline || [];
-  const currentTimelineItem = timelineData[activeQuestionIdx];
-  const activeQuestion = interview ? interview.questions.find(q => q.id === currentTimelineItem?.questionId) : null;
-  const activeTranscript = candidate.transcripts[currentTimelineItem?.questionId] || "No recording transcript matches this question.";
+  // Derive unified presentation data
+  const candidateName = report?.candidate?.name || candidate?.name || 'Candidate';
+  const candidateRole = interview?.jobRole || interview?.title || candidate?.role || 'Software Engineer';
+  const overallScore = report?.overallScore ?? candidate?.overallScore ?? 0;
+  const recommendation = report?.recommendation || candidate?.recommendation || 'HIRE';
+  const strengthsList = report?.strengths || candidate?.strengths || [];
+  const weaknessesList = report?.weaknesses || candidate?.weaknesses || [];
+  const summaryText = report?.summary || candidate?.summary || 'Evaluation summary pending.';
+  const completionDate = candidate?.completionDate || (report?.generatedAt ? new Date(report.generatedAt).toLocaleDateString() : 'Recent');
+
+  // Derive radar skills data from report scores
+  const skillsData = candidate?.skills?.length > 0 ? candidate.skills : [
+    { name: 'Technical', score: report?.technicalScore ?? overallScore },
+    { name: 'Problem Solving', score: report?.problemSolvingScore ?? overallScore },
+    { name: 'Communication', score: report?.communicationScore ?? 85 },
+    { name: 'Confidence', score: report?.confidenceScore ?? 85 },
+    { name: 'Execution', score: overallScore }
+  ];
+
+  // Derive timeline data from question analysis or candidate timeline
+  const timelineData = (report?.questionAnalysis && report.questionAnalysis.length > 0)
+    ? report.questionAnalysis.map((qa, idx) => ({
+        step: `Question ${idx + 1}`,
+        questionId: qa.questionId,
+        text: qa.text,
+        category: qa.category,
+        score: qa.score,
+        timeTaken: qa.timeTaken || 45,
+        comments: qa.feedback || 'Evaluated successfully.',
+        answerText: qa.answerText || '',
+        code: qa.code || ''
+      }))
+    : (candidate?.timeline || []);
+
+  const currentTimelineItem = timelineData[activeQuestionIdx] || timelineData[0] || {};
+  const activeQuestion = interview?.questions?.find(q => q.id === currentTimelineItem?.questionId) || {
+    id: currentTimelineItem?.questionId || 'q-1',
+    text: currentTimelineItem?.text || 'Technical evaluation question',
+    category: currentTimelineItem?.category || 'Technical'
+  };
+
+  const activeTranscript = currentTimelineItem?.answerText || 
+    (candidate?.transcripts && candidate.transcripts[currentTimelineItem?.questionId]) || 
+    "No recording transcript matches this question.";
 
   const getRecommendationBadge = (rec) => {
     if (rec === 'STRONG HIRE') return <Badge variant="success">Strong Hire</Badge>;
@@ -123,7 +162,7 @@ export const Report = () => {
   const breadcrumbs = [
     { label: 'Workspace', path: '/recruiter' },
     { label: 'Candidates', path: '/recruiter/candidates' },
-    { label: `${candidate.name} Evaluation` }
+    { label: `${candidateName} Evaluation` }
   ];
 
   return (
@@ -143,13 +182,13 @@ export const Report = () => {
       {/* Main Title Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 select-none text-left">
         <div className="flex items-center space-x-3.5">
-          <Avatar name={candidate.name} size="lg" />
+          <Avatar name={candidateName} size="lg" />
           <div>
             <div className="flex items-center space-x-2.5">
-              <h1 className="text-2xl font-bold tracking-tight text-brandHeading leading-tight">{candidate.name}</h1>
-              {getRecommendationBadge(candidate.recommendation)}
+              <h1 className="text-2xl font-bold tracking-tight text-brandHeading leading-tight">{candidateName}</h1>
+              {getRecommendationBadge(recommendation)}
             </div>
-            <p className="text-xs text-brandBody mt-0.5">Applied to: <span className="font-semibold">{candidate.role}</span> • Reviewed on {candidate.completionDate}</p>
+            <p className="text-xs text-brandBody mt-0.5">Applied to: <span className="font-semibold">{candidateRole}</span> • Reviewed on {completionDate}</p>
           </div>
         </div>
       </div>
@@ -174,12 +213,12 @@ export const Report = () => {
                   strokeWidth="8"
                   fill="transparent"
                   strokeDasharray={402}
-                  strokeDashoffset={402 - (402 * candidate.overallScore) / 100}
+                  strokeDashoffset={402 - (402 * overallScore) / 100}
                   strokeLinecap="round"
                 />
               </svg>
               <div className="absolute flex flex-col items-center justify-center">
-                <span className="text-3xl font-extrabold text-brandHeading tracking-tight">{candidate.overallScore}%</span>
+                <span className="text-3xl font-extrabold text-brandHeading tracking-tight">{overallScore}%</span>
                 <span className="text-[10px] uppercase font-bold tracking-wide text-brandBody">Fit score</span>
               </div>
             </div>
@@ -210,11 +249,13 @@ export const Report = () => {
           </CardHeader>
           <CardBody className="p-4 flex-grow flex flex-col justify-between space-y-4">
             {(() => {
-              const proctorLog = candidate.codeAnswers?.proctor || { tabSwitches: 0, copyPastes: 0, screenShareActive: true };
+              const proctorLog = report?.proctoringSummary || candidate?.codeAnswers?.proctor || { tabSwitches: 0, tabHiddenCount: 0, copyPastes: 0, screenShareActive: true };
+              const tabSwitches = proctorLog.tabHiddenCount ?? proctorLog.tabSwitches ?? 0;
+              const copyPastes = proctorLog.copyPastes ?? 0;
               const calculateIntegrityScore = () => {
                 let base = 100;
-                base -= (proctorLog.tabSwitches || 0) * 15;
-                base -= (proctorLog.copyPastes || 0) * 20;
+                base -= tabSwitches * 15;
+                base -= copyPastes * 20;
                 return Math.max(10, base);
               };
               const integrityScore = calculateIntegrityScore();
@@ -247,18 +288,18 @@ export const Report = () => {
                   <div className="space-y-2 text-[11px] font-mono text-brandHeading border-t border-brandBorder pt-3">
                     <div className="flex justify-between items-center">
                       <span>Tab Switches:</span>
-                      <span className={proctorLog.tabSwitches > 0 ? 'text-brandWarning font-bold' : 'text-brandSuccess font-bold'}>
-                        {proctorLog.tabSwitches}
+                      <span className={tabSwitches > 0 ? 'text-brandWarning font-bold' : 'text-brandSuccess font-bold'}>
+                        {tabSwitches}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span>Copy/Pastes:</span>
-                      <span className={proctorLog.copyPastes > 0 ? 'text-brandDanger font-bold' : 'text-brandSuccess font-bold'}>
-                        {proctorLog.copyPastes}
+                      <span className={copyPastes > 0 ? 'text-brandDanger font-bold' : 'text-brandSuccess font-bold'}>
+                        {copyPastes}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span>Screen Share:</span>
+                      <span>Screen / Proctor:</span>
                       <span className="text-brandSuccess font-bold">Active</span>
                     </div>
                   </div>
@@ -274,7 +315,7 @@ export const Report = () => {
             <h3 className="text-sm font-bold text-brandHeading">Executive Summary</h3>
           </CardHeader>
           <CardBody className="text-xs text-brandBody leading-relaxed flex-grow overflow-y-auto max-h-56">
-            {candidate.summary}
+            {summaryText}
           </CardBody>
         </Card>
       </div>
@@ -290,7 +331,7 @@ export const Report = () => {
           </CardHeader>
           <CardBody className="p-4">
             <ul className="space-y-2.5 text-xs text-brandBody">
-              {candidate.strengths?.map((str, idx) => (
+              {strengthsList.map((str, idx) => (
                 <li key={idx} className="flex items-start space-x-2">
                   <span className="text-brandSuccess font-bold shrink-0 mt-0.5">•</span>
                   <span>{str}</span>
@@ -309,7 +350,7 @@ export const Report = () => {
           </CardHeader>
           <CardBody className="p-4">
             <ul className="space-y-2.5 text-xs text-brandBody">
-              {candidate.weaknesses?.map((weak, idx) => (
+              {weaknessesList.map((weak, idx) => (
                 <li key={idx} className="flex items-start space-x-2">
                   <span className="text-brandWarning font-bold shrink-0 mt-0.5">•</span>
                   <span>{weak}</span>

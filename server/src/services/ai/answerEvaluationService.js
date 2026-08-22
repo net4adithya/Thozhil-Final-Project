@@ -54,9 +54,10 @@ export const evaluateAnswerDeterministic = (questionText, answerText, category =
   const isCoding = category.toLowerCase().includes('code') || cleanCode.length > 20;
 
   // Length and substance heuristics
-  let baseScore = 75;
-  if (wordCount > 60 || cleanCode.length > 80) baseScore += 12;
-  if (wordCount > 120 || cleanCode.length > 180) baseScore += 5;
+  let baseScore = 68;
+  if (wordCount < 10 && cleanCode.length < 25) baseScore = 48;
+  else if (wordCount > 60 || cleanCode.length > 80) baseScore += 10;
+  else if (wordCount > 100 || cleanCode.length > 150) baseScore += 16;
 
   // Question-answer keyword overlap
   const qKeywords = questionText.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 4);
@@ -64,11 +65,11 @@ export const evaluateAnswerDeterministic = (questionText, answerText, category =
   const matchedKeywords = qKeywords.filter(kw => ansLower.includes(kw));
   const keywordRatio = qKeywords.length > 0 ? matchedKeywords.length / qKeywords.length : 0.6;
 
-  const technicalAccuracy = Math.min(98, Math.max(30, Math.round(baseScore * (0.6 + keywordRatio * 0.4))));
-  const relevance = Math.min(98, Math.max(35, Math.round(70 + keywordRatio * 25)));
-  const problemSolving = Math.min(96, Math.max(30, Math.round((technicalAccuracy + relevance) / 2)));
-  const communication = isCoding ? 85 : Math.min(95, Math.max(40, Math.round(60 + Math.min(wordCount, 100) * 0.35)));
-  const completeness = Math.min(95, Math.max(30, Math.round(technicalAccuracy * 0.95)));
+  const technicalAccuracy = Math.min(98, Math.max(20, Math.round(baseScore * (0.6 + keywordRatio * 0.4))));
+  const relevance = Math.min(98, Math.max(25, Math.round(55 + keywordRatio * 35)));
+  const problemSolving = Math.min(96, Math.max(20, Math.round((technicalAccuracy + relevance) / 2)));
+  const communication = isCoding ? 85 : Math.min(95, Math.max(30, Math.round(50 + Math.min(wordCount, 100) * 0.4)));
+  const completeness = Math.min(95, Math.max(20, Math.round(technicalAccuracy * 0.95)));
 
   const finalScore = Math.round((technicalAccuracy * 0.4) + (relevance * 0.25) + (problemSolving * 0.2) + (communication * 0.15));
 
