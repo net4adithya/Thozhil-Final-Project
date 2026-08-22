@@ -114,6 +114,8 @@ export const getReportByIdOrInterviewId = async (id) => {
   return mapDbToReport(data);
 };
 
+export const getReportByInterviewId = getReportByIdOrInterviewId;
+
 export const getAnalytics = async () => {
   // Query all candidates
   const { data: candidates, error: candError } = await supabase
@@ -194,11 +196,11 @@ export const getAnalytics = async () => {
   }
 
   const weeklyCompletions = [
-    { name: 'Mon', count: completedCandidates.length > 0 ? Math.round(completedCandidates.length * 0.1) : 1 },
-    { name: 'Tue', count: completedCandidates.length > 0 ? Math.round(completedCandidates.length * 0.2) : 2 },
-    { name: 'Wed', count: completedCandidates.length > 0 ? Math.round(completedCandidates.length * 0.1) : 1 },
-    { name: 'Thu', count: completedCandidates.length > 0 ? Math.round(completedCandidates.length * 0.3) : 3 },
-    { name: 'Fri', count: completedCandidates.length > 0 ? Math.round(completedCandidates.length * 0.2) : 2 },
+    { name: 'Mon', count: Math.round(completedCandidates.length * 0.1) },
+    { name: 'Tue', count: Math.round(completedCandidates.length * 0.2) },
+    { name: 'Wed', count: Math.round(completedCandidates.length * 0.1) },
+    { name: 'Thu', count: Math.round(completedCandidates.length * 0.3) },
+    { name: 'Fri', count: Math.round(completedCandidates.length * 0.2) },
     { name: 'Sat', count: 0 },
     { name: 'Sun', count: 0 },
   ];

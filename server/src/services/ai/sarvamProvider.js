@@ -392,7 +392,19 @@ const generateDeterministicAdaptiveDecision = ({
     };
   }
 
-  // 5. Move to new topic
+  // 5. Move to new topic or conclude if last question reached
+  if (currentQuestionIndex >= totalQuestionsLimit - 1) {
+    return {
+      action: 'CONCLUDE',
+      question: `Thank you for completing your live AI interview for the ${roleTitle} position. You have completed all scheduled questions, and your evaluation report is being generated.`,
+      reason: 'Configured question count limit completed.',
+      topic: 'Conclusion',
+      difficulty: 'MEDIUM',
+      competency: 'Communication',
+      generatedAt: new Date().toISOString()
+    };
+  }
+
   const nextTopics = [
     { topic: 'API Design & Idempotency', question: 'How do you design idempotent RESTful APIs and ensure safe retry handling for distributed payments or critical operations?' },
     { topic: 'System Reliability & CI/CD', question: 'What monitoring, alerting, and automated rollback strategies do you implement to ensure zero-downtime deployments in production?' },

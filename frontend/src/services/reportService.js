@@ -42,10 +42,10 @@ export const reportService = {
     } catch (err) {
       console.warn('Analytics fetch error, returning fallback metrics:', err.message);
       return {
-        totalInterviews: 12,
-        completedInterviews: 8,
-        activeCandidates: 14,
-        averageScore: 84
+        totalInterviews: 0,
+        completedInterviews: 0,
+        activeCandidates: 0,
+        averageScore: 0
       };
     }
   }

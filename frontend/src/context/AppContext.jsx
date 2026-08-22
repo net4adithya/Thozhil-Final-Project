@@ -195,20 +195,20 @@ export const AppProvider = ({ children }) => {
         }
       }
 
-      const finalScore = reportData?.overallScore || 88;
+      const finalScore = reportData?.overallScore !== undefined ? reportData.overallScore : null;
 
       // 3. Update candidate assessment completion state in Supabase
       const updatedCand = await candidateService.updateCandidate(candidateId, {
         status: 'Completed',
         overallScore: finalScore,
-        recommendation: reportData?.recommendation || 'HIRE',
-        summary: reportData?.summary || 'Completed async technical interview assessment.',
+        recommendation: reportData?.recommendation || null,
+        summary: reportData?.summary || 'Completed technical interview assessment.',
         strengths: reportData?.strengths || [],
         weaknesses: reportData?.weaknesses || [],
         completionDate: new Date().toISOString().split('T')[0]
       });
 
-      showToast(`Assessment submitted successfully! Evaluation score: ${finalScore}%`, 'success');
+      showToast(`Assessment submitted successfully! ${finalScore !== null ? `Evaluation score: ${finalScore}%` : ''}`.trim(), 'success');
       await refreshData();
       return updatedCand;
     } catch (e) {

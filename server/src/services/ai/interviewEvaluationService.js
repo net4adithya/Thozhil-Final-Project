@@ -26,7 +26,26 @@ export const evaluateInterview = async (interviewId) => {
     throw new ApiError(404, `Interview ${interviewId} not found`);
   }
 
-  const candidateId = interview.candidateId || interview.candidate?.id;
+  let candidateId = interview.candidateId || interview.candidate?.id;
+  if (!candidateId) {
+    const { data: candMatch } = await supabase
+      .from('candidates')
+      .select('id')
+      .eq('interview_id', interviewId)
+      .limit(1)
+      .maybeSingle();
+    candidateId = candMatch?.id;
+  }
+  if (!candidateId) {
+    const { data: ansMatch } = await supabase
+      .from('answers')
+      .select('candidate_id')
+      .eq('interview_id', interviewId)
+      .not('candidate_id', 'is', null)
+      .limit(1)
+      .maybeSingle();
+    candidateId = ansMatch?.candidate_id;
+  }
   if (!candidateId) {
     throw new ApiError(400, 'Interview has no associated candidate record');
   }
