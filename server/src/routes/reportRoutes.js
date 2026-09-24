@@ -5,6 +5,7 @@ import { validateObjectId } from '../middleware/validateObjectId.js';
 const router = express.Router();
 
 router.post('/', reportController.createReport);
+router.get('/', reportController.getReports);
 router.get('/analytics', reportController.getAnalytics);
 router.post('/evaluate/:id', validateObjectId, reportController.evaluateInterview);
 router.post('/interview/:id/evaluate', validateObjectId, reportController.evaluateInterview);

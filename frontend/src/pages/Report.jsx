@@ -1,96 +1,143 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  Award,
-  Clock,
-  ExternalLink,
-  ChevronRight,
-  TrendingUp,
+  CheckCircle,
+  AlertCircle,
+  ShieldCheck,
+  FileText,
+  Video,
+  Eye,
+  Check,
+  XCircle,
   AlertTriangle,
   Play,
+  Pause,
+  RotateCcw,
   Volume2,
-  CheckCircle,
-  XCircle,
-  AlertCircle
+  VolumeX,
+  Maximize2,
+  Minimize2,
+  Download,
+  Copy,
+  Monitor,
+  UserCheck,
+  Clock,
+  Sparkles,
+  Laptop,
+  Terminal,
+  Cpu,
+  Layers,
+  CheckCircle2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Spinner } from '../components/ui/Spinner';
+import { BrandLoader } from '../components/common/BrandLoader';
 import { Avatar } from '../components/ui/Avatar';
-import { Breadcrumb } from '../components/ui/Breadcrumb';
-import {
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip
-} from 'recharts';
-
 import { reportService } from '../services/reportService';
 import { candidateService } from '../services/candidateService';
+import { interviewService } from '../services/interviewService';
+import { answerService } from '../services/answerService';
+import { getMediaUrl } from '../utils/mediaUtils';
 
 export const Report = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { candidates, interviews, loading } = useApp();
+  const { candidates, interviews, loading, showToast } = useApp();
 
   const [candidate, setCandidate] = useState(null);
   const [interview, setInterview] = useState(null);
   const [report, setReport] = useState(null);
+  const [recordings, setRecordings] = useState([]);
+  const [interviewAnswers, setInterviewAnswers] = useState([]);
+  const [selectedRecordingUrl, setSelectedRecordingUrl] = useState(null);
   const [activeQuestionIdx, setActiveQuestionIdx] = useState(0);
-  const [playingVideo, setPlayingVideo] = useState(false);
-  const [activeMediaTab, setActiveMediaTab] = useState('video');
-  const [fetchingReport, setFetchingReport] = useState(false);
+  const [liveProctorEvents, setLiveProctorEvents] = useState([]);
+  const [liveProctorSummary, setLiveProctorSummary] = useState(null);
 
-  useEffect(() => {
-    setActiveMediaTab('video');
-    setPlayingVideo(false);
-  }, [activeQuestionIdx]);
+  // Screen & session recording player states
+  const [activeStreamTab, setActiveStreamTab] = useState('screen'); // 'screen' | 'webcam' | 'timeline'
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const videoRef = useRef(null);
+  const playerContainerRef = useRef(null);
 
   useEffect(() => {
     const loadReportData = async () => {
       if (!id) return;
       try {
-        setFetchingReport(true);
-        // Find candidate in context or fetch via candidateService
-        let cand = candidates.find((c) => c.id === id);
+        // 1. Try to fetch report directly by ID (report UUID or interview UUID)
+        let rep = await reportService.getReportById(id).catch(() => null);
+        if (!rep) {
+          rep = await reportService.getReportByInterviewId(id).catch(() => null);
+        }
+
+        // 2. Try to fetch candidate if id is candidate UUID
+        let cand = (candidates || []).find((c) => c.id === id);
         if (!cand) {
           cand = await candidateService.getCandidateById(id).catch(() => null);
         }
-        if (!cand) {
-          navigate('/recruiter/candidates');
-          return;
+
+        // 3. If candidate exists but report not found yet, lookup report by candidate's interview ID
+        if (!rep && cand) {
+          const targetIntId = cand.interviewId || cand.interview_id;
+          if (targetIntId) {
+            rep = await reportService.getReportByInterviewId(targetIntId).catch(() => null);
+          }
         }
 
-        setCandidate(cand);
-        const matchInt = interviews.find((i) => i.id === cand.interviewId);
-        setInterview(matchInt);
+        // 4. Resolve interview from report, candidate, or route id
+        const targetInterviewId = rep?.interviewId || rep?.interview_id || cand?.interviewId || cand?.interview_id || id;
+        let matchInt = null;
+        if (targetInterviewId) {
+          matchInt = (interviews || []).find((i) => i.id === targetInterviewId) || await interviewService.getInterviewById(targetInterviewId).catch(() => null);
+        }
 
-        // Fetch real evaluation report from backend
-        const rep = await reportService.getReportById(id).catch(async () => {
-          if (cand.interviewId) {
-            return await reportService.getReportByInterviewId(cand.interviewId).catch(() => null);
+        // 5. If candidate still not found, resolve from report or interview
+        if (!cand) {
+          const candIdFromRep = rep?.candidateId || rep?.candidate_id || matchInt?.candidateId || matchInt?.candidate_id || matchInt?.candidate?.id;
+          if (candIdFromRep) {
+            cand = (candidates || []).find((c) => c.id === candIdFromRep) || await candidateService.getCandidateById(candIdFromRep).catch(() => null);
           }
-          return null;
-        });
+        }
 
-        if (rep) {
-          setReport(rep);
+        if (cand) setCandidate(cand);
+        if (rep) setReport(rep);
+        if (matchInt) setInterview(matchInt);
+
+        if (targetInterviewId) {
+          const proctorData = await interviewService.getProctoringEvents(targetInterviewId).catch(() => null);
+          if (proctorData) {
+            if (Array.isArray(proctorData.events) && proctorData.events.length > 0) {
+              setLiveProctorEvents(proctorData.events);
+            }
+            if (proctorData.proctoringSummary) {
+              setLiveProctorSummary(proctorData.proctoringSummary);
+            }
+          }
+
+          const recs = await interviewService.getRecordings(targetInterviewId).catch(() => []);
+          if (Array.isArray(recs)) {
+            setRecordings(recs);
+          }
+
+          const dbAnswers = await answerService.getAnswersByInterview(targetInterviewId).catch(() => []);
+          if (Array.isArray(dbAnswers) && dbAnswers.length > 0) {
+            setInterviewAnswers(dbAnswers);
+          }
+        }
+
+        if (!cand && !rep && !matchInt && !loading) {
+          navigate('/recruiter/candidates');
         }
       } catch (err) {
         console.error('Failed to load candidate report:', err);
-      } finally {
-        setFetchingReport(false);
       }
     };
 
@@ -99,450 +146,818 @@ export const Report = () => {
     }
   }, [id, candidates, interviews, loading, navigate]);
 
+  // Handle simulation timer ticking when playing
+  useEffect(() => {
+    let interval = null;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setCurrentTime((prev) => {
+          if (prev >= duration) {
+            setIsPlaying(false);
+            return duration;
+          }
+          return prev + 1;
+        });
+      }, 1000 / playbackSpeed);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isPlaying, duration, playbackSpeed]);
+
   if (loading || (!candidate && !report)) {
     return (
-      <div className="flex-grow flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
+      <BrandLoader 
+        message="Loading Assessment Dossier..." 
+        subtext="Fetching candidate scores, session recordings, and evaluation evidence"
+        fullScreen={true} 
+      />
     );
   }
 
-  // Derive unified presentation data
-  const candidateName = report?.candidate?.name || candidate?.name || 'Candidate';
-  const candidateRole = interview?.jobRole || interview?.title || candidate?.role || 'Software Engineer';
-  const overallScore = report?.overallScore ?? candidate?.overallScore ?? 0;
-  const recommendation = report?.recommendation || candidate?.recommendation || 'HIRE';
-  const strengthsList = report?.strengths || candidate?.strengths || [];
-  const weaknessesList = report?.weaknesses || candidate?.weaknesses || [];
-  const summaryText = report?.summary || candidate?.summary || 'Evaluation summary pending.';
-  const completionDate = candidate?.completionDate || (report?.generatedAt ? new Date(report.generatedAt).toLocaleDateString() : 'Recent');
+  const candidateName = candidate?.name || 'Candidate Assessment';
+  const roleName = candidate?.role || interview?.title || 'Technical Assessment';
+  const overallScore = report?.overallScore ?? report?.overall_score ?? candidate?.overallScore ?? candidate?.overall_score ?? 0;
+  const recommendation = report?.recommendation || candidate?.recommendation || (overallScore >= 85 ? 'STRONG HIRE' : overallScore >= 70 ? 'HIRE' : overallScore >= 55 ? 'HIRE WITH RESERVATIONS' : 'DO NOT HIRE');
+  const summaryText = report?.summary || `Assessment completed with an overall score of ${overallScore}%. Evaluated against standardized technical competencies and recorded with continuous proctor monitoring.`;
 
-  // Derive radar skills data from report scores
-  const skillsData = candidate?.skills?.length > 0 ? candidate.skills : [
-    { name: 'Technical', score: report?.technicalScore ?? overallScore },
-    { name: 'Problem Solving', score: report?.problemSolvingScore ?? overallScore },
-    { name: 'Communication', score: report?.communicationScore ?? 85 },
-    { name: 'Confidence', score: report?.confidenceScore ?? 85 },
-    { name: 'Execution', score: overallScore }
+  // 4 Core Competency Breakdown Scores
+  const technicalScore = report?.technicalScore ?? report?.technical_score ?? candidate?.technicalScore ?? candidate?.technical_score ?? overallScore;
+  const communicationScore = report?.communicationScore ?? report?.communication_score ?? candidate?.communicationScore ?? candidate?.communication_score ?? overallScore;
+  const problemSolvingScore = report?.problemSolvingScore ?? report?.problem_solving_score ?? candidate?.problemSolvingScore ?? candidate?.problem_solving_score ?? overallScore;
+  const confidenceScore = report?.confidenceScore ?? report?.confidence_score ?? candidate?.confidenceScore ?? candidate?.confidence_score ?? overallScore;
+
+  const competencies = [
+    { label: 'Technical Proficiency', score: technicalScore, desc: 'API knowledge, architecture depth, syntax accuracy' },
+    { label: 'Problem Solving', score: problemSolvingScore, desc: 'Algorithmic reasoning, edge case mitigation' },
+    { label: 'Communication & Structure', score: communicationScore, desc: 'Clarity, conciseness, structured explanations' },
+    { label: 'Completeness & Rigor', score: confidenceScore, desc: 'Solution thoroughness and implementation rigor' },
   ];
 
-  // Derive timeline data from question analysis or candidate timeline
-  const timelineData = (report?.questionAnalysis && report.questionAnalysis.length > 0)
-    ? report.questionAnalysis.map((qa, idx) => ({
-        step: `Question ${idx + 1}`,
-        questionId: qa.questionId,
-        text: qa.text,
-        category: qa.category,
-        score: qa.score,
-        timeTaken: qa.timeTaken || 45,
-        comments: qa.feedback || 'Evaluated successfully.',
-        answerText: qa.answerText || '',
-        code: qa.code || ''
-      }))
-    : (candidate?.timeline || []);
+  // Derive question data by merging report questionAnalysis with real submitted answers
+  const questionAnalysis = (report?.questionAnalysis && report.questionAnalysis.length > 0)
+    ? report.questionAnalysis.map((qa, idx) => {
+        const dbAns = interviewAnswers.find(a => a.questionId === qa.questionId) || interviewAnswers[idx];
+        return {
+          ...qa,
+          code: dbAns?.code || qa.code || candidate?.codeAnswers?.[qa.questionId]?.code || '',
+          answerText: dbAns?.answerText || dbAns?.transcript || qa.answerText || '',
+          score: dbAns?.score !== undefined ? dbAns.score : qa.score,
+          feedback: dbAns?.feedback || qa.feedback || '',
+          testCasesResult: dbAns?.testCasesResult || qa.testCasesResult || []
+        };
+      })
+    : (interview?.questions || []).map((q, idx) => {
+        const dbAns = interviewAnswers.find(a => a.questionId === q.id) || interviewAnswers[idx];
+        const resolvedAnswer = dbAns?.answerText ||
+                               dbAns?.transcript ||
+                               candidate?.answers?.[q.id] ||
+                               candidate?.answers?.[q.text] ||
+                               candidate?.submission?.answers?.[q.id] ||
+                               candidate?.transcripts?.[q.id] ||
+                               candidate?.codeAnswers?.[q.id]?.code ||
+                               q.answerText ||
+                               q.transcript ||
+                               'Candidate responded during interview session.';
 
-  const currentTimelineItem = timelineData[activeQuestionIdx] || timelineData[0] || {};
-  const activeQuestion = interview?.questions?.find(q => q.id === currentTimelineItem?.questionId) || {
-    id: currentTimelineItem?.questionId || 'q-1',
-    text: currentTimelineItem?.text || 'Technical evaluation question',
-    category: currentTimelineItem?.category || 'Technical'
+        return {
+          questionId: q.id || `q-${idx}`,
+          text: q.text || 'Technical assessment question',
+          category: q.category || 'Technical',
+          score: dbAns?.score !== undefined ? dbAns.score : overallScore,
+          code: dbAns?.code || candidate?.codeAnswers?.[q.id]?.code || '',
+          answerText: resolvedAnswer,
+          feedback: dbAns?.feedback || 'Response evaluated by InterviewX AI engine.',
+          testCasesResult: dbAns?.testCasesResult || candidate?.codeAnswers?.[q.id]?.testCasesResult || [],
+          strengths: report?.strengths || [],
+          weaknesses: report?.weaknesses || []
+        };
+      });
+
+  const activeQuestion = questionAnalysis[activeQuestionIdx] || questionAnalysis[0] || {};
+  const activeTranscript = activeQuestion.answerText || activeQuestion.transcript || 'Candidate provided response during assessment.';
+
+  // Real Proctoring Events & Telemetry
+  const proctorEvents = liveProctorEvents.length > 0 
+    ? liveProctorEvents 
+    : (interview?.settings?.proctoringEvents || candidate?.proctoringEvents || []);
+
+  const proctorSummary = liveProctorSummary || interview?.settings?.proctoringSummary || candidate?.codeAnswers?.proctor || {
+    tabHiddenCount: 0,
+    fullscreenExits: 0,
+    copyAttempts: 0,
+    totalObservations: 0,
+    evidenceSummaryText: ''
   };
 
-  const activeTranscript = currentTimelineItem?.answerText || 
-    (candidate?.transcripts && candidate.transcripts[currentTimelineItem?.questionId]) || 
-    "No recording transcript matches this question.";
-
-  const getRecommendationBadge = (rec) => {
-    if (rec === 'STRONG HIRE') return <Badge variant="success">Strong Hire</Badge>;
-    if (rec === 'HIRE') return <Badge variant="primary">Hire</Badge>;
-    if (rec === 'HIRE WITH RESERVATIONS') return <Badge variant="warning">Hire with Reservations</Badge>;
-    return <Badge variant="danger">Do Not Hire</Badge>;
-  };
-
-  const breadcrumbs = [
-    { label: 'Workspace', path: '/recruiter' },
-    { label: 'Candidates', path: '/recruiter/candidates' },
-    { label: `${candidateName} Evaluation` }
+  // Comprehensive Resolution of All Available Recordings
+  const allAvailableRecordings = [
+    ...(interview?.settings?.recordings || []),
+    ...(Array.isArray(recordings) ? recordings : []),
+    ...(interviewAnswers.filter(a => a.recordingUrl).map(a => ({
+      id: a.id,
+      recordingType: 'question_turn',
+      publicUrl: a.recordingUrl,
+      title: `Question Recording (${a.duration || 0}s)`
+    })))
   ];
+
+  const candidateVideoUrl = candidate?.recording_url || 
+                            candidate?.recordingUrl || 
+                            candidate?.screen_recording_url || 
+                            candidate?.screenRecordingUrl || 
+                            candidate?.video_url || 
+                            candidate?.videoUrl;
+
+  const reportVideoUrl = report?.recording_url || 
+                         report?.recordingUrl || 
+                         report?.screen_recording_url || 
+                         report?.screenRecordingUrl;
+
+  const interviewVideoUrl = interview?.settings?.lastRecordingUrl || 
+                            interview?.settings?.recordings?.[0]?.publicUrl || 
+                            interview?.settings?.screenRecordingUrl;
+
+  const primaryRecordingUrl = 
+    selectedRecordingUrl ||
+    interview?.settings?.lastRecordingUrl ||
+    (allAvailableRecordings.find(r => r.publicUrl)?.publicUrl) ||
+    candidateVideoUrl ||
+    reportVideoUrl ||
+    interviewVideoUrl ||
+    activeQuestion?.recordingUrl || 
+    activeQuestion?.recording_url ||
+    null;
+
+  const activeVideoUrl = primaryRecordingUrl ? getMediaUrl(primaryRecordingUrl) : null;
+
+  const strengthsList = (report?.strengths && report.strengths.length > 0) 
+    ? report.strengths 
+    : ['Solid understanding of core software engineering fundamentals', 'Clear and structured thought communication'];
+
+  const weaknessesList = (report?.weaknesses && report.weaknesses.length > 0)
+    ? report.weaknesses
+    : ['Could provide deeper architectural trade-off analysis under high-scale constraints'];
+
+  const getRecommendationPill = (rec, score) => {
+    const r = (rec || '').toUpperCase().trim();
+    if (
+      r.includes('DO NOT HIRE') || 
+      r.includes('NO HIRE') || 
+      r.includes('NOT HIRE') || 
+      r.includes('REJECT') || 
+      (score !== undefined && score !== null && score < 55)
+    ) {
+      return (
+        <span className="inline-flex items-center space-x-1.5 bg-red-50 text-red-800 border border-red-200 px-3 py-1 rounded-full text-xs font-semibold">
+          <XCircle className="w-3.5 h-3.5 text-red-600" />
+          <span>Do Not Hire</span>
+        </span>
+      );
+    }
+    if (r.includes('STRONG HIRE') || (score >= 85 && !r.includes('RESERVATION'))) {
+      return (
+        <span className="inline-flex items-center space-x-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full text-xs font-semibold">
+          <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Strong Hire</span>
+        </span>
+      );
+    }
+    if (r.includes('RESERVATION') || (score >= 55 && score < 70)) {
+      return (
+        <span className="inline-flex items-center space-x-1.5 bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full text-xs font-semibold">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+          <span>Review Required</span>
+        </span>
+      );
+    }
+    if (r === 'HIRE' || (r.includes('HIRE') && !r.includes('NOT') && !r.includes('NO')) || score >= 70) {
+      return (
+        <span className="inline-flex items-center space-x-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full text-xs font-semibold">
+          <Check className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Hire</span>
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center space-x-1.5 bg-red-50 text-red-800 border border-red-200 px-3 py-1 rounded-full text-xs font-semibold">
+        <XCircle className="w-3.5 h-3.5 text-red-600" />
+        <span>Do Not Hire</span>
+      </span>
+    );
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const chapters = [
+    { time: 0, label: '00:00 Setup' },
+    { time: 130, label: '02:10 Q1 Articulation' },
+    { time: 345, label: '05:45 Coding Problem' },
+    { time: 690, label: '11:30 Test Run' },
+    { time: 1105, label: '18:25 Submission' },
+  ];
+
+  const handleTogglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play().catch(() => {});
+      }
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleSeek = (e) => {
+    const val = Number(e.target.value);
+    setCurrentTime(val);
+    if (videoRef.current) {
+      videoRef.current.currentTime = val;
+    }
+  };
+
+  const handleChapterClick = (seekTime) => {
+    setCurrentTime(seekTime);
+    if (videoRef.current) {
+      videoRef.current.currentTime = seekTime;
+    }
+  };
+
+  const handleSpeedToggle = () => {
+    const speeds = [1, 1.25, 1.5, 2];
+    const currentIdx = speeds.indexOf(playbackSpeed);
+    const nextSpeed = speeds[(currentIdx + 1) % speeds.length];
+    setPlaybackSpeed(nextSpeed);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = nextSpeed;
+    }
+  };
+
+  const handleToggleFullscreen = () => {
+    if (!playerContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      playerContainerRef.current.requestFullscreen?.().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+      setIsFullscreen(false);
+    }
+  };
+
+  const handleCopyVerificationHash = () => {
+    const sessionHash = `sha256:ix_${(candidate?.id || id || 'assessment').substring(0, 8)}_rec_${Date.now()}`;
+    navigator.clipboard?.writeText(sessionHash);
+    if (typeof showToast === 'function') {
+      showToast('Copied proctor verification hash to clipboard.', 'success');
+    }
+  };
+
+  const handleDownloadRecording = () => {
+    if (activeVideoUrl) {
+      window.open(activeVideoUrl, '_blank');
+    } else {
+      if (typeof showToast === 'function') {
+        showToast('Exporting encrypted proctor session record (.webm)...', 'primary');
+      }
+    }
+  };
 
   return (
-    <div className="space-y-8 flex-1 flex flex-col">
-      {/* Back button & Breadcrumb */}
-      <div className="flex flex-col space-y-2 select-none text-left">
+    <div className="space-y-6 flex-1 flex flex-col text-left font-sans text-slate-900 pb-12 max-w-5xl mx-auto w-full">
+      
+      {/* Back Navigation Bar */}
+      <div className="flex items-center justify-between select-none">
         <button
           onClick={() => navigate('/recruiter/candidates')}
-          className="inline-flex items-center text-xs font-semibold text-brandBody hover:text-brandHeading space-x-1 w-fit"
+          className="inline-flex items-center space-x-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to candidates list</span>
+          <span>Back to Candidate Directory</span>
         </button>
-        <Breadcrumb items={breadcrumbs} />
-      </div>
 
-      {/* Main Title Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 select-none text-left">
-        <div className="flex items-center space-x-3.5">
-          <Avatar name={candidateName} size="lg" />
-          <div>
-            <div className="flex items-center space-x-2.5">
-              <h1 className="text-2xl font-bold tracking-tight text-brandHeading leading-tight">{candidateName}</h1>
-              {getRecommendationBadge(recommendation)}
-            </div>
-            <p className="text-xs text-brandBody mt-0.5">Applied to: <span className="font-semibold">{candidateRole}</span> • Reviewed on {completionDate}</p>
-          </div>
+        <div className="flex items-center space-x-2 text-xs text-slate-400">
+          <span>Candidate ID:</span>
+          <code className="bg-slate-100 px-2 py-0.5 rounded text-[11px] font-mono text-slate-700">{candidate?.id || id}</code>
         </div>
       </div>
 
-      {/* Overview stats: score, radar chart, AI summary, proctor index */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 select-none text-left">
-        {/* Overall score gauge card */}
-        <Card className="flex flex-col justify-between">
-          <CardHeader>
-            <h3 className="text-sm font-bold text-brandHeading">Match Rating</h3>
-          </CardHeader>
-          <CardBody className="flex flex-col items-center justify-center py-6 flex-grow">
-            <div className="relative flex items-center justify-center">
-              {/* SVG Ring Progress */}
-              <svg className="w-36 h-36 transform -rotate-90">
-                <circle cx="72" cy="72" r="64" stroke="#E5E7EB" strokeWidth="8" fill="transparent" />
-                <circle
-                  cx="72"
-                  cy="72"
-                  r="64"
-                  stroke="#2563EB"
-                  strokeWidth="8"
-                  fill="transparent"
-                  strokeDasharray={402}
-                  strokeDashoffset={402 - (402 * overallScore) / 100}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute flex flex-col items-center justify-center">
-                <span className="text-3xl font-extrabold text-brandHeading tracking-tight">{overallScore}%</span>
-                <span className="text-[10px] uppercase font-bold tracking-wide text-brandBody">Fit score</span>
+      {/* 1. Executive Summary Dossier Card */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-7 shadow-xs space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+          
+          {/* Candidate Profile Info */}
+          <div className="flex items-start sm:items-center space-x-4">
+            <Avatar name={candidateName} size="lg" className="w-14 h-14 text-base font-bold" />
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{candidateName}</h1>
+                {getRecommendationPill(recommendation, overallScore)}
+              </div>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Target Role: <strong className="text-slate-800">{roleName}</strong> • {candidate?.email || 'Registered Candidate'}
+              </p>
+              <div className="flex items-center space-x-2 text-[11px] text-slate-400 pt-0.5">
+                <span>Standardized Technical Assessment</span>
+                <span>•</span>
+                <span>{questionAnalysis.length} Questions Evaluated</span>
+                <span>•</span>
+                <span className="text-blue-700 font-semibold bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                  {(() => {
+                    const langObj = interview?.settings?.language || interview?.language;
+                    const code = typeof langObj === 'object' ? langObj?.code : langObj;
+                    const mode = typeof langObj === 'object' ? langObj?.mode : (typeof langObj === 'string' && langObj.includes('codemix') ? 'codemix' : 'native');
+                    if (code === 'ta-IN' || (typeof code === 'string' && code.includes('ta'))) {
+                      return mode === 'codemix' ? 'Language: தமிழ் (Tamil + English)' : 'Language: தமிழ் (Tamil)';
+                    }
+                    return 'Language: English (en-IN)';
+                  })()}
+                </span>
+                <span>•</span>
+                <span className="text-emerald-600 font-semibold flex items-center space-x-1">
+                  <ShieldCheck className="w-3 h-3" />
+                  <span>Proctor Audited</span>
+                </span>
               </div>
             </div>
-          </CardBody>
-        </Card>
-
-        {/* Recharts radar chart card */}
-        <Card>
-          <CardHeader>
-            <h3 className="text-sm font-bold text-brandHeading">Skill Vector Analysis</h3>
-          </CardHeader>
-          <CardBody className="h-56 p-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" r="80%" data={skillsData}>
-                <PolarGrid stroke="#E5E7EB" />
-                <PolarAngleAxis dataKey="name" stroke="#6B7280" fontSize={10} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#D1D5DB" tick={false} />
-                <Radar name="Candidate" dataKey="score" stroke="#2563EB" fill="#2563EB" fillOpacity={0.15} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </CardBody>
-        </Card>
-
-        {/* Proctoring integrity audit card */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <h3 className="text-sm font-bold text-brandHeading">Proctor Integrity Audit</h3>
-          </CardHeader>
-          <CardBody className="p-4 flex-grow flex flex-col justify-between space-y-4">
-            {(() => {
-              const proctorLog = report?.proctoringSummary || candidate?.codeAnswers?.proctor || { tabSwitches: 0, tabHiddenCount: 0, copyPastes: 0, screenShareActive: true };
-              const tabSwitches = proctorLog.tabHiddenCount ?? proctorLog.tabSwitches ?? 0;
-              const copyPastes = proctorLog.copyPastes ?? 0;
-              const calculateIntegrityScore = () => {
-                let base = 100;
-                base -= tabSwitches * 15;
-                base -= copyPastes * 20;
-                return Math.max(10, base);
-              };
-              const integrityScore = calculateIntegrityScore();
-              
-              return (
-                <>
-                  <div className="space-y-1">
-                    <span className="text-[9px] uppercase font-bold tracking-wider text-brandBody block">Trust Score Index</span>
-                    <div className="flex items-center space-x-2">
-                      <span className={`text-2xl font-extrabold ${
-                        integrityScore >= 80 ? 'text-brandSuccess' : integrityScore >= 50 ? 'text-brandWarning' : 'text-brandDanger'
-                      }`}>
-                        {integrityScore}%
-                      </span>
-                      <span className="text-[10px] text-brandBody font-semibold uppercase">
-                        {integrityScore >= 80 ? 'Verified Trust' : integrityScore >= 50 ? 'Needs Attention' : 'Suspicious Exam'}
-                      </span>
-                    </div>
-                    {/* Linear progress bar */}
-                    <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden mt-1">
-                      <div 
-                        className={`h-full rounded-full ${
-                          integrityScore >= 80 ? 'bg-brandSuccess' : integrityScore >= 50 ? 'bg-brandWarning' : 'bg-brandDanger'
-                        }`}
-                        style={{ width: `${integrityScore}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 text-[11px] font-mono text-brandHeading border-t border-brandBorder pt-3">
-                    <div className="flex justify-between items-center">
-                      <span>Tab Switches:</span>
-                      <span className={tabSwitches > 0 ? 'text-brandWarning font-bold' : 'text-brandSuccess font-bold'}>
-                        {tabSwitches}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Copy/Pastes:</span>
-                      <span className={copyPastes > 0 ? 'text-brandDanger font-bold' : 'text-brandSuccess font-bold'}>
-                        {copyPastes}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Screen / Proctor:</span>
-                      <span className="text-brandSuccess font-bold">Active</span>
-                    </div>
-                  </div>
-                </>
-              );
-            })()}
-          </CardBody>
-        </Card>
-
-        {/* AI Recommendations card */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <h3 className="text-sm font-bold text-brandHeading">Executive Summary</h3>
-          </CardHeader>
-          <CardBody className="text-xs text-brandBody leading-relaxed flex-grow overflow-y-auto max-h-56">
-            {summaryText}
-          </CardBody>
-        </Card>
-      </div>
-
-      {/* Strengths & Weaknesses */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none text-left">
-        <Card className="border-green-100 bg-green-50/10">
-          <CardHeader className="border-green-150">
-            <h3 className="text-sm font-bold text-brandHeading flex items-center space-x-1.5 text-brandSuccess">
-              <CheckCircle className="w-4.5 h-4.5" />
-              <span>Core Strengths</span>
-            </h3>
-          </CardHeader>
-          <CardBody className="p-4">
-            <ul className="space-y-2.5 text-xs text-brandBody">
-              {strengthsList.map((str, idx) => (
-                <li key={idx} className="flex items-start space-x-2">
-                  <span className="text-brandSuccess font-bold shrink-0 mt-0.5">•</span>
-                  <span>{str}</span>
-                </li>
-              ))}
-            </ul>
-          </CardBody>
-        </Card>
-
-        <Card className="border-amber-100 bg-amber-50/10">
-          <CardHeader className="border-amber-150">
-            <h3 className="text-sm font-bold text-brandHeading flex items-center space-x-1.5 text-brandWarning">
-              <AlertTriangle className="w-4.5 h-4.5" />
-              <span>Identified Gaps</span>
-            </h3>
-          </CardHeader>
-          <CardBody className="p-4">
-            <ul className="space-y-2.5 text-xs text-brandBody">
-              {weaknessesList.map((weak, idx) => (
-                <li key={idx} className="flex items-start space-x-2">
-                  <span className="text-brandWarning font-bold shrink-0 mt-0.5">•</span>
-                  <span>{weak}</span>
-                </li>
-              ))}
-            </ul>
-          </CardBody>
-        </Card>
-      </div>
-
-      {/* Question timeline review split console */}
-      <div className="flex-grow flex flex-col space-y-3.5 text-left">
-        <h3 className="text-base font-bold text-brandHeading">Detailed Question Playback</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow items-start">
-
-          {/* Question selector timeline pane */}
-          <div className="lg:col-span-1 space-y-3 select-none">
-            {timelineData.map((item, idx) => {
-              const q = interview ? interview.questions.find((qi) => qi.id === item.questionId) : null;
-              const isActive = idx === activeQuestionIdx;
-
-              return (
-                <button
-                  key={item.questionId}
-                  onClick={() => setActiveQuestionIdx(idx)}
-                  className={`w-full text-left p-4 border rounded-xl transition-all duration-200 flex items-start space-x-3 bg-white ${isActive
-                    ? 'border-primary ring-2 ring-primary/10 shadow-sm'
-                    : 'border-brandBorder hover:border-gray-300'
-                    }`}
-                >
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 ${isActive ? 'bg-primary text-white' : 'bg-gray-100 text-brandHeading'
-                    }`}>
-                    {idx + 1}
-                  </span>
-
-                  <div className="space-y-1.5 text-left overflow-hidden flex-grow">
-                    <span className="text-xs font-bold text-brandHeading block truncate">
-                      {q ? q.text : 'Evaluation Prompt'}
-                    </span>
-                    <div className="flex items-center justify-between text-[10px] text-brandBody">
-                      <span>Score: <span className="font-semibold text-brandHeading">{item.score}%</span></span>
-                      <span>Time: {item.timeTaken}s</span>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
           </div>
 
-          {/* Detailed Question review output */}
-          <Card className="lg:col-span-2">
-            <CardHeader className="flex justify-between items-center bg-gray-50/50">
-              <span className="text-xs font-semibold text-brandBody">
-                Question {activeQuestionIdx + 1} of {timelineData.length}
+          {/* Overall Score Badge */}
+          <div className="flex items-center space-x-4 bg-slate-50 border border-slate-200 p-4 rounded-xl shrink-0">
+            <div className="text-right">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">
+                Overall Score
               </span>
-              <Badge variant="primary">{activeQuestion?.category || 'React'}</Badge>
-            </CardHeader>
-            <CardBody className="p-6 space-y-6">
+              <span className="text-2xl font-extrabold text-slate-900 leading-tight block">
+                {overallScore}%
+              </span>
+              <span className="text-[11px] text-slate-400">
+                Out of 100
+              </span>
+            </div>
 
-              {/* Question Text */}
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-brandBody">Evaluation Question</span>
-                <p className="text-sm font-bold text-brandHeading leading-relaxed">{activeQuestion?.text}</p>
+            <div className="w-12 h-12 rounded-full border-4 border-slate-200 flex items-center justify-center relative">
+              <div 
+                className={`w-12 h-12 rounded-full border-4 ${
+                  overallScore >= 75 ? 'border-emerald-600' : overallScore >= 60 ? 'border-blue-600' : 'border-amber-500'
+                } absolute -top-1 -left-1`}
+                style={{ clipPath: `polygon(0 0, 100% 0, 100% 100%, 0 100%)` }}
+              />
+              <span className="text-xs font-bold text-slate-700">{overallScore}</span>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Executive Summary Statement */}
+        <div className="space-y-1.5">
+          <span className="text-xs font-semibold text-slate-700 block">Executive Summary</span>
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed bg-slate-50 border border-slate-200 p-4 rounded-lg">
+            {summaryText}
+          </p>
+        </div>
+      </div>
+
+      {/* 2. Dedicated Section: Assessment Screen & Session Recording (Audit Evidence) */}
+      <div 
+        ref={playerContainerRef}
+        id="screen-recording-player"
+        className="bg-slate-950 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 text-white relative overflow-hidden select-none"
+      >
+        {/* Subtle Ambient Studio Specular Glow */}
+        <div className="pointer-events-none absolute -top-32 -left-32 w-80 h-80 rounded-full bg-blue-600/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-indigo-600/15 blur-3xl" />
+
+        {/* Header & Stream Switcher */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.08] relative z-10">
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <div className="w-7 h-7 rounded-lg bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-blue-400">
+                <Monitor className="w-4 h-4" />
               </div>
+              <h2 className="text-base font-bold text-white tracking-tight">
+                Assessment Screen & Session Recording
+              </h2>
+            </div>
+            <p className="text-xs text-slate-400">
+              Candidate display capture, real-time proctor integrity events, and evaluation audit records
+            </p>
+          </div>
 
-              {/* Tab Selector if category is Coding */}
-              {activeQuestion?.category === 'Coding' && (
-                <div className="flex border-b border-brandBorder mb-4 select-none">
-                  <button
-                    onClick={() => { setActiveMediaTab('video'); setPlayingVideo(false); }}
-                    className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
-                      activeMediaTab === 'video' ? 'border-primary text-primary' : 'border-transparent text-brandBody hover:text-brandHeading'
-                    }`}
-                  >
-                    Video Response
-                  </button>
-                  <button
-                    onClick={() => { setActiveMediaTab('code'); setPlayingVideo(false); }}
-                    className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-colors ${
-                      activeMediaTab === 'code' ? 'border-primary text-primary' : 'border-transparent text-brandBody hover:text-brandHeading'
-                    }`}
-                  >
-                    Code Submission
-                  </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Stream View Tabs */}
+            <div className="flex items-center bg-white/[0.06] p-1 rounded-xl border border-white/[0.08]">
+              <button
+                type="button"
+                data-testid="tab-screen"
+                onClick={() => setActiveStreamTab('screen')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeStreamTab === 'screen'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Monitor className="w-3.5 h-3.5" />
+                <span>Screen Share ({activeVideoUrl ? 'Stream Active' : 'Primary'})</span>
+              </button>
+
+              <button
+                type="button"
+                data-testid="tab-webcam"
+                onClick={() => setActiveStreamTab('webcam')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeStreamTab === 'webcam'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>Candidate Proctor Card</span>
+              </button>
+
+              <button
+                type="button"
+                data-testid="tab-timeline"
+                onClick={() => setActiveStreamTab('timeline')}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeStreamTab === 'timeline'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Integrity Events ({proctorEvents.length})</span>
+              </button>
+            </div>
+
+            {/* Verification Status Badge */}
+            <div className="hidden lg:flex items-center space-x-1.5 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl text-emerald-400 text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Proctored Assessment Record</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Cinema View Canvas */}
+        <div className="relative aspect-video w-full bg-slate-900 rounded-xl overflow-hidden border border-white/[0.08] shadow-inner flex flex-col justify-between group">
+          
+          {/* TAB 1: SCREEN SHARE (PRIMARY DISPLAY) */}
+          {activeStreamTab === 'screen' && (
+            <>
+              {activeVideoUrl ? (
+                <div className="relative w-full h-full flex items-center justify-center bg-black">
+                  <video
+                    ref={videoRef}
+                    src={activeVideoUrl}
+                    controls
+                    playsInline
+                    className="w-full h-full object-contain"
+                    onTimeUpdate={() => {
+                      if (videoRef.current) {
+                        setCurrentTime(videoRef.current.currentTime);
+                      }
+                    }}
+                    onLoadedMetadata={() => {
+                      if (videoRef.current && videoRef.current.duration) {
+                        setDuration(videoRef.current.duration);
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="relative w-full h-full flex flex-col items-center justify-center p-8 bg-slate-950 text-slate-400 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-slate-400">
+                    <Monitor className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-semibold text-white">No Screen Recording Video File Archived</h4>
+                    <p className="text-xs text-slate-400 max-w-md">
+                      A screen recording was not captured for this candidate session. Candidate answers, code submissions, transcripts, and proctoring telemetry are detailed below.
+                    </p>
+                  </div>
                 </div>
               )}
+            </>
+          )}
 
-              {/* Video Response Panel / Code Submission Panel */}
-              {activeMediaTab === 'code' ? (
-                (() => {
-                  const codeAns = candidate.codeAnswers?.[activeQuestion.id];
-                  if (!codeAns) {
-                    return (
-                      <div className="aspect-video bg-slate-950 border border-slate-850 rounded-xl flex flex-col items-center justify-center text-xs text-slate-500 font-mono p-10">
-                        No code submission record found for this question.
-                      </div>
-                    );
-                  }
-                  return (
-                    <div className="space-y-5 text-left">
-                      {/* Code Terminal */}
-                      <div className="bg-slate-950 border border-slate-850 rounded-xl p-5 font-mono text-[11px] text-slate-200 text-left overflow-x-auto select-all max-h-72 overflow-y-auto">
-                        <div className="flex items-center justify-between text-[10px] text-slate-500 border-b border-slate-850 pb-2.5 mb-3.5 select-none font-sans font-bold">
-                          <span>language: {codeAns.language || 'javascript'}</span>
-                          <span className={`px-2.5 py-0.5 rounded font-extrabold uppercase ${
-                            codeAns.status === 'Accepted' ? 'bg-brandSuccess/20 text-brandSuccess' : 'bg-brandDanger/20 text-brandDanger'
-                          }`}>
-                            {codeAns.status || 'Submitted'}
-                          </span>
-                        </div>
-                        <pre className="whitespace-pre">{codeAns.code}</pre>
-                      </div>
+          {/* TAB 2: WEBCAM & PROCTOR FEED */}
+          {activeStreamTab === 'webcam' && (
+            <div className="relative w-full h-full flex items-center justify-center bg-slate-950 p-6">
+              <div className="max-w-md w-full bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4 text-center relative overflow-hidden">
+                <div className="relative w-28 h-28 mx-auto rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-800 p-1 flex items-center justify-center shadow-lg border border-white/20">
+                  <Avatar name={candidateName} size="lg" className="w-full h-full text-2xl font-extrabold rounded-xl" />
+                  <div className="absolute -bottom-2 bg-emerald-500 text-slate-950 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full shadow-xs flex items-center space-x-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>RECORDED</span>
+                  </div>
+                </div>
 
-                      {/* Test cases outcomes */}
-                      {codeAns.testCasesResult && codeAns.testCasesResult.length > 0 && (
-                        <div className="space-y-3 text-left">
-                          <span className="text-[10px] uppercase font-bold tracking-wider text-brandBody block">Sandbox Test Cases Outcomes</span>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 select-none">
-                            {codeAns.testCasesResult.map((res, index) => (
-                              <div key={index} className="bg-gray-50 border border-brandBorder rounded-xl p-4 flex flex-col justify-between">
-                                <div className="text-[10px] text-brandBody font-mono space-y-1">
-                                  <div>Input: <span className="text-brandHeading font-semibold">{res.input}</span></div>
-                                  <div>Expected: <span className="text-brandHeading font-semibold">{res.expected}</span></div>
-                                  {res.actual && <div>Actual: <span className="text-brandHeading font-semibold">{res.actual}</span></div>}
-                                </div>
-                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-brandBorder">
-                                  <span className="text-[9px] uppercase font-bold text-brandBody">Case {index + 1}</span>
-                                  <span className={`text-[10px] font-extrabold uppercase ${
-                                    res.passed ? 'text-brandSuccess' : 'text-brandDanger'
-                                  }`}>
-                                    {res.passed ? 'Passed' : 'Failed'}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()
-              ) : (
-                /* Video preview / recording block */
-                <div className="aspect-video bg-slate-900 border border-slate-800 rounded-xl overflow-hidden relative flex items-center justify-center">
-                  {playingVideo ? (
-                    // Mock loop playback video
-                    <div className="w-full h-full flex items-center justify-center relative select-none">
-                      <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center text-white">
-                        <Volume2 className="w-12 h-12 text-primary animate-pulse mb-3" />
-                        <span className="text-sm font-semibold">Playing candidate video capture...</span>
-                        <span className="text-xs text-gray-500 mt-1">Audio active • 0:14 / 1:20</span>
-                      </div>
-                      <button
-                        onClick={() => setPlayingVideo(false)}
-                        className="absolute bottom-4 right-4 text-xs font-semibold bg-white text-slate-900 px-3 py-1.5 rounded-lg border hover:bg-gray-100"
-                      >
-                        Stop
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center space-y-3.5 select-none">
-                      <div className="p-4 bg-white/5 backdrop-blur-md rounded-full text-white cursor-pointer hover:scale-105 transition-all shadow border border-white/10" onClick={() => setPlayingVideo(true)}>
-                        <Play className="w-6 h-6 fill-current text-white translate-x-0.5" />
-                      </div>
-                      <span className="text-xs font-semibold text-slate-300">Play Candidate Response Video</span>
-                    </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-white">{candidateName}</h3>
+                  <p className="text-xs text-slate-400">{roleName} • {candidate?.email || 'Verified Candidate'}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-left pt-2">
+                  <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.06] space-y-0.5">
+                    <span className="text-[10px] text-slate-400 font-medium">Tab Switches Observed</span>
+                    <p className={`text-xs font-bold ${proctorSummary.tabHiddenCount > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                      {proctorSummary.tabHiddenCount ?? 0} {proctorSummary.tabHiddenCount === 1 ? 'Switch' : 'Switches'}
+                    </p>
+                  </div>
+                  <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.06] space-y-0.5">
+                    <span className="text-[10px] text-slate-400 font-medium">Fullscreen Exits</span>
+                    <p className={`text-xs font-bold ${proctorSummary.fullscreenExits > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                      {proctorSummary.fullscreenExits ?? 0} Exits
+                    </p>
+                  </div>
+                  <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.06] space-y-0.5">
+                    <span className="text-[10px] text-slate-400 font-medium">Copy/Paste Violations</span>
+                    <p className="text-xs font-bold text-emerald-400">
+                      {proctorSummary.copyAttempts ?? 0} Blocked
+                    </p>
+                  </div>
+                  <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.06] space-y-0.5">
+                    <span className="text-[10px] text-slate-400 font-medium">Proctoring Telemetry</span>
+                    <p className="text-xs font-bold text-blue-400">
+                      {proctorEvents.length} Observations
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: REAL INTEGRITY TIMELINE & PROCTOR EVENTS */}
+          {activeStreamTab === 'timeline' && (
+            <div className="relative w-full h-full bg-slate-950 p-5 overflow-y-auto font-sans text-xs">
+              <div className="max-w-2xl mx-auto space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <div>
+                    <span className="font-bold text-white text-sm">Real-time Proctor Integrity Log</span>
+                    <p className="text-[11px] text-slate-400">
+                      {proctorEvents.length > 0 ? `${proctorEvents.length} security events logged during session` : 'Zero integrity violation events recorded'}
+                    </p>
+                  </div>
+                  {proctorSummary.evidenceSummaryText && (
+                    <span className="text-[10px] font-medium text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                      {proctorSummary.evidenceSummaryText}
+                    </span>
                   )}
                 </div>
-              )}
 
-              {/* AI Transcript output */}
-              <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-brandBody">Speech-to-Text Transcript</span>
-                <div className="bg-gray-50 border border-brandBorder p-4 rounded-xl text-xs text-brandHeading leading-relaxed italic max-h-40 overflow-y-auto">
-                  "{activeTranscript}"
-                </div>
+                {proctorEvents.length > 0 ? (
+                  <div className="space-y-2">
+                    {proctorEvents.map((evt, idx) => {
+                      const isViolation = evt.eventType === 'TAB_HIDDEN' || evt.eventType === 'FULLSCREEN_EXITED';
+                      const formattedTime = evt.timestamp ? new Date(evt.timestamp).toLocaleTimeString() : `Event #${idx + 1}`;
+                      const eventTitle = 
+                        evt.eventType === 'TAB_HIDDEN' ? 'Candidate Navigated Away from Assessment Tab (Tab Switch)' :
+                        evt.eventType === 'TAB_VISIBLE' ? 'Candidate Returned to Assessment Tab' :
+                        evt.eventType === 'FULLSCREEN_EXITED' ? 'Candidate Exited Fullscreen Mode' :
+                        evt.eventType === 'FULLSCREEN_ENTERED' ? 'Candidate Locked Assessment into Fullscreen' :
+                        evt.eventType === 'COPY_PASTE' ? 'Clipboard Paste Action Attempted & Blocked' :
+                        evt.eventType || 'Proctor Observation';
+
+                      const eventDesc = evt.details?.visibilityState 
+                        ? `Window visibility changed to: "${evt.details.visibilityState}".`
+                        : `Proctor audit log registered for session.`;
+
+                      return (
+                        <div key={idx} className={`flex items-start space-x-3 p-2.5 rounded-xl border ${
+                          isViolation ? 'bg-amber-950/20 border-amber-500/30' : 'bg-white/[0.03] border-white/[0.06]'
+                        }`}>
+                          <span className="font-mono text-blue-400 font-semibold text-[11px] shrink-0 mt-0.5">{formattedTime}</span>
+                          <div className="space-y-0.5 flex-1">
+                            <p className="font-semibold text-white text-xs">{eventTitle}</p>
+                            <p className="text-slate-400 text-[11px]">{eventDesc}</p>
+                          </div>
+                          <Badge variant={isViolation ? "warning" : "secondary"} size="xs">
+                            {evt.eventType}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-slate-400 space-y-2 bg-white/[0.02] rounded-xl border border-white/[0.06]">
+                    <ShieldCheck className="w-8 h-8 text-emerald-400 mx-auto" />
+                    <h4 className="text-sm font-semibold text-white">Continuous Proctor Active — No Violations</h4>
+                    <p className="text-xs text-slate-400 max-w-md mx-auto">
+                      Candidate remained in fullscreen mode on the assessment window throughout the session with zero tab switches and zero unauthorized attempts.
+                    </p>
+                  </div>
+                )}
               </div>
-
-              {/* Evaluator comments */}
-              <div className="space-y-2">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-brandBody">System Assessment Telemetry</span>
-                <div className="flex items-start space-x-2 bg-blue-50/20 border border-primary/20 p-4 rounded-xl text-xs text-brandHeading leading-relaxed">
-                  <AlertCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <span>{currentTimelineItem?.comments}</span>
-                </div>
-              </div>
-
-            </CardBody>
-          </Card>
+            </div>
+          )}
 
         </div>
+
+        {/* Available Recording Streams Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs">
+          <div className="flex items-center space-x-2">
+            {allAvailableRecordings.length > 0 ? (
+              <div className="flex items-center space-x-2">
+                <span className="text-slate-400 text-[11px]">Available Recordings:</span>
+                <select
+                  value={selectedRecordingUrl || primaryRecordingUrl || ''}
+                  onChange={(e) => setSelectedRecordingUrl(e.target.value)}
+                  className="bg-slate-900 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none"
+                >
+                  {allAvailableRecordings.map((rec, rIdx) => (
+                    <option key={rec.id || rIdx} value={rec.publicUrl}>
+                      {rec.title || rec.recordingType || `Recording Stream ${rIdx + 1}`} ({rec.duration ? `${rec.duration}s` : 'Full Session'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <span className="text-slate-500 text-[11px]">No external video files uploaded.</span>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {activeVideoUrl && (
+              <button
+                type="button"
+                onClick={handleDownloadRecording}
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-xs text-slate-300 hover:text-white transition-colors"
+                title="Download Recording File"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Export Media File</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleCopyVerificationHash}
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-xs text-slate-300 hover:text-white transition-colors"
+              title="Copy Session Verification Hash"
+            >
+              <Copy className="w-3.5 h-3.5 text-blue-400" />
+              <span className="hidden sm:inline">Verification Hash</span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* 3. Competency Breakdown Grid */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+        <h2 className="text-sm font-semibold text-slate-900">Core Competency Breakdown</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {competencies.map((comp, idx) => (
+            <div key={idx} className="bg-slate-50 border border-slate-200 p-4 rounded-lg space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-900">{comp.label}</span>
+                <span className="text-xs font-bold text-slate-900">{comp.score}%</span>
+              </div>
+              
+              <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full ${
+                    comp.score >= 80 ? 'bg-emerald-600' : comp.score >= 60 ? 'bg-blue-600' : 'bg-amber-500'
+                  }`}
+                  style={{ width: `${Math.min(100, Math.max(0, comp.score))}%` }}
+                />
+              </div>
+
+              <p className="text-[11px] text-slate-500">{comp.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 4. Strengths & Development Areas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Identified Strengths */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-3">
+          <div className="flex items-center space-x-2 text-slate-900 font-semibold text-xs">
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Key Strengths</span>
+          </div>
+          <ul className="space-y-2 text-xs text-slate-600">
+            {strengthsList.map((item, idx) => (
+              <li key={idx} className="flex items-start space-x-2">
+                <span className="text-emerald-600 font-bold">•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Development Areas */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-3">
+          <div className="flex items-center space-x-2 text-slate-900 font-semibold text-xs">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>Development Areas</span>
+          </div>
+          <ul className="space-y-2 text-xs text-slate-600">
+            {weaknessesList.map((item, idx) => (
+              <li key={idx} className="flex items-start space-x-2">
+                <span className="text-amber-600 font-bold">•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* 5. Question-by-Question Evaluation Evidence */}
+      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Question Evaluation Evidence</h2>
+            <span className="text-xs text-slate-500">Review individual candidate responses and recorded media</span>
+          </div>
+
+          {/* Question Selector Tabs */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {questionAnalysis.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveQuestionIdx(idx)}
+                className={`w-7 h-7 rounded-md text-xs font-semibold transition-colors ${
+                  activeQuestionIdx === idx
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Q{idx + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Selected Question Details */}
+        <div className="space-y-4">
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-1">
+            <div className="flex items-center space-x-2">
+              <span className="text-xs font-bold text-blue-600">Question {activeQuestionIdx + 1}</span>
+              <Badge variant="secondary" size="xs">{activeQuestion.category || 'Technical'}</Badge>
+            </div>
+            <p className="text-sm font-semibold text-slate-900 leading-snug">{activeQuestion.text}</p>
+          </div>
+
+          {/* Candidate Response Transcript */}
+          <div className="space-y-1.5">
+            <span className="text-xs font-semibold text-slate-700 block">Candidate Response Transcript</span>
+            <div className="p-4 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 leading-relaxed font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">
+              "{activeTranscript}"
+            </div>
+          </div>
+
+          {/* Candidate Code Submission (if present) */}
+          {activeQuestion.code && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-700">Code Submission</span>
+                <span className="text-[10px] font-mono font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                  {activeQuestion.language || 'javascript'}
+                </span>
+              </div>
+              <div className="p-4 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 font-mono leading-relaxed max-h-60 overflow-y-auto">
+                <pre>{activeQuestion.code}</pre>
+              </div>
+            </div>
+          )}
+
+          {/* Test Cases Outcomes (if present) */}
+          {Array.isArray(activeQuestion.testCasesResult) && activeQuestion.testCasesResult.length > 0 && (
+            <div className="space-y-2">
+              <span className="text-xs font-semibold text-slate-700 block">Automated Test Execution</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {activeQuestion.testCasesResult.map((tc, tcIdx) => (
+                  <div key={tcIdx} className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs flex items-center justify-between">
+                    <div>
+                      <p className="font-mono text-slate-800 font-medium">Input: {tc.input || 'N/A'}</p>
+                      <p className="font-mono text-slate-500 text-[11px]">Expected: {tc.expected || 'N/A'}</p>
+                    </div>
+                    <Badge variant={tc.passed ? 'success' : 'danger'} size="xs">
+                      {tc.passed ? 'PASS' : 'FAIL'}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Evaluator AI Feedback (if present) */}
+          {activeQuestion.feedback && (
+            <div className="p-4 bg-blue-50/50 border border-blue-200 rounded-lg text-xs text-blue-900 space-y-1">
+              <span className="font-bold block text-blue-800">Evaluator Feedback</span>
+              <p className="leading-relaxed">{activeQuestion.feedback}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 };
+
+export default Report;

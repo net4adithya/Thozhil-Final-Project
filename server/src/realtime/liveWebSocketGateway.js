@@ -77,8 +77,23 @@ export const initLiveWebSocket = (server) => {
     });
 
     ws.on('message', async (rawMessage) => {
+      if (!rawMessage) return;
+      const str = typeof rawMessage === 'string' ? rawMessage.trim() : rawMessage.toString().trim();
+      if (!str || str === 'ping' || str === 'pong' || str === '{"type":"ping"}') return;
+      if (!str.startsWith('{') || !str.endsWith('}')) {
+        // Binary audio frame or non-JSON WebSocket frame, ignore safely
+        return;
+      }
+
+      let payload;
       try {
-        const payload = JSON.parse(rawMessage.toString());
+        payload = JSON.parse(str);
+      } catch (parseErr) {
+        console.warn('[LiveGateway] Safely ignored non-JSON WebSocket frame:', parseErr.message);
+        return;
+      }
+
+      try {
         const { event, sessionId, eventId, data = {} } = payload;
 
         if (!event) {
@@ -110,6 +125,7 @@ export const initLiveWebSocket = (server) => {
                 candidateName: session.candidateName,
                 roleTitle: session.roleTitle,
                 introPhrase: session.introPhrase,
+                language: session.language,
                 totalQuestions: session.totalQuestions,
                 currentQuestionIndex: session.currentQuestionIndex,
                 currentQuestion: session.currentQuestion,
@@ -159,10 +175,10 @@ export const initLiveWebSocket = (server) => {
             const session = liveSessionManager.getSession(activeSessionId);
             if (!session) return;
 
-            if (phraseType === 'intro') {
-              // Transition from intro to asking first question
+            if (phraseType === 'intro' || phraseType === 'introduction') {
               const firstQ = session.questions[0] || session.currentQuestion;
-              const questionPhrase = `Question 1: ${firstQ.text}`;
+              const isTamil = session.language?.code === 'ta-IN';
+              const questionPhrase = isTamil ? `கேள்வி 1: ${firstQ.text}` : `Question 1: ${firstQ.text}`;
               
               liveSessionManager.transitionState(activeSessionId, SESSION_STATES.AI_SPEAKING);
               
@@ -218,6 +234,9 @@ export const initLiveWebSocket = (server) => {
                 questionId: data.questionId,
                 transcript: data.transcript,
                 answerText: data.answerText,
+                code: data.code || null,
+                language: data.language || null,
+                testResults: data.testResults || null,
                 duration: data.duration || 60
               });
 

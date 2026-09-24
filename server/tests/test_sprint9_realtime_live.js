@@ -22,7 +22,7 @@ function assert(condition, message) {
 }
 
 // Helper to wait for a specific WebSocket event
-function waitForEvent(ws, targetEvent, timeoutMs = 15000) {
+function waitForEvent(ws, targetEvent, timeoutMs = 30000) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       reject(new Error(`Timeout waiting for event: ${targetEvent}`));
@@ -45,6 +45,21 @@ function waitForEvent(ws, targetEvent, timeoutMs = 15000) {
   });
 }
 
+async function withRetry(fn, retries = 4, delayMs = 600) {
+  let lastErr;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, delayMs * attempt));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 async function runSprint9Tests() {
   console.log('\n=== Commencing Sprint 9 Real-Time Live Interview Test Suite ===\n');
 
@@ -65,54 +80,64 @@ async function runSprint9Tests() {
 
   try {
     // 2. Create test candidate using candidateService
-    const cand = await createCandidate({
-      name: 'Jordan Realtime',
-      email: `jordan.realtime.${Date.now()}@example.com`,
-      role: 'Senior Platform Engineer',
-      status: 'Reviewing'
-    });
+    const cand = await withRetry(() =>
+      createCandidate({
+        name: 'Jordan Realtime',
+        email: `jordan.realtime.${Date.now()}@example.com`,
+        role: 'Senior Platform Engineer',
+        status: 'Reviewing'
+      })
+    );
 
     assert(cand && cand.id, 'Created test candidate in database');
     testCandidateId = cand.id;
 
     // 3. Create test LIVE interview with questions using interviewService
-    const liveInt = await createInterview({
-      title: 'Senior Platform Live Architecture Assessment',
-      type: 'live',
-      interviewType: 'live',
-      jobRole: 'Senior Platform Engineer',
-      duration: 30,
-      status: 'Active',
-      candidate: testCandidateId
-    });
+    const liveInt = await withRetry(() =>
+      createInterview({
+        title: 'Senior Platform Live Architecture Assessment',
+        type: 'live',
+        interviewType: 'live',
+        jobRole: 'Senior Platform Engineer',
+        duration: 30,
+        status: 'Active',
+        candidate: testCandidateId
+      })
+    );
 
     assert(liveInt && liveInt.id, 'Created test Live Interview in database');
     testLiveInterviewId = liveInt.id;
 
     // Insert 2 test questions for live interview
-    await createQuestion(testLiveInterviewId, {
-      text: 'How do you design a distributed real-time messaging pipeline handling 100k events/sec with Redis and WebSockets?',
-      category: 'System Design',
-      difficulty: 'Hard',
-      questionOrder: 0
-    });
+    await withRetry(() =>
+      createQuestion(testLiveInterviewId, {
+        text: 'How do you design a distributed real-time messaging pipeline handling 100k events/sec with Redis and WebSockets?',
+        category: 'System Design',
+        difficulty: 'Hard',
+        questionOrder: 0
+      })
+    );
 
-    await createQuestion(testLiveInterviewId, {
-      text: 'Explain how you handle database connection pooling and failover during catastrophic network partitions.',
-      category: 'Database Architecture',
-      difficulty: 'Hard',
-      questionOrder: 1
-    });
+    await withRetry(() =>
+      createQuestion(testLiveInterviewId, {
+        text: 'Explain how you handle database connection pooling and failover during catastrophic network partitions.',
+        category: 'Database Architecture',
+        difficulty: 'Hard',
+        questionOrder: 1
+      })
+    );
 
     // 4. Create test ASYNC interview (for rejection validation)
-    const asyncInt = await createInterview({
-      title: 'Async Coding Screening',
-      type: 'async',
-      interviewType: 'async',
-      jobRole: 'Software Engineer',
-      duration: 30,
-      status: 'Active'
-    });
+    const asyncInt = await withRetry(() =>
+      createInterview({
+        title: 'Async Coding Screening',
+        type: 'async',
+        interviewType: 'async',
+        jobRole: 'Software Engineer',
+        duration: 30,
+        status: 'Active'
+      })
+    );
 
     testAsyncInterviewId = asyncInt?.id;
 

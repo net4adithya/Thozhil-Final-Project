@@ -1,10 +1,19 @@
 import apiClient from './apiClient';
-import { mockApi } from './mockApi';
+import { ASSESSMENT_TEMPLATES, getTemplateById as findTemplateById } from '../config/templates';
+
+const DEFAULT_SETTINGS = {
+  companyName: 'InterviewX AI Enterprise',
+  recruiterName: 'Recruiter Admin',
+  recruiterEmail: 'recruiter@interviewx.local',
+  apiKey: 'ix_live_sec_prod_9941a80c98f8430a',
+  cameraSelected: 'default-cam',
+  micSelected: 'default-mic'
+};
 
 export const interviewService = {
-  // Fetch all assessment tracks from Express REST API -> Supabase
-  getInterviews: async () => {
-    const response = await apiClient.get('/interviews');
+  // Fetch assessment tracks from Express REST API -> Supabase (optionally filtered by candidateId, status, etc.)
+  getInterviews: async (params = {}) => {
+    const response = await apiClient.get('/interviews', { params });
     return response.data?.data || [];
   },
 
@@ -105,7 +114,7 @@ export const interviewService = {
   uploadRecording: async (interviewId, formData) => {
     const response = await apiClient.post(`/interviews/${interviewId}/recordings`, formData, {
       headers: {
-        'Content-Type': undefined // Let browser/Axios set boundary
+        'Content-Type': undefined
       }
     });
     return response.data?.data;
@@ -126,13 +135,49 @@ export const interviewService = {
     return response.data?.data;
   },
 
-  // Templates, settings, question bank preserved in mockApi for subsequent sprints
-  getTemplates: () => mockApi.getTemplates(),
-  getTemplateById: (id) => mockApi.getTemplateById(id),
-  createTemplate: (data) => mockApi.createTemplate(data),
-  getSettings: () => mockApi.getSettings(),
-  updateSettings: (data) => mockApi.updateSettings(data),
-  addQuestion: (data) => mockApi.addQuestion(data),
+  // Templates
+  getTemplates: async () => {
+    return ASSESSMENT_TEMPLATES;
+  },
+
+  getTemplateById: async (id) => {
+    return findTemplateById(id);
+  },
+
+  createTemplate: async (data) => {
+    const newTpl = {
+      ...data,
+      id: `tpl-${Date.now()}`
+    };
+    return newTpl;
+  },
+
+  // Workspace Settings
+  getSettings: async () => {
+    try {
+      const stored = localStorage.getItem('interviewx_workspace_settings');
+      return stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
+    } catch {
+      return DEFAULT_SETTINGS;
+    }
+  },
+
+  updateSettings: async (data) => {
+    try {
+      const current = await interviewService.getSettings();
+      const merged = { ...current, ...data };
+      localStorage.setItem('interviewx_workspace_settings', JSON.stringify(merged));
+      return merged;
+    } catch {
+      return data;
+    }
+  },
+
+  addQuestion: async (interviewId, data) => {
+    if (!interviewId) throw new Error('Interview ID required');
+    const response = await apiClient.post(`/interviews/${interviewId}/questions`, data);
+    return response.data?.data;
+  }
 };
 
 export default interviewService;

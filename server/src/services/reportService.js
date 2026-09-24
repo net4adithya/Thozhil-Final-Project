@@ -97,14 +97,31 @@ export const getReportByIdOrInterviewId = async (id) => {
   if (error && error.code !== '22P02') throw error;
 
   if (!data) {
-    const { data: fallbackData, error: fallbackError } = await supabase
+    const { data: fallbackList, error: fallbackError } = await supabase
       .from('reports')
       .select('*, candidates(*), interviews(*)')
       .eq('interview_id', id)
-      .maybeSingle();
+      .order('generated_at', { ascending: false })
+      .limit(1);
 
-    if (fallbackError) throw fallbackError;
-    data = fallbackData;
+    if (fallbackError && fallbackError.code !== '22P02') throw fallbackError;
+    if (fallbackList && fallbackList.length > 0) {
+      data = fallbackList[0];
+    }
+  }
+
+  if (!data) {
+    const { data: candList, error: candError } = await supabase
+      .from('reports')
+      .select('*, candidates(*), interviews(*)')
+      .eq('candidate_id', id)
+      .order('generated_at', { ascending: false })
+      .limit(1);
+
+    if (candError && candError.code !== '22P02') throw candError;
+    if (candList && candList.length > 0) {
+      data = candList[0];
+    }
   }
 
   if (!data) {
@@ -115,6 +132,24 @@ export const getReportByIdOrInterviewId = async (id) => {
 };
 
 export const getReportByInterviewId = getReportByIdOrInterviewId;
+
+export const getReports = async (filter = {}) => {
+  let query = supabase
+    .from('reports')
+    .select('*, candidates(*), interviews(*)');
+
+  if (filter.interviewId) {
+    query = query.eq('interview_id', filter.interviewId);
+  }
+  if (filter.candidateId) {
+    query = query.eq('candidate_id', filter.candidateId);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return (data || []).map(mapDbToReport);
+};
 
 export const getAnalytics = async () => {
   // Query all candidates

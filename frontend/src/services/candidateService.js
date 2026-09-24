@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import { mockApi } from './mockApi';
+import answerService from './answerService';
 
 export const candidateService = {
   // Fetch all candidates from Express REST API -> Supabase
@@ -51,9 +51,10 @@ export const candidateService = {
     return response.data?.data;
   },
 
-  // Candidate answer submission fallback for mock interview flows
-  submitCandidateAnswers: (candidateId, answers, codeAnswers) =>
-    mockApi.submitCandidateInterviewAnswers(candidateId, answers, codeAnswers)
+  // Candidate answer submission via real answerService
+  submitCandidateAnswers: async (interviewId, candidateId, answers, codeAnswers) => {
+    return await answerService.submitAllAnswers(interviewId, candidateId, answers, codeAnswers);
+  }
 };
 
 export default candidateService;

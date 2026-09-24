@@ -58,7 +58,30 @@ export const extractTextFromBuffer = async (buffer, fileType = '', originalName 
       const pdfData = await pdfParse(buffer);
       rawText = pdfData?.text || '';
     } catch (err) {
-      throw new ApiError(400, `Corrupt or invalid PDF document: ${err.message}`);
+      // Fallback for PDFs with non-standard syntax, unescaped parens, or bad xref tables
+      try {
+        const rawStr = buffer.toString('binary');
+        // Extract text in BT ... ET blocks with Tj/TJ operator
+        const tjMatches = [...rawStr.matchAll(/\(([^)]+)\)\s*T[jJ]/g)].map(m => m[1].replace(/\\([\\()])/g, '$1'));
+        if (tjMatches.length > 0) {
+          rawText = tjMatches.join(' ');
+        } else {
+          // General printable ASCII chunks from streams
+          const textStreams = rawStr.match(/stream[\r\n]+([\s\S]*?)[\r\n]+endstream/g) || [];
+          const extractedWords = [];
+          textStreams.forEach(stream => {
+            const matches = stream.match(/[A-Za-z0-9,.:;@/\-\(\)\s]{4,}/g) || [];
+            extractedWords.push(...matches);
+          });
+          if (extractedWords.length > 0) {
+            rawText = extractedWords.join(' ');
+          } else {
+            throw err;
+          }
+        }
+      } catch (fallbackErr) {
+        throw new ApiError(400, `Corrupt or invalid PDF document: ${err.message}`);
+      }
     }
   } else if (isDocx) {
     format = 'DOCX';

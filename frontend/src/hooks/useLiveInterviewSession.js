@@ -37,6 +37,7 @@ export const useLiveInterviewSession = ({
   const [isFollowUp, setIsFollowUp] = useState(false);
   const [followUpCount, setFollowUpCount] = useState(0);
   const [currentAiPhrase, setCurrentAiPhrase] = useState('');
+  const [currentPhraseType, setCurrentPhraseType] = useState('intro');
   const [transcripts, setTranscripts] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
@@ -48,14 +49,57 @@ export const useLiveInterviewSession = ({
   const pingIntervalRef = useRef(null);
   const isManuallyClosedRef = useRef(false);
 
+  // Keep latest callback references to prevent stale closures and unnecessary reconnects
+  const onAiSpeakingRef = useRef(onAiSpeaking);
+  const onCandidateTurnRef = useRef(onCandidateTurn);
+  const onCompletedRef = useRef(onCompleted);
+  const onErrorRef = useRef(onError);
+
+  useEffect(() => {
+    onAiSpeakingRef.current = onAiSpeaking;
+    onCandidateTurnRef.current = onCandidateTurn;
+    onCompletedRef.current = onCompleted;
+    onErrorRef.current = onError;
+  }, [onAiSpeaking, onCandidateTurn, onCompleted, onError]);
+
   // Derive WebSocket URL
   const getWebSocketUrl = useCallback(() => {
+    // 1. Explicit WebSocket URL from environment
+    if (import.meta.env.VITE_WS_URL) {
+      return import.meta.env.VITE_WS_URL;
+    }
+    // 2. Derive from REST API URL if configured
+    if (import.meta.env.VITE_API_URL) {
+      try {
+        const apiUrl = new URL(import.meta.env.VITE_API_URL);
+        const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+        return `${wsProtocol}//${apiUrl.host}/ws/live`;
+      } catch (e) {
+        console.warn('[useLiveInterview] Failed to parse VITE_API_URL for WebSocket derivation:', e.message);
+      }
+    }
+    // 3. Fallback based on browser window location
     const isHttps = window.location.protocol === 'https:';
     const wsProtocol = isHttps ? 'wss:' : 'ws:';
     const host = window.location.hostname || 'localhost';
-    // Server is on port 5001 in dev
-    const port = window.location.port === '5173' || window.location.port === '3000' ? '5001' : window.location.port || '5001';
+    // Backend default port is 5000
+    const port = window.location.port === '5173' || window.location.port === '3000' ? '5000' : (window.location.port || '5000');
     return `${wsProtocol}//${host}:${port}/ws/live`;
+  }, []);
+
+  // Helper to derive scoped session storage key
+  const getSessionKey = useCallback(() => {
+    if (interviewId && candidateId) return `interviewx_live_session_${interviewId}_${candidateId}`;
+    if (candidateId) return `interviewx_live_session_cand_${candidateId}`;
+    if (interviewId) return `interviewx_live_session_int_${interviewId}`;
+    return null;
+  }, [interviewId, candidateId]);
+
+  // Clean legacy unscoped keys
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem('interviewx_live_session_id');
+    } catch (e) {}
   }, []);
 
   /**
@@ -67,9 +111,12 @@ export const useLiveInterviewSession = ({
       return false;
     }
 
+    const key = getSessionKey();
+    const storedId = key ? sessionStorage.getItem(key) : null;
+
     const envelope = {
       event: eventName,
-      sessionId: sessionId || sessionStorage.getItem('interviewx_live_session_id'),
+      sessionId: sessionId || storedId || undefined,
       eventId: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       timestamp: new Date().toISOString(),
       data
@@ -77,7 +124,7 @@ export const useLiveInterviewSession = ({
 
     socketRef.current.send(JSON.stringify(envelope));
     return true;
-  }, [sessionId]);
+  }, [sessionId, getSessionKey]);
 
   /**
    * Disconnect socket cleanly
@@ -131,7 +178,8 @@ export const useLiveInterviewSession = ({
         }, 20000);
 
         // Check if reconnecting existing session or initializing fresh
-        const storedSessionId = sessionId || sessionStorage.getItem('interviewx_live_session_id');
+        const key = getSessionKey();
+        const storedSessionId = sessionId || (key ? sessionStorage.getItem(key) : null);
         if (isReconnecting && storedSessionId && interviewId) {
           sendEvent('session:reconnect', {
             sessionId: storedSessionId,
@@ -160,7 +208,10 @@ export const useLiveInterviewSession = ({
 
             case 'session:initialized': {
               setSessionId(data.sessionId);
-              sessionStorage.setItem('interviewx_live_session_id', data.sessionId);
+              const key = getSessionKey();
+              if (key && data.sessionId) {
+                sessionStorage.setItem(key, data.sessionId);
+              }
               setSessionState(data.state || LIVE_STATES.CONNECTED);
               setCurrentQuestion(data.currentQuestion);
               setCurrentQuestionIndex(data.currentQuestionIndex || 0);
@@ -179,6 +230,7 @@ export const useLiveInterviewSession = ({
             case 'ai:speaking': {
               setSessionState(LIVE_STATES.AI_SPEAKING);
               setCurrentAiPhrase(data.phrase);
+              if (data.phraseType) setCurrentPhraseType(data.phraseType);
               if (data.question) setCurrentQuestion(data.question);
               if (data.questionIndex !== undefined) setCurrentQuestionIndex(data.questionIndex);
               if (data.isFollowUp !== undefined) setIsFollowUp(data.isFollowUp);
@@ -186,11 +238,11 @@ export const useLiveInterviewSession = ({
               const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
               setTranscripts((prev) => [
                 ...prev,
-                { speaker: 'Ava (AI Interviewer)', text: data.phrase, timestamp, phraseType: data.phraseType }
+                { speaker: 'Evaluator (Assessment Guide)', text: data.phrase, timestamp, phraseType: data.phraseType }
               ]);
 
-              if (onAiSpeaking) {
-                onAiSpeaking(data);
+              if (onAiSpeakingRef.current) {
+                onAiSpeakingRef.current(data);
               }
               break;
             }
@@ -202,8 +254,8 @@ export const useLiveInterviewSession = ({
               if (data.isFollowUp !== undefined) setIsFollowUp(data.isFollowUp);
               if (data.followUpCount !== undefined) setFollowUpCount(data.followUpCount);
 
-              if (onCandidateTurn) {
-                onCandidateTurn(data);
+              if (onCandidateTurnRef.current) {
+                onCandidateTurnRef.current(data);
               }
               break;
             }
@@ -219,10 +271,14 @@ export const useLiveInterviewSession = ({
               setSessionState(LIVE_STATES.COMPLETED);
               setIsCompleted(true);
               if (data.report) setReport(data.report);
+              const key = getSessionKey();
+              if (key) {
+                sessionStorage.removeItem(key);
+              }
               sessionStorage.removeItem('interviewx_live_session_id');
 
-              if (onCompleted) {
-                onCompleted(data);
+              if (onCompletedRef.current) {
+                onCompletedRef.current(data);
               }
               break;
             }
@@ -239,7 +295,7 @@ export const useLiveInterviewSession = ({
               // Restore transcripts from conversation history
               if (Array.isArray(data.conversationHistory)) {
                 const restoredTranscripts = data.conversationHistory.map((item) => ({
-                  speaker: item.role === 'ai' ? 'Ava (AI Interviewer)' : 'You (Candidate)',
+                  speaker: item.role === 'ai' ? 'Evaluator (Assessment Guide)' : 'You (Candidate)',
                   text: item.text,
                   timestamp: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
                 }));
@@ -253,12 +309,14 @@ export const useLiveInterviewSession = ({
               break;
 
             case 'session:error':
-              console.error('[useLiveInterview] Server session error:', data.message);
-              setErrorMessage(data.message || 'An error occurred in the live interview session');
+              console.warn('[useLiveInterview] Server session error:', data.message);
+              if (data.code !== 'MALFORMED_JSON' && sessionState !== LIVE_STATES.COMPLETED) {
+                setErrorMessage(data.message || 'An error occurred in the live interview session');
+              }
               if (data.fatal) {
                 setSessionState(LIVE_STATES.ERROR);
               }
-              if (onError) onError(data);
+              if (onErrorRef.current) onErrorRef.current(data);
               break;
 
             default:
@@ -303,7 +361,7 @@ export const useLiveInterviewSession = ({
       setConnectionStatus('error');
       setErrorMessage(`Failed to establish real-time connection: ${err.message}`);
     }
-  }, [getWebSocketUrl, sessionId, interviewId, candidateId, sendEvent, sessionState, onAiSpeaking, onCandidateTurn, onCompleted, onError]);
+  }, [getWebSocketUrl, sessionId, interviewId, candidateId, sendEvent, sessionState]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -320,25 +378,35 @@ export const useLiveInterviewSession = ({
   }, [sendEvent]);
 
   /**
-   * Candidate submits answer transcript
+   * Candidate submits answer transcript or code solution
    */
-  const submitAnswer = useCallback(({ questionId, transcript, answerText, duration = 60 }) => {
-    const rawAnswer = (transcript || answerText || '').trim();
-    if (!rawAnswer) return false;
+  const submitAnswer = useCallback(({ questionId, transcript, answerText, code, language, testResults, duration = 60 }) => {
+    let rawAnswer = (transcript || answerText || '').trim();
+    if (!rawAnswer && code) {
+      rawAnswer = `Candidate submitted code solution in ${language || 'javascript'}`;
+    }
+    if (!rawAnswer && !code) return false;
 
     setSessionState(LIVE_STATES.PROCESSING);
     
     // Append candidate message to transcript locally
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const displayMessage = code 
+      ? `${rawAnswer ? rawAnswer + '\n\n' : ''}💻 [Submitted ${language || 'Code'} Solution]:\n\`\`\`${language || 'javascript'}\n${code}\n\`\`\``
+      : rawAnswer;
+
     setTranscripts((prev) => [
       ...prev,
-      { speaker: 'You (Candidate)', text: rawAnswer, timestamp }
+      { speaker: 'You (Candidate)', text: displayMessage, timestamp, isCode: !!code, language }
     ]);
 
     return sendEvent('candidate:submit_answer', {
       questionId: questionId || currentQuestion?.id,
       transcript: rawAnswer,
       answerText: rawAnswer,
+      code: code || null,
+      language: language || null,
+      testResults: testResults || null,
       duration
     });
   }, [sendEvent, currentQuestion]);
@@ -351,11 +419,18 @@ export const useLiveInterviewSession = ({
   }, [sendEvent]);
 
   /**
-   * Manual reconnect trigger
+   * Manual reconnect / retry trigger
    */
   const retryConnection = useCallback(() => {
+    setErrorMessage('');
     reconnectAttemptsRef.current = 0;
-    connect(true);
+    if (socketRef.current) {
+      try {
+        socketRef.current.close(1000, 'Reconnecting');
+      } catch (e) {}
+      socketRef.current = null;
+    }
+    connect(false);
   }, [connect]);
 
   return {
@@ -368,6 +443,7 @@ export const useLiveInterviewSession = ({
     isFollowUp,
     followUpCount,
     currentAiPhrase,
+    currentPhraseType,
     transcripts,
     errorMessage,
     isCompleted,

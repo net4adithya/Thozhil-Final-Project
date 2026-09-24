@@ -1,6 +1,8 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import * as candidateService from '../services/candidateService.js';
 
+import ApiError from '../utils/ApiError.js';
+
 export const createCandidate = asyncHandler(async (req, res) => {
   const candidate = await candidateService.createCandidate(req.body);
   res.status(201).json({
@@ -11,7 +13,17 @@ export const createCandidate = asyncHandler(async (req, res) => {
 });
 
 export const getCandidates = asyncHandler(async (req, res) => {
-  const candidates = await candidateService.queryCandidates();
+  // If request is from an authenticated candidate, only return their own record
+  if (req.user?.role === 'Candidate' && req.user.candidateId) {
+    const candidate = await candidateService.getCandidateById(req.user.candidateId);
+    return res.status(200).json({
+      success: true,
+      data: candidate ? [candidate] : [],
+      message: 'Candidate profile retrieved successfully'
+    });
+  }
+
+  const candidates = await candidateService.queryCandidates(req.query);
   res.status(200).json({
     success: true,
     data: candidates,
@@ -20,6 +32,11 @@ export const getCandidates = asyncHandler(async (req, res) => {
 });
 
 export const getCandidate = asyncHandler(async (req, res) => {
+  // Candidate can only access their own profile
+  if (req.user?.role === 'Candidate' && req.user.candidateId && req.params.id !== req.user.candidateId) {
+    throw new ApiError(403, 'Access denied: You cannot view another candidate\'s private profile.');
+  }
+
   const candidate = await candidateService.getCandidateById(req.params.id);
   res.status(200).json({
     success: true,

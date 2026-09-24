@@ -23,7 +23,12 @@ export const initLiveSession = async (interviewId, candidateId) => {
   const candidateName = candidate?.name || 'Candidate';
   const roleTitle = interview.jobRole || interview.title || 'Software Engineering Position';
 
-  const introPhrase = `Hello ${candidateName}, welcome to your InterviewX AI live interview for the ${roleTitle} role. I will be your AI interviewer today. I will guide you through a series of technical and architectural questions. When you are ready, let's begin with our first question.`;
+  const language = interview.settings?.language || { code: 'en-IN', name: 'English', mode: 'native' };
+  const isTamil = language?.code === 'ta-IN';
+
+  const introPhrase = isTamil
+    ? `வணக்கம் ${candidateName}, ${roleTitle} பணிக்கான உங்கள் InterviewX AI நேரடி நேர்காணலுக்கு வரவேற்கிறேன். நான் உங்கள் AI நேர்காணலாளர். நாம் இப்போது முதல் கேள்வியுடன் தொடங்கலாம்.`
+    : `Hello ${candidateName}, welcome to your InterviewX AI live interview for the ${roleTitle} role. I will be your AI interviewer today. I will guide you through a series of technical and architectural questions. When you are ready, let's begin with our first question.`;
 
   return {
     sessionId: `live-${interviewId}-${Date.now()}`,
@@ -32,6 +37,7 @@ export const initLiveSession = async (interviewId, candidateId) => {
     candidateName,
     roleTitle,
     introPhrase,
+    language,
     totalQuestions: questions.length,
     currentQuestionIndex: 0,
     currentQuestion: questions[0] || {
@@ -61,7 +67,7 @@ export const processLiveTurn = async (interviewId, payload) => {
     currentQuestionIndex = 0
   } = payload;
 
-  const rawAnswer = (transcript || answerText || '').trim();
+  const rawAnswer = (transcript || answerText || payload?.userSpeechText || payload?.text || payload?.answer || '').trim();
   if (!rawAnswer) {
     throw new ApiError(400, 'Answer transcript or text is required to evaluate response');
   }
@@ -109,7 +115,8 @@ export const processLiveTurn = async (interviewId, payload) => {
     currentQuestionIndex: Number(currentQuestionIndex),
     totalQuestionsLimit: questions.length,
     remainingTimeSeconds: 1200,
-    difficulty: currentQ.difficulty || 'MEDIUM'
+    difficulty: currentQ.difficulty || 'MEDIUM',
+    language: interview.settings?.language || { code: 'en-IN', name: 'English', mode: 'native' }
   });
 
   const canFollowUp = !isFollowUp && Number(followUpCount) < MAX_FOLLOWUPS_PER_QUESTION;
@@ -198,8 +205,8 @@ export const completeLiveSession = async (interviewId, candidateId) => {
   if (candidateId) {
     await updateCandidateById(candidateId, {
       status: 'Completed',
-      overallScore: report?.overallScore || 85,
-      recommendation: report?.recommendation || 'HIRE',
+      overallScore: report?.overallScore !== undefined ? report.overallScore : 85,
+      recommendation: report?.recommendation || ((report?.overallScore !== undefined ? report.overallScore : 85) >= 85 ? 'STRONG HIRE' : (report?.overallScore !== undefined ? report.overallScore : 85) >= 70 ? 'HIRE' : (report?.overallScore !== undefined ? report.overallScore : 85) >= 55 ? 'HIRE WITH RESERVATIONS' : 'DO NOT HIRE'),
       summary: report?.summary || 'Completed live technical interview.',
       strengths: report?.strengths || [],
       weaknesses: report?.weaknesses || [],

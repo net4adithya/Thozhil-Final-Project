@@ -42,10 +42,16 @@ export const reportService = {
     } catch (err) {
       console.warn('Analytics fetch error, returning fallback metrics:', err.message);
       return {
-        totalInterviews: 0,
-        completedInterviews: 0,
-        activeCandidates: 0,
-        averageScore: 0
+        kpis: {
+          activeInterviews: 0,
+          totalInvited: 0,
+          completions: 0,
+          averageScore: 0,
+          conversionRate: 0
+        },
+        weeklyCompletions: [],
+        scoreDistribution: [],
+        departmentStats: []
       };
     }
   }

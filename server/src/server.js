@@ -12,7 +12,7 @@ const startServer = async () => {
   // Attach Live Interview WebSocket gateway
   initLiveWebSocket(httpServer);
 
-  server = httpServer.listen(config.port, () => {
+  server = httpServer.listen(config.port, '0.0.0.0', () => {
     console.log(`Server running in [${config.env}] mode on port: ${config.port}`);
     console.log(`Live WebSocket gateway ready on: ws://localhost:${config.port}/ws/live`);
   });
@@ -37,12 +37,11 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 process.on('unhandledRejection', (err) => {
-  console.error(`Unhandled Rejection Error: ${err.message}`);
-  if (server) {
-    server.close(() => process.exit(1));
-  } else {
-    process.exit(1);
-  }
+  console.error('[Server] Unhandled Rejection:', err?.stack || err?.message || err);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[Server] Uncaught Exception:', err?.stack || err?.message || err);
 });
 
 startServer();

@@ -1,4 +1,5 @@
 import ApiError from '../../utils/ApiError.js';
+import { callSarvamChatCompletion } from './sarvamProvider.js';
 
 /**
  * Pluggable Centralized AI Provider Adapter
@@ -7,45 +8,17 @@ import ApiError from '../../utils/ApiError.js';
  * @param {string} userPrompt - User prompt containing untrusted data with strict boundaries
  * @returns {Promise<Object>} Structured JSON response
  */
-export const callAIProvider = async (systemPrompt, userPrompt) => {
-  const apiKey = process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
-  const aiProvider = (process.env.AI_PROVIDER || (process.env.OPENAI_API_KEY ? 'openai' : 'builtin')).toLowerCase();
+export const callAIProvider = async (systemPrompt, userPrompt, options = {}) => {
+  const sarvamApiKey = (process.env.SARVAM_API_KEY || process.env.SARVAM_API_Key || process.env.SARVAM_KEY || '').trim();
 
-  // 1. OpenAI Integration (if configured)
-  if (aiProvider === 'openai' && apiKey) {
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: process.env.AI_MODEL || 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.2
-        })
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`OpenAI API error (${response.status}): ${errText}`);
-      }
-
-      const json = await response.json();
-      const rawContent = json.choices?.[0]?.message?.content;
-      return JSON.parse(rawContent);
-    } catch (err) {
-      console.warn('[AIProvider] Remote OpenAI invocation notice, utilizing deterministic engine:', err.message);
-    }
+  if (!sarvamApiKey) {
+    throw new ApiError(500, 'SARVAM_API_KEY is required but not configured in the server environment');
   }
 
-  // 2. Builtin Deterministic Evaluation & Screening Engine
-  return parseWithBuiltinEngine(systemPrompt, userPrompt);
+  console.log('[AI] Sarvam LLM completion request initiated');
+  const result = await callSarvamChatCompletion(systemPrompt, userPrompt, options);
+  console.log('[AI] Sarvam LLM completion successfully produced structured output');
+  return result;
 };
 
 /**

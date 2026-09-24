@@ -48,9 +48,12 @@ const mapCandidateToDb = (cand) => {
   if (cand.phone !== undefined) dbCand.phone = cand.phone;
   if (cand.role !== undefined) dbCand.role = cand.role;
   if (cand.interviewId !== undefined) dbCand.interview_id = cand.interviewId;
+  if (cand.interview_id !== undefined) dbCand.interview_id = cand.interview_id;
   if (cand.status !== undefined) dbCand.status = cand.status;
   if (cand.overallScore !== undefined) dbCand.overall_score = cand.overallScore;
+  if (cand.overall_score !== undefined) dbCand.overall_score = cand.overall_score;
   if (cand.completionDate !== undefined) dbCand.completion_date = cand.completionDate;
+  if (cand.completion_date !== undefined) dbCand.completion_date = cand.completion_date;
   if (cand.avatarInitials !== undefined) dbCand.avatar_initials = cand.avatarInitials;
   if (cand.skills !== undefined) dbCand.skills = cand.skills;
   if (cand.education !== undefined) dbCand.education = cand.education;
@@ -87,6 +90,15 @@ export const createCandidate = async (candidateBody) => {
     .single();
 
   if (error) throw error;
+
+  // If candidate was assigned to an interview, synchronize interviews.candidate_id
+  if (dbData.interview_id) {
+    await supabase
+      .from('interviews')
+      .update({ candidate_id: data.id })
+      .eq('id', dbData.interview_id);
+  }
+
   return mapDbToCandidate(data);
 };
 
@@ -146,6 +158,15 @@ export const updateCandidateById = async (id, updateBody) => {
     .single();
 
   if (error) throw error;
+
+  // If candidate was assigned/updated to an interview, synchronize interviews.candidate_id
+  if (dbData.interview_id) {
+    await supabase
+      .from('interviews')
+      .update({ candidate_id: id })
+      .eq('id', dbData.interview_id);
+  }
+
   return mapDbToCandidate(data);
 };
 

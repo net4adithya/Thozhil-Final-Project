@@ -51,3 +51,14 @@ export const screenResume = asyncHandler(async (req, res) => {
     message: 'Resume AI screening completed successfully'
   });
 });
+
+export const generateQuestions = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { roleTitle, jobId } = req.body || {};
+  const result = await resumeScreeningService.generatePersonalizedQuestionsFromResume(id, { roleTitle, jobId });
+  res.status(200).json({
+    success: true,
+    data: result,
+    message: 'Personalized questions synthesized from candidate resume successfully'
+  });
+});

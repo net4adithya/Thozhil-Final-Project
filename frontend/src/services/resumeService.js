@@ -28,17 +28,11 @@ export const resumeService = {
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('resume', file);
     if (candidateId) {
       formData.append('candidateId', candidateId);
-      formData.append('candidate', candidateId);
     }
 
-    const response = await apiClient.post('/resumes', formData, {
-      headers: {
-        'Content-Type': undefined // Allow browser/Axios to set multipart boundary
-      }
-    });
+    const response = await apiClient.post('/resumes', formData);
 
     return response.data?.data;
   },
@@ -72,6 +66,17 @@ export const resumeService = {
   screenResume: async (id, jobId = null) => {
     const payload = jobId ? { jobId } : {};
     const response = await apiClient.post(`/resumes/${id}/screen`, payload);
+    return response.data?.data;
+  },
+
+  /**
+   * Generates tailored technical interview questions synthesized directly from candidate's resume
+   * @param {string} id - Resume UUID
+   * @param {Object} [options] - Options { roleTitle, jobId }
+   * @returns {Promise<Object>} Candidate profile summary and personalized questions array
+   */
+  generateQuestionsFromResume: async (id, options = {}) => {
+    const response = await apiClient.post(`/resumes/${id}/generate-questions`, options);
     return response.data?.data;
   }
 };

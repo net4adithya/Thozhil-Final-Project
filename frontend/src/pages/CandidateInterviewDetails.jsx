@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, FileText, CheckCircle2, ShieldCheck, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Clock, FileText, CheckCircle2, ShieldCheck, ArrowRight, Video } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Spinner } from '../components/ui/Spinner';
+import { BrandLoader } from '../components/common/BrandLoader';
 import { candidateService } from '../services/candidateService';
 import { interviewService } from '../services/interviewService';
 
@@ -27,26 +26,37 @@ export const CandidateInterviewDetails = () => {
         let matchInt = null;
 
         if (cand) {
-          matchInt = (interviews || []).find((i) => i.id === cand.interviewId || i.candidate?.id === cand.id);
-          if (!matchInt && cand.interviewId) {
-            matchInt = await interviewService.getInterviewById(cand.interviewId).catch(() => null);
+          const targetIntId = cand.interviewId || cand.interview_id;
+          matchInt = (interviews || []).find((i) => i.id === targetIntId || i.candidate?.id === cand.id || i.candidate_id === cand.id || i.candidateId === cand.id);
+          if (!matchInt && targetIntId) {
+            matchInt = await interviewService.getInterviewById(targetIntId).catch(() => null);
           }
           if (!matchInt && interviews?.length > 0) {
-            matchInt = interviews[0];
+            matchInt = interviews.find((i) => i.jobRole === cand.role || i.title === cand.role) || interviews[0];
           }
         } else {
-          // Check if id is an interview UUID
           matchInt = (interviews || []).find((i) => i.id === id);
           if (!matchInt) {
             matchInt = await interviewService.getInterviewById(id).catch(() => null);
           }
           if (matchInt) {
-            cand = (candidates || []).find((c) => c.interviewId === matchInt.id || c.id === matchInt.candidate?.id) || candidates?.[0];
+            const activeCandId = sessionStorage.getItem('interviewx_active_candidate_id');
+            const targetCandId = matchInt.candidate_id || matchInt.candidateId || matchInt.candidate?.id || activeCandId;
+            if (targetCandId) {
+              cand = (candidates || []).find((c) => c.id === targetCandId) || await candidateService.getCandidateById(targetCandId).catch(() => null);
+            }
+            if (!cand) {
+              cand = (candidates || []).find((c) => c.interviewId === matchInt.id || c.interview_id === matchInt.id) || candidates?.[0];
+            }
             if (!cand) {
               const candList = await candidateService.getCandidates().catch(() => []);
-              cand = candList.find((c) => c.interviewId === matchInt.id) || candList[0];
+              cand = candList.find((c) => c.interviewId === matchInt.id || c.interview_id === matchInt.id) || candList[0];
             }
           }
+        }
+
+        if (cand?.id) {
+          try { sessionStorage.setItem('interviewx_active_candidate_id', cand.id); } catch (e) {}
         }
 
         if (cand) setCandidate(cand);
@@ -69,113 +79,116 @@ export const CandidateInterviewDetails = () => {
 
   if (loading || resolving || !candidate || !interview) {
     return (
-      <div className="flex-grow flex items-center justify-center">
-        <Spinner size="lg" />
+      <div className="flex-grow flex items-center justify-center py-24">
+        <BrandLoader message="Loading assessment briefing..." subMessage="Calibrating environment & technical guidelines" />
       </div>
     );
   }
 
   const isLive = (interview.type || interview.interviewType) === 'live';
-  const companyInitial = ((interview.company || interview.title || 'I')[0] || 'I').toUpperCase();
 
   return (
-    <div className="space-y-8 flex-grow flex flex-col max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8 text-left select-none">
+    <div className="space-y-6 flex-grow flex flex-col max-w-2xl mx-auto w-full p-4 sm:p-6 lg:p-8 text-left font-sans text-slate-900">
       
       {/* Return link */}
       <button
         onClick={() => navigate('/candidate')}
-        className="inline-flex items-center text-xs font-semibold text-brandBody hover:text-brandHeading space-x-1 w-fit"
+        className="inline-flex items-center text-xs font-medium text-slate-500 hover:text-slate-900 space-x-1 w-fit"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Return to Dashboard</span>
+        <span>Return to Candidate Portal</span>
       </button>
 
       {/* Main card */}
-      <Card className="shadow-sm">
-        <CardBody className="p-6 md:p-8 space-y-6">
-          
-          {/* Header branding */}
-          <div className="flex justify-between items-start gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <Badge variant="primary">
-                  {isLive ? 'Live Interview' : 'Async Interview'}
-                </Badge>
-                <span className="text-[10px] text-brandBody font-semibold uppercase">{interview.company || 'InterviewX'}</span>
-              </div>
-              <h1 className="text-xl md:text-2xl font-extrabold text-brandHeading tracking-tight leading-tight">
-                {interview.title}
-              </h1>
-              <p className="text-xs text-brandBody">
-                Candidate: <span className="font-semibold text-brandHeading">{candidate.name}</span> • Assigned Role: <span className="font-semibold text-brandHeading">{interview.jobRole || 'Engineering'}</span>
-              </p>
-            </div>
-            
-            <div className="shrink-0 bg-primary/10 text-primary w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl border border-primary/20">
-              {companyInitial}
-            </div>
+      <div className="bg-white rounded-xl p-8 sm:p-10 shadow-xs space-y-6 relative overflow-hidden border border-slate-200">
+        {/* Header branding */}
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Badge variant={isLive ? 'live' : 'secondary'} size="xs">
+              {isLive ? 'Live Interview' : 'Recorded Assessment'}
+            </Badge>
+            <span className="text-xs text-slate-400">•</span>
+            <span className="text-xs text-blue-600 font-semibold">{interview.department || 'Engineering'}</span>
           </div>
 
-          <hr className="border-brandBorder" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            {interview.title || interview.jobRole}
+          </h1>
+          <p className="text-xs text-slate-500">
+            Prepared for <strong className="text-slate-900 font-semibold">{candidate.name}</strong>
+          </p>
+        </div>
 
-          {/* Core metadata stats */}
-          <div className="grid grid-cols-3 gap-4 text-center bg-gray-50 border border-brandBorder rounded-xl p-4">
-            <div>
-              <span className="text-[10px] uppercase font-bold text-brandBody block">Format</span>
-              <span className="text-xs font-bold text-brandHeading">{isLive ? 'Live Conversation (Sarvam Voice)' : 'Pre-recorded'}</span>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-brandBody block">Questions</span>
-              <span className="text-xs font-bold text-brandHeading">{interview.questions?.length || 0} Items</span>
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-brandBody block">Time Limit</span>
-              <span className="text-xs font-bold text-brandHeading">{interview.duration || 30} Mins</span>
-            </div>
+        {/* Metadata stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs shadow-xs">
+          <div>
+            <span className="text-[11px] text-slate-400 block">Format</span>
+            <span className="font-semibold text-slate-900 mt-0.5 block">
+              {isLive ? 'Live Conversational' : 'Recorded Video'}
+            </span>
           </div>
-
-          {/* Description instructions section */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-brandHeading flex items-center space-x-1.5 font-sans">
-              <ShieldCheck className="w-4.5 h-4.5 text-primary" />
-              <span>Assessment Instructions & Expectations</span>
-            </h3>
-
-            <div className="space-y-3.5 text-xs text-brandBody leading-relaxed">
-              <p>
-                {isLive 
-                  ? "You are entering a Live AI Interview experience. You will engage in an interactive real-time vocal conversation with our virtual interviewer host Ava (powered by Sarvam STT & TTS). The system will ask role-specific questions and dynamically construct custom follow-up prompts based on your responses." 
-                  : "You are entering an Async Pre-recorded Interview experience. You will face a predefined series of questions. For each question, you will be allocated preparation time followed by automated recording limits. You can review your transcribed answers and code submissions before submitting."
+          <div>
+            <span className="text-[11px] text-slate-400 block">Language</span>
+            <span className="font-semibold text-blue-700 mt-0.5 block">
+              {(() => {
+                const langObj = interview.settings?.language || interview.language;
+                const code = typeof langObj === 'object' ? langObj?.code : langObj;
+                const mode = typeof langObj === 'object' ? langObj?.mode : (typeof langObj === 'string' && langObj.includes('codemix') ? 'codemix' : 'native');
+                if (code === 'ta-IN' || (typeof code === 'string' && code.includes('ta'))) {
+                  return mode === 'codemix' ? 'தமிழ் (Tamil + English)' : 'தமிழ் (Tamil)';
                 }
-              </p>
+                return 'English';
+              })()}
+            </span>
+          </div>
+          <div>
+            <span className="text-[11px] text-slate-400 block">Questions</span>
+            <span className="font-semibold text-slate-900 mt-0.5 block">
+              {interview.questions?.length || 0} Questions
+            </span>
+          </div>
+          <div>
+            <span className="text-[11px] text-slate-400 block">Time Allocated</span>
+            <span className="font-semibold text-slate-900 mt-0.5 block">
+              {interview.duration || 30} Minutes
+            </span>
+          </div>
+        </div>
 
-              <div className="bg-blue-50/50 border border-primary/15 rounded-xl p-4 space-y-2">
-                <span className="font-bold text-brandHeading block text-xs">Guidelines for Success:</span>
-                <ul className="list-disc pl-5 space-y-1 text-brandBody">
-                  <li>Find a quiet space with minimal background noise levels.</li>
-                  <li>Ensure your face is clearly visible inside the camera bounds.</li>
-                  <li>Do not leave, reload, or navigate away from the browser window once inside.</li>
-                  <li>Use the Device Check wizard on the next step to confirm your camera & microphone levels.</li>
-                </ul>
-              </div>
+        {/* Guidelines */}
+        <div className="space-y-3 pt-1">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">Before You Begin</h2>
+          <div className="space-y-2.5 text-xs text-slate-600 leading-relaxed">
+            <div className="flex items-start space-x-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <span>Ensure you are in a quiet, well-lit environment with minimal background distractions.</span>
+            </div>
+            <div className="flex items-start space-x-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <span>Have your camera and microphone connected. We will run an equipment check on the next screen.</span>
+            </div>
+            <div className="flex items-start space-x-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <span>Maintain your browser window in full-screen focus throughout the session.</span>
             </div>
           </div>
+        </div>
 
-          {/* Action trigger */}
-          <div className="pt-2">
-            <Button
-              onClick={() => navigate(`/candidate/interviews/${interview.id}/device-check`)}
-              variant="primary"
-              className="w-full py-3 text-sm font-bold"
-              icon={ArrowRight}
-              iconPosition="right"
-            >
-              Start Interview Setup
-            </Button>
-          </div>
+        {/* Primary CTA */}
+        <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span className="text-xs text-slate-400 font-medium">Next step: Hardware Diagnostics</span>
+          <Button
+            onClick={() => navigate(`/candidate/interviews/${interview.id || candidate.interviewId || candidate.interview_id}/device-check`)}
+            variant="primary"
+            size="md"
+            icon={ArrowRight}
+            iconPosition="right"
+          >
+            Continue to Equipment Check
+          </Button>
+        </div>
 
-        </CardBody>
-      </Card>
+      </div>
 
     </div>
   );

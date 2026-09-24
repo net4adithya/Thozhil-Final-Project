@@ -10,5 +10,7 @@ router.get('/:id', validateObjectId, resumeController.getResume);
 router.post('/:id/process', validateObjectId, resumeController.processResume);
 router.post('/:id/extract', validateObjectId, resumeController.processResume);
 router.post('/:id/screen', validateObjectId, resumeController.screenResume);
+router.post('/:id/generate-questions', validateObjectId, resumeController.generateQuestions);
+router.post('/:id/questions', validateObjectId, resumeController.generateQuestions);
 
 export default router;

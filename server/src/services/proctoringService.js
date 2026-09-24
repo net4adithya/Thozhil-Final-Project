@@ -2,16 +2,28 @@ import supabase from '../config/supabase.js';
 import ApiError from '../utils/ApiError.js';
 import { getInterviewById } from './interviewService.js';
 
-// Allowed Basic Proctoring Observation Event Types
+// Allowed Observable Technical Proctoring Event Types
 export const ALLOWED_PROCTORING_EVENTS = [
+  'RULES_ACKNOWLEDGED',
   'TAB_HIDDEN',
   'TAB_VISIBLE',
+  'WINDOW_BLUR',
+  'WINDOW_FOCUS',
   'FULLSCREEN_ENTERED',
   'FULLSCREEN_EXITED',
+  'SCREEN_SHARE_STARTED',
+  'SCREEN_SHARE_STOPPED',
+  'CAMERA_ENABLED',
   'CAMERA_DISABLED',
+  'MICROPHONE_ENABLED',
   'MICROPHONE_DISABLED',
   'CAMERA_PERMISSION_DENIED',
   'MICROPHONE_PERMISSION_DENIED',
+  'COPY_ATTEMPT',
+  'PASTE_ATTEMPT',
+  'CONTEXT_MENU_ATTEMPT',
+  'PAGE_RELOAD_ATTEMPT',
+  'DEVTOOLS_SUSPECTED',
   'RECORDING_STARTED',
   'RECORDING_STOPPED',
   'RECORDING_UPLOAD_SUCCESS',
@@ -58,9 +70,27 @@ export const logProctoringEvents = async (interviewId, payload) => {
   const existingEvents = Array.isArray(currentSettings.proctoringEvents) ? currentSettings.proctoringEvents : [];
   const updatedEvents = [...existingEvents, ...validEvents];
 
-  // Calculate summary metrics
-  const tabHiddenCount = updatedEvents.filter((e) => e.eventType === 'TAB_HIDDEN').length;
+  // Calculate observable summary metrics
+  const tabHiddenCount = updatedEvents.filter((e) => e.eventType === 'TAB_HIDDEN' || e.eventType === 'WINDOW_BLUR').length;
   const fullscreenExits = updatedEvents.filter((e) => e.eventType === 'FULLSCREEN_EXITED').length;
+  const screenShareStopped = updatedEvents.filter((e) => e.eventType === 'SCREEN_SHARE_STOPPED').length;
+  const copyAttempts = updatedEvents.filter((e) => e.eventType === 'COPY_ATTEMPT' || e.eventType === 'PASTE_ATTEMPT').length;
+
+  // Deterministic Explainable Integrity Risk Score (0 - 100)
+  const riskScore = Math.min(
+    100,
+    tabHiddenCount * 15 + fullscreenExits * 10 + screenShareStopped * 25 + copyAttempts * 5
+  );
+
+  const evidenceNotes = [];
+  if (tabHiddenCount > 0) evidenceNotes.push(`Candidate switched tabs/windows ${tabHiddenCount} time${tabHiddenCount > 1 ? 's' : ''}`);
+  if (fullscreenExits > 0) evidenceNotes.push(`Candidate exited fullscreen ${fullscreenExits} time${fullscreenExits > 1 ? 's' : ''}`);
+  if (screenShareStopped > 0) evidenceNotes.push(`Screen sharing stopped ${screenShareStopped} time${screenShareStopped > 1 ? 's' : ''}`);
+  if (copyAttempts > 0) evidenceNotes.push(`Clipboard copy/paste restricted actions detected ${copyAttempts} time${copyAttempts > 1 ? 's' : ''}`);
+
+  const evidenceSummaryText = evidenceNotes.length > 0
+    ? evidenceNotes.join('. ') + '.'
+    : 'No suspicious browser actions observed during the assessment.';
 
   try {
     await supabase
@@ -72,7 +102,11 @@ export const logProctoringEvents = async (interviewId, payload) => {
           proctoringSummary: {
             tabHiddenCount,
             fullscreenExits,
+            screenShareStopped,
+            copyAttempts,
             totalObservations: updatedEvents.length,
+            integrityRiskScore: riskScore,
+            evidenceSummaryText,
             lastObservedAt: new Date().toISOString()
           }
         }
@@ -91,6 +125,10 @@ export const logProctoringEvents = async (interviewId, payload) => {
     summary: {
       tabHiddenCount,
       fullscreenExits,
+      screenShareStopped,
+      copyAttempts,
+      integrityRiskScore: riskScore,
+      evidenceSummaryText,
       totalObservations: updatedEvents.length
     },
     events: validEvents

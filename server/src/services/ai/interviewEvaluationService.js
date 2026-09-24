@@ -93,34 +93,17 @@ export const evaluateInterview = async (interviewId) => {
     let qEval = null;
 
     if (matchingAnswer) {
-      const hasCompletedScore = matchingAnswer.evaluation_status === 'completed' && matchingAnswer.score !== null;
-      if (hasCompletedScore) {
-        // Answer was already scored during live turn or prior evaluation run
-        const rawScore = Number(matchingAnswer.score);
-        qEval = validateAnswerEvaluation({
-          score: rawScore,
-          technicalAccuracy: rawScore,
-          problemSolving: rawScore,
-          communication: 85,
-          confidence: Math.min(95, Math.max(70, Math.round(rawScore * 0.95))),
-          feedback: matchingAnswer.feedback || 'Answer evaluated with clear technical structure.',
-          strengths: ['Demonstrated clear understanding of core concepts'],
-          weaknesses: []
-        });
-      } else {
-        // Evaluate answer
-        try {
-          const evalResult = await evaluateAnswerById(matchingAnswer.id);
-          qEval = evalResult.evaluation;
-        } catch (evalErr) {
-          console.warn(`[EvaluationEngine] Fallback evaluation for question ${q.id}:`, evalErr.message);
-          qEval = evaluateAnswerDeterministic(
-            q.text,
-            matchingAnswer.answer_text || matchingAnswer.transcript || '',
-            q.category,
-            matchingAnswer.code || ''
-          );
-        }
+      try {
+        const evalResult = await evaluateAnswerById(matchingAnswer.id);
+        qEval = evalResult.evaluation;
+      } catch (evalErr) {
+        console.warn(`[EvaluationEngine] Fallback evaluation for question ${q.id}:`, evalErr.message);
+        qEval = evaluateAnswerDeterministic(
+          q.text,
+          matchingAnswer.answer_text || matchingAnswer.transcript || '',
+          q.category,
+          matchingAnswer.code || ''
+        );
       }
     } else {
       // Unattempted question
@@ -175,6 +158,10 @@ export const evaluateInterview = async (interviewId) => {
 
   if (uniqueStrengths.length === 0) {
     uniqueStrengths.push('Demonstrated solid foundational technical knowledge');
+  }
+
+  if (overallScore < 60 && uniqueWeaknesses.length === 0) {
+    uniqueWeaknesses.push('Overall technical assessment indicated gaps in architecture depth and implementation details.');
   }
 
   // 5. Standardized Recommendation Thresholds

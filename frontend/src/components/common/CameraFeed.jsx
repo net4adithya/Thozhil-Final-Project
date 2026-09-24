@@ -6,6 +6,9 @@ export const CameraFeed = ({
   muted = false,
   cameraActive = true,
   className = '',
+  onStreamReady = null,
+  externalStream = null,
+  showBadges = true
 }) => {
   const [deviceStatus, setDeviceStatus] = useState('checking'); // 'checking' | 'active' | 'paused' | 'denied'
   const [hasRealCamera, setHasRealCamera] = useState(false);
@@ -19,6 +22,17 @@ export const CameraFeed = ({
   // Request real webcam feed from navigator.mediaDevices
   useEffect(() => {
     let currentStream = null;
+
+    if (externalStream) {
+      streamRef.current = externalStream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = externalStream;
+        videoRef.current.play().catch(() => {});
+      }
+      setHasRealCamera(true);
+      setDeviceStatus('active');
+      return;
+    }
 
     const startWebcam = async () => {
       if (!cameraActive) {
@@ -56,6 +70,7 @@ export const CameraFeed = ({
 
           setHasRealCamera(true);
           setDeviceStatus('active');
+          if (onStreamReady) onStreamReady(stream);
         } else {
           throw new Error('Webcam media device API is not supported in this browser.');
         }
@@ -211,7 +226,7 @@ export const CameraFeed = ({
       )}
 
       {/* Status Badges Overlay */}
-      {cameraActive && deviceStatus === 'active' && (
+      {showBadges && cameraActive && deviceStatus === 'active' && (
         <>
           {/* Top recording indicator */}
           <div className="absolute top-3 left-3 flex items-center space-x-2 bg-slate-950/80 backdrop-blur-xs px-2.5 py-1.5 rounded-lg border border-slate-800 shadow-md">

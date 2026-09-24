@@ -4,7 +4,7 @@ import { Camera, Mic, Volume2, ShieldCheck, ArrowRight, ArrowLeft, RefreshCw } f
 import { useApp } from '../context/AppContext';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Spinner } from '../components/ui/Spinner';
+import { BrandLoader } from '../components/common/BrandLoader';
 import { CameraFeed } from '../components/common/CameraFeed';
 import { VoiceWaveform } from '../components/common/VoiceWaveform';
 
@@ -34,8 +34,8 @@ export const AsyncInterview = () => {
 
   if (loading || !candidate) {
     return (
-      <div className="flex-grow flex items-center justify-center">
-        <Spinner size="lg" />
+      <div className="flex-grow flex items-center justify-center py-24">
+        <BrandLoader message="Initializing video capture pipeline..." subMessage="Calibrating camera feed & microphone frequency response" />
       </div>
     );
   }
@@ -45,11 +45,11 @@ export const AsyncInterview = () => {
   };
 
   return (
-    <div className="space-y-8 flex-grow flex flex-col max-w-4xl mx-auto w-full p-4 sm:p-6 lg:p-8 text-left">
+    <div className="space-y-8 flex-grow flex flex-col max-w-4xl mx-auto w-full p-4 sm:p-6 lg:p-8 text-left font-sans text-slate-900">
       {/* Back navigation */}
       <button
         onClick={() => navigate('/candidate')}
-        className="inline-flex items-center text-xs font-semibold text-brandBody hover:text-brandHeading space-x-1 w-fit select-none"
+        className="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-slate-900 space-x-1 w-fit select-none"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         <span>Return to dashboard</span>
@@ -57,8 +57,8 @@ export const AsyncInterview = () => {
 
       {/* Main Title Banner */}
       <div className="select-none">
-        <h1 className="text-2xl font-bold tracking-tight text-brandHeading">Media Stream Setup</h1>
-        <p className="text-sm text-brandBody">Configure camera, verify audio frequencies, and review assessment rules.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Media Stream Setup</h1>
+        <p className="text-sm text-slate-500">Configure camera, verify audio frequencies, and review assessment rules.</p>
       </div>
 
       {/* Dual Column grid splits */}
@@ -89,69 +89,62 @@ export const AsyncInterview = () => {
           </div>
 
           {/* Voice Waveform test area */}
-          <Card>
-            <CardBody className="p-4 space-y-3.5">
-              <div className="flex items-center justify-between text-xs select-none">
-                <span className="font-semibold text-brandHeading">Microphone Sensitivity Check</span>
-                <button
-                  type="button"
-                  onClick={() => micActive && setTestingVoice(!testingVoice)}
-                  disabled={!micActive}
-                  className={`font-semibold hover:underline disabled:opacity-40 disabled:no-underline text-primary`}
-                >
-                  {testingVoice ? 'Stop Test' : 'Test Microphone'}
-                </button>
-              </div>
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3.5">
+            <div className="flex items-center justify-between text-xs select-none">
+              <span className="font-semibold text-slate-900">Microphone Sensitivity Check</span>
+              <button
+                type="button"
+                onClick={() => micActive && setTestingVoice(!testingVoice)}
+                disabled={!micActive}
+                className={`font-semibold hover:underline disabled:opacity-40 disabled:no-underline text-blue-600`}
+              >
+                {testingVoice ? 'Stop Test' : 'Test Microphone'}
+              </button>
+            </div>
 
-              <VoiceWaveform isActive={testingVoice && micActive} />
-            </CardBody>
-          </Card>
+            <VoiceWaveform isActive={testingVoice && micActive} />
+          </div>
         </div>
 
         {/* Right Column: Assessment rules details */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <h3 className="text-sm font-bold text-brandHeading flex items-center space-x-1.5">
-                <ShieldCheck className="w-4.5 h-4.5 text-primary" />
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-4">
+            <div className="border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
+                <ShieldCheck className="w-4 h-4 text-blue-600" />
                 <span>Assessment Instructions</span>
               </h3>
-            </CardHeader>
-            <CardBody className="p-5 text-xs text-brandBody leading-relaxed space-y-4">
+            </div>
+            <div className="text-xs text-slate-600 leading-relaxed space-y-4">
               <div className="flex items-start space-x-3">
-                <span className="w-5 h-5 rounded-full bg-gray-150 flex items-center justify-center text-brandHeading font-bold shrink-0">1</span>
-                <p>This assessment contains <span className="font-semibold text-brandHeading">{interview?.questions?.length || 5} questions</span> targeting Core engineering/product skills.</p>
+                <span className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold shrink-0">1</span>
+                <p>This assessment contains <span className="font-semibold text-slate-900">{interview?.questions?.length || 5} questions</span> targeting core technical skills.</p>
               </div>
 
               <div className="flex items-start space-x-3">
-                <span className="w-5 h-5 rounded-full bg-gray-150 flex items-center justify-center text-brandHeading font-bold shrink-0">2</span>
-                <p>Each question has an individual answering time limit (e.g. 180 seconds). The exam timer resets dynamically on each question.</p>
+                <span className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold shrink-0">2</span>
+                <p>Each question has an individual answering time limit. The timer resets dynamically on each question.</p>
               </div>
 
               <div className="flex items-start space-x-3">
-                <span className="w-5 h-5 rounded-full bg-gray-150 flex items-center justify-center text-brandHeading font-bold shrink-0">3</span>
-                <p>Once you click "Enter Interview Room", the assessment is locked and you must complete it in a single sitting. Do not reload or minimize the window tab.</p>
+                <span className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 font-bold shrink-0">3</span>
+                <p>Once you enter the interview room, the assessment is protected. Do not reload or minimize the window tab.</p>
               </div>
-            </CardBody>
-          </Card>
+            </div>
+          </div>
 
           {/* Proceed control */}
           <div className="select-none">
             <Button
               onClick={handleEnterRoom}
               variant="primary"
+              size="lg"
               className="w-full py-3"
-              disabled={!camActive || !micActive}
               icon={ArrowRight}
               iconPosition="right"
             >
               Enter Interview Room
             </Button>
-            {!camActive && (
-              <p className="text-[10px] text-brandDanger mt-2 text-center font-medium">
-                You must enable camera and microphone access before entering.
-              </p>
-            )}
           </div>
         </div>
 
@@ -159,3 +152,5 @@ export const AsyncInterview = () => {
     </div>
   );
 };
+
+export default AsyncInterview;

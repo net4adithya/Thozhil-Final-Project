@@ -4,13 +4,15 @@ export const Card = ({
   children,
   className = '',
   hoverEffect = false,
+  onClick = null,
   ...props
 }) => {
   return (
     <div
-      className={`bg-brandSurface border border-brandBorder rounded-xl shadow-sm transition-all duration-250 ${
-        hoverEffect ? 'hover:shadow-md hover:border-gray-300' : ''
-      } ${className}`}
+      onClick={onClick}
+      className={`border border-slate-200 rounded-xl bg-white shadow-xs transition-colors duration-150 ${
+        hoverEffect ? 'hover:border-slate-300 hover:shadow-sm' : ''
+      } ${onClick ? 'cursor-pointer' : ''} ${className}`}
       {...props}
     >
       {children}
@@ -25,7 +27,7 @@ export const CardHeader = ({
 }) => {
   return (
     <div
-      className={`px-5 py-4 border-b border-brandBorder flex items-center justify-between ${className}`}
+      className={`px-5 py-3.5 border-b border-slate-100 flex items-center justify-between ${className}`}
       {...props}
     >
       {children}
@@ -52,10 +54,12 @@ export const CardFooter = ({
 }) => {
   return (
     <div
-      className={`px-5 py-4 bg-gray-50/50 border-t border-brandBorder rounded-b-xl flex items-center justify-between ${className}`}
+      className={`px-5 py-3 bg-slate-50/80 border-t border-slate-100 rounded-b-xl flex items-center justify-between text-xs text-slate-500 ${className}`}
       {...props}
     >
       {children}
     </div>
   );
 };
+
+export default Card;

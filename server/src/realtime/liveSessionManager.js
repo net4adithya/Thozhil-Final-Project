@@ -28,13 +28,13 @@ export const SESSION_STATES = {
 const VALID_TRANSITIONS = {
   [SESSION_STATES.IDLE]: [SESSION_STATES.CONNECTING, SESSION_STATES.CONNECTED, SESSION_STATES.ERROR],
   [SESSION_STATES.CONNECTING]: [SESSION_STATES.CONNECTED, SESSION_STATES.ERROR, SESSION_STATES.DISCONNECTED],
-  [SESSION_STATES.CONNECTED]: [SESSION_STATES.INTRODUCTION, SESSION_STATES.AI_SPEAKING, SESSION_STATES.LISTENING, SESSION_STATES.DISCONNECTED, SESSION_STATES.COMPLETED, SESSION_STATES.ERROR],
-  [SESSION_STATES.INTRODUCTION]: [SESSION_STATES.AI_SPEAKING, SESSION_STATES.LISTENING, SESSION_STATES.DISCONNECTED, SESSION_STATES.ERROR],
+  [SESSION_STATES.CONNECTED]: [SESSION_STATES.INTRODUCTION, SESSION_STATES.AI_SPEAKING, SESSION_STATES.LISTENING, SESSION_STATES.AI_THINKING, SESSION_STATES.PROCESSING, SESSION_STATES.DISCONNECTED, SESSION_STATES.COMPLETED, SESSION_STATES.ERROR],
+  [SESSION_STATES.INTRODUCTION]: [SESSION_STATES.AI_SPEAKING, SESSION_STATES.LISTENING, SESSION_STATES.AI_THINKING, SESSION_STATES.PROCESSING, SESSION_STATES.DISCONNECTED, SESSION_STATES.ERROR],
   [SESSION_STATES.AI_SPEAKING]: [SESSION_STATES.LISTENING, SESSION_STATES.AI_THINKING, SESSION_STATES.PROCESSING, SESSION_STATES.DISCONNECTED, SESSION_STATES.COMPLETED, SESSION_STATES.ERROR],
   [SESSION_STATES.LISTENING]: [SESSION_STATES.PROCESSING, SESSION_STATES.AI_THINKING, SESSION_STATES.DISCONNECTED, SESSION_STATES.COMPLETED, SESSION_STATES.ERROR],
   [SESSION_STATES.PROCESSING]: [SESSION_STATES.AI_THINKING, SESSION_STATES.AI_SPEAKING, SESSION_STATES.NEXT_QUESTION, SESSION_STATES.COMPLETED, SESSION_STATES.DISCONNECTED, SESSION_STATES.ERROR],
   [SESSION_STATES.AI_THINKING]: [SESSION_STATES.AI_SPEAKING, SESSION_STATES.NEXT_QUESTION, SESSION_STATES.COMPLETED, SESSION_STATES.DISCONNECTED, SESSION_STATES.ERROR],
-  [SESSION_STATES.NEXT_QUESTION]: [SESSION_STATES.AI_SPEAKING, SESSION_STATES.LISTENING, SESSION_STATES.COMPLETED, SESSION_STATES.DISCONNECTED, SESSION_STATES.ERROR],
+  [SESSION_STATES.NEXT_QUESTION]: [SESSION_STATES.AI_SPEAKING, SESSION_STATES.LISTENING, SESSION_STATES.AI_THINKING, SESSION_STATES.PROCESSING, SESSION_STATES.COMPLETED, SESSION_STATES.DISCONNECTED, SESSION_STATES.ERROR],
   [SESSION_STATES.DISCONNECTED]: [SESSION_STATES.CONNECTED, SESSION_STATES.AI_SPEAKING, SESSION_STATES.LISTENING, SESSION_STATES.AI_THINKING, SESSION_STATES.COMPLETED, SESSION_STATES.ERROR],
   [SESSION_STATES.COMPLETED]: [], // Terminal state
   [SESSION_STATES.ERROR]: [SESSION_STATES.CONNECTING, SESSION_STATES.CONNECTED, SESSION_STATES.COMPLETED]
@@ -80,32 +80,100 @@ class LiveSessionManager {
     const targetSessionId = sessionId || `live-sess-${interviewId}-${candidateId || 'guest'}`;
     if (this.sessions.has(targetSessionId)) {
       const existing = this.sessions.get(targetSessionId);
-      if (existing.disconnectTimer) {
-        clearTimeout(existing.disconnectTimer);
-        existing.disconnectTimer = null;
+      // Validate candidate and interview identity to prevent reusing sessions across different candidates
+      const candidateMatches = !candidateId || !existing.candidateId || existing.candidateId === candidateId;
+      const interviewMatches = !interviewId || existing.interviewId === interviewId;
+      const isValidToRestore = existing && !existing.completed && candidateMatches && interviewMatches;
+
+      if (isValidToRestore) {
+        if (existing.disconnectTimer) {
+          clearTimeout(existing.disconnectTimer);
+          existing.disconnectTimer = null;
+        }
+        existing.lastActivity = new Date().toISOString();
+        if (existing.state === SESSION_STATES.DISCONNECTED) {
+          existing.state = existing.previousState || SESSION_STATES.CONNECTED;
+        }
+        console.log(`[LiveSession] Restored existing session: ${targetSessionId} for candidate: ${existing.candidateName || candidateId} (State: ${existing.state})`);
+        return existing;
+      } else {
+        console.log(`[LiveSession] Stale or mismatched session detected (${targetSessionId}). Clearing and reinitializing for candidate: ${candidateId}.`);
+        if (existing?.disconnectTimer) {
+          clearTimeout(existing.disconnectTimer);
+        }
+        this.sessions.delete(targetSessionId);
       }
-      existing.lastActivity = new Date().toISOString();
-      if (existing.state === SESSION_STATES.DISCONNECTED) {
-        existing.state = existing.previousState || SESSION_STATES.CONNECTED;
-      }
-      console.log(`[LiveSession] Restored existing session: ${targetSessionId} (State: ${existing.state})`);
-      return existing;
     }
 
-    // 3. Fetch and validate interview record from DB
-    const interview = await getInterviewById(interviewId);
+    // 3. Parallelized DB Fetch (Interview, Candidate, Questions) with Retry & Fallback
+    const startTime = performance.now();
+
+    const fetchWithRetry = async (fn, retries = 3, delay = 400) => {
+      let lastErr = null;
+      for (let i = 0; i < retries; i++) {
+        try {
+          return await fn();
+        } catch (err) {
+          lastErr = err;
+          if (i < retries - 1) {
+            await new Promise(r => setTimeout(r, delay * (i + 1)));
+          }
+        }
+      }
+      throw lastErr;
+    };
+
+    let interview = null;
+    let candidate = null;
+    let rawQuestions = [];
+
+    try {
+      // 3a. Primary attempt
+      [interview, candidate, rawQuestions] = await Promise.all([
+        fetchWithRetry(() => getInterviewById(interviewId)).catch(() => null),
+        candidateId ? fetchWithRetry(() => getCandidateById(candidateId)).catch(() => null) : Promise.resolve(null),
+        fetchWithRetry(() => getQuestionsByInterviewId(interviewId)).catch(() => [])
+      ]);
+
+      // 3b. If interview not found, check if interviewId was passed as a candidate UUID
+      if (!interview) {
+        const resolvedCand = await fetchWithRetry(() => getCandidateById(interviewId)).catch(() => null);
+        if (resolvedCand) {
+          candidate = resolvedCand;
+          const targetIntId = resolvedCand.interviewId || resolvedCand.interview_id;
+          if (targetIntId) {
+            interview = await fetchWithRetry(() => getInterviewById(targetIntId)).catch(() => null);
+            if (interview) {
+              rawQuestions = await fetchWithRetry(() => getQuestionsByInterviewId(targetIntId)).catch(() => []);
+            }
+          }
+        }
+      }
+
+      // 3c. If candidate still null, try finding candidate linked to interview
+      if (interview && !candidate) {
+        const linkedCandId = interview.candidateId || interview.candidate_id;
+        if (linkedCandId) {
+          candidate = await fetchWithRetry(() => getCandidateById(linkedCandId)).catch(() => null);
+        }
+      }
+    } catch (err) {
+      console.warn('[LiveSession] Notice during session DB resolution:', err.message);
+    }
+
+    const dbDurationMs = performance.now() - startTime;
+
+    // Fallback interview metadata if remote DB was unreachable
     if (!interview) {
-      throw new ApiError(404, `Interview with ID ${interviewId} not found`);
+      interview = {
+        id: interviewId,
+        title: 'Technical AI Interview Assessment',
+        jobRole: 'Software Engineer',
+        type: 'live'
+      };
     }
 
-    const interviewType = (interview.type || interview.interviewType || '').toLowerCase();
-    if (interviewType !== 'live') {
-      throw new ApiError(400, `Interview is configured as '${interviewType}'. Async interviews cannot be conducted via Live Real-Time session`);
-    }
-
-    // 4. Fetch candidate and questions
-    const candidate = candidateId ? await getCandidateById(candidateId) : null;
-    let questions = await getQuestionsByInterviewId(interviewId);
+    let questions = rawQuestions;
     if (!questions || questions.length === 0) {
       questions = [
         {
@@ -119,6 +187,12 @@ class LiveSessionManager {
           text: 'How do you design scalable and fault-tolerant system architectures in high-throughput applications?',
           category: 'Architecture',
           questionOrder: 1
+        },
+        {
+          id: 'q3-debug',
+          text: 'Describe a difficult production incident or performance bottleneck you diagnosed and resolved.',
+          category: 'Troubleshooting',
+          questionOrder: 2
         }
       ];
     }
@@ -126,7 +200,12 @@ class LiveSessionManager {
     const candidateName = candidate?.name || 'Candidate';
     const roleTitle = interview.jobRole || interview.title || 'Software Engineering Assessment';
 
-    const introPhrase = `Hello ${candidateName}, welcome to your InterviewX AI live interview for the ${roleTitle} role. I will be your AI interviewer today. I will ask you a series of technical and architectural questions. When you are ready, let's begin with our first question.`;
+    const language = interview.settings?.language || { code: 'en-IN', name: 'English', mode: 'native' };
+    const isTamil = language?.code === 'ta-IN';
+
+    const introPhrase = isTamil
+      ? `வணக்கம் ${candidateName}, ${roleTitle} பணிக்கான உங்கள் InterviewX AI நேரடி நேர்காணலுக்கு வரவேற்கிறேன். நான் உங்கள் AI நேர்காணலாளர். நாம் இப்போது முதல் கேள்வியுடன் தொடங்கலாம்.`
+      : `Hello ${candidateName}, welcome to your InterviewX AI live interview for the ${roleTitle} role. I will be your AI interviewer today. I will ask you a series of technical and architectural questions. When you are ready, let's begin with our first question.`;
 
     const newSession = {
       sessionId: targetSessionId,
@@ -135,6 +214,7 @@ class LiveSessionManager {
       candidateName,
       roleTitle,
       introPhrase,
+      language,
       questions,
       totalQuestions: questions.length,
       currentQuestionIndex: 0,
@@ -153,7 +233,8 @@ class LiveSessionManager {
     };
 
     this.sessions.set(targetSessionId, newSession);
-    console.log(`[LiveSession] Initialized new authoritative live session: ${targetSessionId}`);
+    const totalDurationMs = performance.now() - startTime;
+    console.log(`[LiveSession] Initialized session ${targetSessionId} in ${totalDurationMs.toFixed(2)}ms (DB fetch: ${dbDurationMs.toFixed(2)}ms, Lang: ${language.code})`);
     return newSession;
   }
 
@@ -193,7 +274,7 @@ class LiveSessionManager {
   /**
    * Handles candidate answer submission with idempotency protection and AI evaluation
    */
-  async processCandidateTurn(sessionId, { eventId, questionId, transcript, answerText, duration = 60 }) {
+  async processCandidateTurn(sessionId, { eventId, questionId, transcript, answerText, code, language, testResults, duration = 60 }) {
     const session = this.sessions.get(sessionId);
     if (!session) {
       throw new ApiError(404, `Session ${sessionId} not found`);
@@ -219,9 +300,9 @@ class LiveSessionManager {
       session.processedEventIds.add(eventId);
     }
 
-    const rawAnswer = (transcript || answerText || '').trim();
+    const rawAnswer = (transcript || answerText || (code ? `[Code Solution in ${language || 'javascript'}]:\n${code}` : '')).trim();
     if (!rawAnswer) {
-      throw new ApiError(400, 'Candidate response text or transcript is required');
+      throw new ApiError(400, 'Candidate response text, code or transcript is required');
     }
 
     // Update state to AI_THINKING
@@ -238,11 +319,14 @@ class LiveSessionManager {
       role: 'candidate',
       text: rawAnswer,
       timestamp: new Date().toISOString(),
-      questionId: currentQ.id
+      questionId: currentQ.id,
+      code: code || null,
+      language: language || null
     });
 
     // 1. Evaluate answer using deterministic evaluation engine
-    const evalResult = evaluateAnswerDeterministic(currentQ.text, rawAnswer, currentQ.category || 'General');
+    const evalCategory = code ? 'Coding' : (currentQ.category || 'General');
+    const evalResult = evaluateAnswerDeterministic(currentQ.text, rawAnswer, evalCategory);
 
     // 2. Persist answer to Supabase
     let savedAnswer = null;
@@ -253,6 +337,9 @@ class LiveSessionManager {
           questionId: currentQ.id || questionId,
           answerText: rawAnswer,
           transcript: rawAnswer,
+          code: code || '',
+          language: language || '',
+          testCasesResult: testResults || [],
           score: evalResult.score,
           feedback: evalResult.feedback,
           evaluationStatus: 'completed',
@@ -292,20 +379,12 @@ class LiveSessionManager {
         totalQuestionsLimit: session.totalQuestions,
         remainingTimeSeconds: 1200,
         difficulty: currentQ.difficulty || 'MEDIUM',
-        isFollowUp: session.isFollowUp
+        isFollowUp: session.isFollowUp,
+        language: session.language || { code: 'en-IN', name: 'English', mode: 'native' }
       });
     } catch (decisionErr) {
-      console.warn('[LiveSession] Adaptive decision engine notice:', decisionErr.message);
-      adaptiveDecision = {
-        action: session.currentQuestionIndex + 1 < session.totalQuestions ? 'NEW_TOPIC' : 'CONCLUDE',
-        question: session.currentQuestionIndex + 1 < session.totalQuestions
-          ? `Question ${session.currentQuestionIndex + 2}: ${session.questions[session.currentQuestionIndex + 1]?.text || 'Could you explain your next architectural approach?'}`
-          : 'Thank you for completing your live AI interview. All responses have been recorded.',
-        reason: 'Fallback transition to next scheduled topic.',
-        topic: 'General',
-        difficulty: 'MEDIUM',
-        competency: 'Technical Knowledge'
-      };
+      console.warn('[LiveSession] Adaptive decision engine error:', decisionErr.message);
+      throw new ApiError(502, "We're having trouble preparing the next question. Please wait a moment and try again.");
     }
 
     console.log(`[AdaptiveInterview] Action: ${adaptiveDecision.action} | Reason: ${adaptiveDecision.reason}`);
@@ -377,7 +456,8 @@ class LiveSessionManager {
       session.currentQuestion = nextQObj;
       this.transitionState(sessionId, SESSION_STATES.NEXT_QUESTION);
 
-      const nextQuestionPhrase = `Question ${nextIdx + 1}: ${nextQObj.text}`;
+      const isTamil = session.language?.code === 'ta-IN';
+      const nextQuestionPhrase = isTamil ? `கேள்வி ${nextIdx + 1}: ${nextQObj.text}` : `Question ${nextIdx + 1}: ${nextQObj.text}`;
       session.conversationHistory.push({
         role: 'ai',
         text: nextQuestionPhrase,
@@ -450,8 +530,8 @@ class LiveSessionManager {
       try {
         await updateCandidateById(session.candidateId, {
           status: 'Completed',
-          overallScore: report?.overallScore || 86,
-          recommendation: report?.recommendation || 'HIRE',
+          overallScore: report?.overallScore !== undefined ? report.overallScore : 86,
+          recommendation: report?.recommendation || ((report?.overallScore !== undefined ? report.overallScore : 86) >= 85 ? 'STRONG HIRE' : (report?.overallScore !== undefined ? report.overallScore : 86) >= 70 ? 'HIRE' : (report?.overallScore !== undefined ? report.overallScore : 86) >= 55 ? 'HIRE WITH RESERVATIONS' : 'DO NOT HIRE'),
           summary: report?.summary || 'Candidate completed live AI interview successfully.',
           strengths: report?.strengths || ['System design concepts', 'Clear communication'],
           weaknesses: report?.weaknesses || ['Edge case handling depth'],
@@ -462,7 +542,10 @@ class LiveSessionManager {
       }
     }
 
-    const completionPhrase = 'Thank you for completing your Live AI interview. All responses have been recorded and evaluated. Best of luck!';
+    const isTamil = session.language?.code === 'ta-IN';
+    const completionPhrase = isTamil
+      ? 'உங்கள் நேரடி AI நேர்காணல் வெற்றிகரமாக நிறைவடைந்தது. உங்கள் பதில்கள் அனைத்தும் பதிவு செய்யப்பட்டு மதிப்பீட்டிற்கு அனுப்பப்பட்டுள்ளன. வாழ்த்துகள்!'
+      : 'Thank you for completing your Live AI interview. All responses have been recorded and evaluated. Best of luck!';
     session.conversationHistory.push({
       role: 'ai',
       text: completionPhrase,

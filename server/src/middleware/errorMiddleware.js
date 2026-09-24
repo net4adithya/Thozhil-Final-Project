@@ -46,7 +46,7 @@ export const errorHandler = (err, req, res, next) => {
     ...(env.env === 'development' && { stack: err.stack }),
   };
 
-  if (env.env === 'development') {
+  if (env.env === 'development' && (statusCode >= 500 || !err.isOperational)) {
     console.error(err);
   }
 

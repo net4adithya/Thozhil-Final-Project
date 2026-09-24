@@ -23,8 +23,7 @@ const ensureStorageBucket = async () => {
     if (!exists) {
       console.log(`[RecordingService] Creating dedicated storage bucket: ${STORAGE_BUCKET}`);
       const { error: createError } = await supabase.storage.createBucket(STORAGE_BUCKET, {
-        public: true,
-        fileSizeLimit: 524288000 // 500MB
+        public: true
       });
       if (createError) {
         console.warn(`[RecordingService] Create bucket notice: ${createError.message}`);
@@ -176,12 +175,45 @@ export const uploadInterviewRecording = async (interviewId, payload, file) => {
 
     // 5b. If question answer recording, update answer row if applicable
     if (questionId && candidateId) {
-      await supabase
-        .from('answers')
-        .update({ recording_url: publicUrl })
-        .eq('interview_id', interviewId)
-        .eq('question_id', questionId)
-        .catch(() => {});
+      try {
+        await supabase
+          .from('answers')
+          .update({ recording_url: publicUrl })
+          .eq('interview_id', interviewId)
+          .eq('question_id', questionId);
+      } catch (ansErr) {
+        console.warn('[RecordingService] Answer recording_url update notice:', ansErr.message);
+      }
+    }
+
+    // 5c. Update candidate record with recording URL so it displays in candidate profile
+    const targetCandId = candidateId || interview.candidate?.id;
+    if (targetCandId) {
+      try {
+        await supabase
+          .from('candidates')
+          .update({ recording_url: publicUrl })
+          .eq('id', targetCandId);
+      } catch (candErr) {
+        console.warn('[RecordingService] Candidate recording_url update notice:', candErr.message);
+      }
+    }
+
+    // 5d. Update assessment report with recording URL so evaluation view can play it
+    try {
+      if (targetCandId) {
+        await supabase
+          .from('reports')
+          .update({ recording_url: publicUrl })
+          .eq('candidate_id', targetCandId);
+      } else {
+        await supabase
+          .from('reports')
+          .update({ recording_url: publicUrl })
+          .eq('interview_id', interviewId);
+      }
+    } catch (repErr) {
+      console.warn('[RecordingService] Report recording_url update notice:', repErr.message);
     }
 
     console.log(`[RecordingService] Persisted recording metadata for interview: ${interviewId}`);

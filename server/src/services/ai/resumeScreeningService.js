@@ -142,6 +142,199 @@ ${resumeText.slice(0, 8000)}
   };
 };
 
+/**
+ * System prompt for generating clear, practical, and jargon-free interview questions from a resume
+ */
+const RESUME_QUESTION_GENERATION_PROMPT = `You are a helpful and practical Technical Interviewer.
+Your goal is to inspect the candidate's resume and create 4 clear, realistic, and easy-to-understand interview questions based on their real experience.
+
+CRITICAL WRITING RULES:
+1. USE SIMPLE, PLAIN ENGLISH: Keep every sentence clear, direct, and easy to read.
+2. STRICTLY NO JARGON OR BUZZWORDS: Do NOT use complex academic or corporate jargon (e.g., avoid "high-throughput container orchestration", "monotonic consistency tokens", "microservice mesh eventual consistency", "sub-100ms p95 latency", "architectural paradigms").
+3. ASK ABOUT REAL WORK: Ask directly about the actual tools, frameworks, and projects listed on their resume (e.g., "In your work with React, how did you structure your components and handle state?" or "How did you design your database tables and fix queries that were slow?").
+4. 4 PRACTICAL QUESTIONS:
+   - Question 1: System Structure & Design (Category: System Design, Difficulty: Medium, Duration: 180) - A simple question on how they structured a project or API.
+   - Question 2: Hands-on Coding & Features (Category: Technical Knowledge, Difficulty: Medium, Duration: 180) - A practical question on building a key feature with their core skill.
+   - Question 3: Data & Performance (Category: Performance, Difficulty: Medium, Duration: 180) - A simple question on managing data or making an app run smoothly.
+   - Question 4: Problem Solving & Debugging (Category: Troubleshooting, Difficulty: Medium, Duration: 180) - A question on how they found and solved a tricky bug.
+
+OUTPUT FORMAT (Valid JSON only):
+{
+  "isResume": true,
+  "candidateName": string,
+  "primaryRole": string,
+  "extractedSkills": string[],
+  "yearsOfExperience": number,
+  "summary": string,
+  "questions": [
+    {
+      "text": string (Clear, simple question without jargon),
+      "category": string,
+      "difficulty": "Easy" | "Medium" | "Hard",
+      "duration": number,
+      "sourceClaim": string (Mention the skill or project from their resume)
+    }
+  ]
+}`;
+
+/**
+ * Analyzes candidate resume text and generates personalized questions tailored to their background
+ * @param {string} resumeId - Resume UUID
+ * @param {Object} options - Options ({ roleTitle, targetJobId })
+ * @returns {Promise<Object>} Analyzed resume summary and personalized questions
+ */
+export const generatePersonalizedQuestionsFromResume = async (resumeId, options = {}) => {
+  if (!resumeId) {
+    throw new ApiError(400, 'Resume ID is required');
+  }
+
+  const resume = await getResumeById(resumeId);
+  const resumeText = (resume.parsedText || '').trim();
+
+  if (!resumeText || resumeText.length < 10) {
+    throw new ApiError(400, 'Please upload a readable resume file (PDF, DOCX, or TXT).');
+  }
+
+  // Extract key candidate metadata
+  const candidate = resume.candidateId ? await getCandidateById(resume.candidateId).catch(() => null) : null;
+  const roleTitle = options.roleTitle || candidate?.role || 'Software Engineer';
+
+  // Construct AI Prompt (clean and concise)
+  const cleanResumeText = resumeText
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s*\n/g, '\n')
+    .trim()
+    .slice(0, 2500);
+
+  const userPrompt = `
+### ROLE BEING HIRED FOR ###
+${roleTitle}
+
+### CANDIDATE RESUME ###
+${cleanResumeText}
+### END OF RESUME ###
+
+Generate 4 clear, conversational, jargon-free technical questions based directly on the technologies and projects in this resume.`;
+
+  let aiResult = null;
+  const maxRetries = 2;
+  let lastErr = null;
+
+  console.log('[AI] Resume analysis and plain-English question synthesis started');
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      aiResult = await callAIProvider(RESUME_QUESTION_GENERATION_PROMPT, userPrompt, {
+        temperature: 0.3
+      });
+      if (aiResult && Array.isArray(aiResult.questions) && aiResult.questions.length > 0) {
+        break;
+      }
+    } catch (err) {
+      lastErr = err;
+      console.warn(`[ResumeQuestionService] Attempt ${attempt} failed:`, err.message);
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 400 * attempt));
+      }
+    }
+  }
+
+  // Fallback: If AI provider is unreachable or returns invalid format, build clean questions from detected skills
+  if (!aiResult || !Array.isArray(aiResult.questions) || aiResult.questions.length === 0) {
+    console.warn('[ResumeQuestionService] Using clean fallback question generator');
+    const lower = resumeText.toLowerCase();
+    const commonSkills = [
+      'React', 'Node.js', 'JavaScript', 'TypeScript', 'Python', 'Java',
+      'SQL', 'PostgreSQL', 'MongoDB', 'AWS', 'Docker', 'Git', 'Express',
+      'HTML', 'CSS', 'Redux', 'REST API', 'GraphQL', 'Next.js'
+    ];
+    const detected = commonSkills.filter(s => lower.includes(s.toLowerCase()));
+    const primarySkill = detected[0] || 'software development';
+    const secondarySkill = detected[1] || 'web applications';
+    const databaseSkill = detected.find(s => ['sql', 'postgresql', 'mongodb', 'mysql'].includes(s.toLowerCase())) || 'databases';
+
+    aiResult = {
+      isResume: true,
+      candidateName: candidate?.name || 'Candidate',
+      primaryRole: roleTitle,
+      extractedSkills: detected.length > 0 ? detected : [primarySkill, secondarySkill],
+      yearsOfExperience: 2,
+      summary: `Experienced in ${detected.slice(0, 4).join(', ') || roleTitle}.`,
+      questions: [
+        {
+          text: `In your past projects, how did you use ${primarySkill} to build features, and what was your approach to keeping your code organized?`,
+          category: 'System Design',
+          difficulty: 'Medium',
+          duration: 180,
+          sourceClaim: `Experience with ${primarySkill}`
+        },
+        {
+          text: `When building applications with ${secondarySkill}, how do you handle data flow, error handling, and testing before shipping to production?`,
+          category: 'Technical Knowledge',
+          difficulty: 'Medium',
+          duration: 180,
+          sourceClaim: `Experience with ${secondarySkill}`
+        },
+        {
+          text: `Can you walk us through how you manage data using ${databaseSkill}, and what steps you take to make sure your queries perform well?`,
+          category: 'Performance',
+          difficulty: 'Medium',
+          duration: 180,
+          sourceClaim: `Experience with ${databaseSkill}`
+        },
+        {
+          text: `Tell us about a difficult technical bug or unexpected issue you had to solve recently. How did you track down the problem and fix it?`,
+          category: 'Troubleshooting',
+          difficulty: 'Medium',
+          duration: 180,
+          sourceClaim: 'Problem solving and debugging'
+        }
+      ]
+    };
+  }
+
+  // Normalize Output
+  const questions = aiResult.questions.map((q, idx) => ({
+    id: `q-res-${Date.now()}-${idx + 1}`,
+    text: q.text || `Can you describe your experience working with ${q.category || 'your core technologies'}?`,
+    category: q.category || 'Technical Knowledge',
+    difficulty: q.difficulty || 'Medium',
+    duration: Number(q.duration) || 180,
+    sourceClaim: q.sourceClaim || 'Resume experience'
+  }));
+
+  const extractedSkills = Array.isArray(aiResult.extractedSkills) ? aiResult.extractedSkills : [];
+  const candidateName = aiResult.candidateName || candidate?.name || 'Candidate';
+  const yearsOfExperience = aiResult.yearsOfExperience || null;
+  const summary = aiResult.summary || '';
+
+  console.log(`[AI] Resume analysis completed: ${questions.length} questions compiled for ${candidateName}`);
+
+  // 6. Update candidate skills and resume metadata if available
+  if (candidate) {
+    try {
+      await supabase
+        .from('candidates')
+        .update({
+          skills: extractedSkills.length > 0 ? extractedSkills : candidate.skills,
+          summary: summary || candidate.summary
+        })
+        .eq('id', candidate.id);
+    } catch (e) {}
+  }
+
+  return {
+    isResume: true,
+    candidateName,
+    roleTitle,
+    extractedSkills,
+    yearsOfExperience,
+    summary,
+    questions
+  };
+};
+
 export default {
-  screenResume
+  screenResume,
+  generatePersonalizedQuestionsFromResume
 };

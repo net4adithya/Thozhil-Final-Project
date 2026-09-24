@@ -1,27 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
-  Video,
   Copy,
-  CheckCircle,
+  Check,
   UserPlus,
   ArrowLeft,
-  Mail,
-  User,
-  ExternalLink,
-  ChevronRight
+  Share2,
+  Users,
+  BookOpen,
+  Clock,
+  ShieldCheck,
+  Pencil,
+  Video
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Table } from '../components/ui/Table';
 import { Avatar } from '../components/ui/Avatar';
-import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
-import { Breadcrumb } from '../components/ui/Breadcrumb';
+import { BrandLoader } from '../components/common/BrandLoader';
+import { interviewService } from '../services/interviewService';
+import { EditInterviewModal } from '../components/interview/EditInterviewModal';
 
 export const InterviewDetails = () => {
   const { id } = useParams();
@@ -36,7 +36,9 @@ export const InterviewDetails = () => {
 
   const [interview, setInterview] = useState(null);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
@@ -69,20 +71,26 @@ export const InterviewDetails = () => {
 
   if (loading || !interview) {
     return (
-      <div className="flex-grow flex items-center justify-center">
-        <Spinner size="lg" />
+      <div className="flex-grow flex items-center justify-center py-24">
+        <BrandLoader message="Loading assessment track details..." subMessage="Synchronizing criteria & candidate benchmarks" />
       </div>
     );
   }
 
-  const interviewCandidates = candidates.filter((c) => c.interviewId === id);
-
-  // Link that candidates can use to simulate joining the interview room
-  const mockCandidateLink = `${window.location.origin}/candidate?interviewId=${interview.id}`;
+  const interviewCandidates = candidates.filter((c) => 
+    c.interviewId === id || 
+    c.interview_id === id ||
+    c.id === interview?.candidate_id ||
+    c.id === interview?.candidateId ||
+    c.id === interview?.candidate?.id
+  );
+  const candidateInviteLink = `${window.location.origin}/candidate?interviewId=${interview.id}`;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(mockCandidateLink);
-    showToast('Assessment invitation link copied to clipboard!', 'success');
+    navigator.clipboard.writeText(candidateInviteLink);
+    setCopied(true);
+    showToast('Assessment invitation link copied to clipboard', 'primary');
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleInviteSubmit = async (data) => {
@@ -91,11 +99,12 @@ export const InterviewDetails = () => {
       await inviteCandidate({
         name: data.name,
         email: data.email,
-        role: interview.title,
+        role: interview.title || interview.jobRole,
         interviewId: interview.id
       });
       setInviteModalOpen(false);
       reset();
+      showToast('Invitation sent successfully.', 'primary');
     } catch (e) {
       console.error(e);
     } finally {
@@ -103,196 +112,262 @@ export const InterviewDetails = () => {
     }
   };
 
-  const getStatusBadge = (status) => {
-    if (status === 'Completed') return <Badge variant="success">Completed</Badge>;
-    if (status === 'Reviewing') return <Badge variant="warning">Reviewing</Badge>;
-    return <Badge variant="primary">Invited</Badge>;
-  };
-
-  const breadcrumbs = [
-    { label: 'Workspace', path: '/recruiter' },
-    { label: 'Interviews', path: '/recruiter/interviews' },
-    { label: interview.title }
-  ];
+  const isLive = interview.type === 'live' || interview.interviewType === 'live';
+  const questions = interview.questions || [];
 
   return (
-    <div className="space-y-8 flex-1 flex flex-col">
-      {/* Breadcrumbs & Navigation */}
-      <div className="flex flex-col space-y-2 select-none">
+    <div className="space-y-6 flex-1 flex flex-col text-left font-sans text-slate-900">
+      {/* Top Header & Breadcrumb */}
+      <div className="space-y-3 pb-2 border-b border-slate-200">
         <button
           onClick={() => navigate('/recruiter/interviews')}
-          className="inline-flex items-center text-xs font-semibold text-brandBody hover:text-brandHeading space-x-1 w-fit"
+          className="inline-flex items-center text-xs font-medium text-slate-500 hover:text-slate-900 space-x-1"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to interviews</span>
+          <span>Back to Assessments</span>
         </button>
-        <Breadcrumb items={breadcrumbs} />
-      </div>
 
-      {/* Main Title Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 select-none">
-        <div className="flex items-center space-x-3.5">
-          <div className="p-3 bg-primary/10 rounded-xl text-primary shrink-0 border border-primary/20">
-            <Video className="w-7 h-7" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center space-x-2.5">
+              <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+                {interview.title || interview.jobRole}
+              </h1>
+              <Badge variant={interview.status === 'Active' || !interview.status ? 'success' : 'secondary'} size="xs">
+                {interview.status || 'Active'}
+              </Badge>
+            </div>
+            <div className="flex items-center space-x-2 text-xs text-slate-500 mt-1">
+              <span>{interview.department || 'Engineering'}</span>
+              <span>•</span>
+              <span>{interview.duration || 30} mins</span>
+              <span>•</span>
+              <span>{isLive ? 'Live Interview' : 'Recorded Assessment'}</span>
+            </div>
           </div>
-          <div className="text-left">
-            <span className="text-xs font-semibold uppercase tracking-wider text-brandBody">{interview.department}</span>
-            <h1 className="text-2xl font-bold tracking-tight text-brandHeading leading-tight">{interview.title}</h1>
+
+          <div className="flex items-center space-x-2.5 flex-wrap gap-y-2">
+            <Button
+              onClick={() => setEditModalOpen(true)}
+              variant="secondary"
+              size="sm"
+              icon={Pencil}
+            >
+              Edit Assessment
+            </Button>
+            <Button
+              onClick={() => setInviteModalOpen(true)}
+              variant="primary"
+              size="sm"
+              icon={UserPlus}
+            >
+              Invite Candidate
+            </Button>
+            <Button
+              onClick={handleCopyLink}
+              variant="secondary"
+              size="sm"
+              icon={copied ? Check : Copy}
+            >
+              {copied ? 'Link Copied' : 'Copy Invite Link'}
+            </Button>
           </div>
         </div>
+      </div>
 
-        <div className="flex items-center space-x-3.5">
-          <Button
-            onClick={() => setInviteModalOpen(true)}
-            variant="primary"
-            size="sm"
-            icon={UserPlus}
-          >
-            Invite Candidate
+      {/* Shareable Link Box */}
+      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-0.5">
+          <span className="text-xs font-semibold text-slate-800">Shareable Assessment Link</span>
+          <p className="text-[11px] text-slate-500">Candidates can access this specific evaluation directly with this URL.</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="text"
+            readOnly
+            value={candidateInviteLink}
+            className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-700 w-64 truncate select-all focus:outline-none focus:border-blue-600 shadow-xs"
+          />
+          <Button onClick={handleCopyLink} size="xs" variant="secondary">
+            {copied ? 'Copied' : 'Copy'}
           </Button>
         </div>
       </div>
 
-      {/* KPIs & Invitation Links */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 select-none">
-        {/* Detail parameters */}
-        <Card className="lg:col-span-2">
-          <CardBody className="p-5 grid grid-cols-2 sm:grid-cols-4 gap-6 text-left">
-            <div className="space-y-1">
-              <span className="text-xs text-brandBody uppercase font-semibold">Total Invited</span>
-              <p className="text-xl font-bold text-brandHeading">{interviewCandidates.length}</p>
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left: Candidate Roster for this opening */}
+        <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">Assigned Candidates</h2>
+              <span className="text-[11px] text-slate-400">{interviewCandidates.length} total applicant records</span>
             </div>
-            <div className="space-y-1">
-              <span className="text-xs text-brandBody uppercase font-semibold">Completions</span>
-              <p className="text-xl font-bold text-brandHeading">
-                {interviewCandidates.filter(c => c.status === 'Completed').length}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-xs text-brandBody uppercase font-semibold">Assigned Questions</span>
-              <p className="text-xl font-bold text-brandHeading">{interview.questions.length}</p>
-            </div>
-            <div className="space-y-1">
-              <span className="text-xs text-brandBody uppercase font-semibold">Created Date</span>
-              <p className="text-xl font-bold text-brandHeading">{interview.createdDate}</p>
-            </div>
-          </CardBody>
-        </Card>
+          </div>
 
-        {/* Invite link share */}
-        <Card>
-          <CardBody className="p-5 text-left space-y-3">
-            <span className="text-xs text-brandBody uppercase font-semibold block">Candidate Link</span>
-            <p className="text-xs text-brandBody leading-relaxed">
-              Share this access link for candidates to start the assessment.
-            </p>
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                readOnly
-                value={mockCandidateLink}
-                className="w-full text-xs text-brandBody bg-gray-50 border border-brandBorder rounded-lg px-3 py-2 outline-none select-all truncate"
-              />
-              <button
-                onClick={handleCopyLink}
-                className="p-2 border border-brandBorder hover:border-gray-300 rounded-lg text-brandBody hover:text-brandHeading bg-white transition-all hover:bg-gray-50 shrink-0"
-                title="Copy Link"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
-            </div>
-          </CardBody>
-        </Card>
-      </div>
+          <div className="divide-y divide-slate-100">
+            {interviewCandidates.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-400">
+                No candidates have been assigned to this assessment yet.
+              </div>
+            ) : (
+              interviewCandidates.map((cand) => {
+                const score = cand.overall_score ?? cand.overallScore;
+                const isEvaluated = score !== undefined && score !== null;
 
-      {/* Candidate applicants list table */}
-      <div className="flex-1 flex flex-col space-y-3">
-        <h3 className="text-base font-bold text-brandHeading text-left">Applied Candidates</h3>
-        <Table
-          headers={['Candidate', 'Email Address', 'Status', 'AI Match Score', 'Submittal Date', 'Action']}
-          data={interviewCandidates}
-          emptyMessage="No candidates have applied to this job yet. Send invites to get started!"
-          renderRow={(cand) => (
-            <tr key={cand.id} className="hover:bg-gray-50/50">
-              <td className="px-6 py-4.5 whitespace-nowrap">
-                <div className="flex items-center space-x-3">
-                  <Avatar name={cand.name} size="sm" />
-                  <span className="font-bold text-brandHeading">{cand.name}</span>
+                return (
+                  <div key={cand.id} className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50/60 transition-colors">
+                    <div className="flex items-center space-x-3 min-w-0 pr-3">
+                      <Avatar name={cand.name} size="sm" />
+                      <div className="min-w-0">
+                        <span className="text-xs font-semibold text-slate-900 block truncate">{cand.name}</span>
+                        <span className="text-[11px] text-slate-500 block truncate">{cand.email}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3 shrink-0">
+                      {isEvaluated ? (
+                        <div className="text-right">
+                          <span className="text-xs font-bold text-slate-900">{score}%</span>
+                          <span className="text-[10px] text-slate-400 block">{cand.recommendation || 'Evaluated'}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-1.5">
+                          {(cand.recording_url || cand.recordingUrl) && (
+                            <span className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded flex items-center space-x-1 font-semibold">
+                              <Video className="w-2.5 h-2.5 text-blue-600" />
+                              <span>Recorded</span>
+                            </span>
+                          )}
+                          <Badge variant="secondary" size="xs">
+                            {cand.status || 'Invited'}
+                          </Badge>
+                        </div>
+                      )}
+
+                      <div className="flex items-center space-x-1.5">
+                        <Button
+                          onClick={() => navigate((isEvaluated || cand.recording_url || cand.recordingUrl || cand.status === 'Completed') ? `/recruiter/candidates/${cand.id}/report` : `/candidate?interviewId=${interview.id}&candidateId=${cand.id}`)}
+                          size="xs"
+                          variant={(isEvaluated || cand.recording_url || cand.recordingUrl || cand.status === 'Completed') ? 'primary' : 'secondary'}
+                        >
+                          {(isEvaluated || cand.recording_url || cand.recordingUrl || cand.status === 'Completed') ? 'View Report' : 'Portal'}
+                        </Button>
+                        {!isEvaluated && cand.status !== 'Completed' && (
+                          <Button
+                            onClick={() => {
+                              sessionStorage.setItem('interviewx_active_candidate_id', cand.id);
+                              navigate(isLive ? `/candidate/interviews/${cand.id}/live` : `/candidate/interviews/${cand.id}/async`);
+                            }}
+                            size="xs"
+                            variant="outline"
+                          >
+                            Launch Room
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right: Configured Questions List */}
+        <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">Configured Questions</h2>
+              <span className="text-[11px] text-slate-400">{questions.length} total questions</span>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+            {questions.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-400">
+                No questions configured for this assessment.
+              </div>
+            ) : (
+              questions.map((q, idx) => (
+                <div key={q.id || idx} className="p-4 space-y-1.5 hover:bg-slate-50/60 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-400">Question {idx + 1}</span>
+                    <Badge variant="secondary" size="xs">{q.category || 'Technical'}</Badge>
+                  </div>
+                  <p className="text-xs text-slate-900 font-medium leading-relaxed">{q.text}</p>
                 </div>
-              </td>
-              <td className="px-6 py-4.5 whitespace-nowrap text-brandBody">{cand.email}</td>
-              <td className="px-6 py-4.5 whitespace-nowrap">{getStatusBadge(cand.status)}</td>
-              <td className="px-6 py-4.5 whitespace-nowrap">
-                <span className={`font-bold ${
-                  cand.overallScore ? (cand.overallScore >= 80 ? 'text-brandSuccess' : cand.overallScore >= 70 ? 'text-primary' : 'text-brandWarning') : 'text-gray-400'
-                }`}>
-                  {cand.overallScore ? `${cand.overallScore}%` : '—'}
-                </span>
-              </td>
-              <td className="px-6 py-4.5 whitespace-nowrap text-brandBody">
-                {cand.completionDate || 'Pending completion'}
-              </td>
-              <td className="px-6 py-4.5 whitespace-nowrap">
-                {cand.status === 'Completed' || cand.status === 'Reviewing' ? (
-                  <Button
-                    onClick={() => navigate(`/recruiter/candidates/${cand.id}/report`)}
-                    variant="secondary"
-                    size="sm"
-                    icon={ExternalLink}
-                    iconPosition="right"
-                  >
-                    View Report
-                  </Button>
-                ) : (
-                  <span className="text-xs text-brandBody font-semibold italic">Awaiting assessment</span>
-                )}
-              </td>
-            </tr>
-          )}
-        />
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Invite Candidate Modal */}
       <Modal
         isOpen={inviteModalOpen}
         onClose={() => setInviteModalOpen(false)}
-        title="Invite New Candidate"
+        title={`Invite Candidate to ${interview.title || 'Assessment'}`}
+        size="md"
       >
         <form onSubmit={handleSubmit(handleInviteSubmit)} className="space-y-4 text-left">
-          <Input
-            label="Full Name"
-            placeholder="John Doe"
-            required
-            icon={User}
-            error={errors.name}
-            {...register('name', { required: 'Candidate full name is required.' })}
-          />
-          <Input
-            label="Email Address"
-            placeholder="john.doe@example.com"
-            type="email"
-            required
-            icon={Mail}
-            error={errors.email}
-            {...register('email', {
-              required: 'Email address is required.',
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: 'Invalid email address structure.'
-              }
-            })}
-          />
-          
-          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-brandBorder">
-            <Button onClick={() => setInviteModalOpen(false)} variant="ghost" size="sm">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-700 block">Candidate Name</label>
+            <input
+              type="text"
+              {...register('name', { required: 'Candidate name is required' })}
+              placeholder="e.g. Jordan Lee"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-600"
+            />
+            {errors.name && <span className="text-[11px] text-red-600 font-medium">{errors.name.message}</span>}
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-700 block">Email Address</label>
+            <input
+              type="email"
+              {...register('email', { required: 'Email is required' })}
+              placeholder="jordan.lee@company.com"
+              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-600"
+            />
+            {errors.email && <span className="text-[11px] text-red-600 font-medium">{errors.email.message}</span>}
+          </div>
+
+          <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setInviteModalOpen(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="sm" loading={submitting}>
-              Send Invitation
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              loading={submitting}
+            >
+              Send Invite
             </Button>
           </div>
         </form>
       </Modal>
+
+      {/* Edit Assessment Modal */}
+      {interview && (
+        <EditInterviewModal
+          isOpen={editModalOpen}
+          interview={interview}
+          onClose={() => setEditModalOpen(false)}
+          onUpdated={(updated) => {
+            setInterview(updated);
+          }}
+          showToast={showToast}
+        />
+      )}
     </div>
   );
 };
+
+export default InterviewDetails;

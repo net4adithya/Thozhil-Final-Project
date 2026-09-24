@@ -158,31 +158,56 @@ export const AppProvider = ({ children }) => {
 
   const addQuestionToBank = async (questionData, targetInterviewId = null) => {
     try {
-      if (targetInterviewId) {
-        const newQ = await questionService.createQuestion(targetInterviewId, questionData);
-        showToast('New question added to assessment.', 'success');
+      const interviewId = targetInterviewId || interviews?.[0]?.id;
+      if (interviewId) {
+        const newQ = await questionService.createQuestion(interviewId, questionData);
+        showToast('New question added to Question Library.', 'success');
         await refreshData();
         return newQ;
       }
-      const newQ = await interviewService.addQuestion(questionData);
-      showToast('New question appended to Bank.', 'success');
-      await refreshData();
-      return newQ;
+      showToast('No active interview found to associate question.', 'warning');
     } catch (e) {
       showToast(e.message || 'Failed to save question.', 'danger');
       throw e;
     }
   };
 
-  const submitCandidateAnswers = async (candidateId, answers, codeAnswers = {}) => {
+  const submitCandidateAnswers = async (candidateIdOrPayload, answersArg, codeAnswersArg = {}) => {
     try {
+      let candidateId = candidateIdOrPayload;
+      let answers = answersArg || {};
+      let codeAnswers = codeAnswersArg || {};
+      let explicitInterviewId = null;
+
+      if (typeof candidateIdOrPayload === 'object' && candidateIdOrPayload !== null) {
+        candidateId = candidateIdOrPayload.candidateId || candidateIdOrPayload.id;
+        answers = candidateIdOrPayload.answers || answersArg || {};
+        codeAnswers = candidateIdOrPayload.codeAnswers || codeAnswersArg || {};
+        explicitInterviewId = candidateIdOrPayload.interviewId;
+      }
+
+      if (candidateId) {
+        try {
+          sessionStorage.setItem(`interviewx_completed_${candidateId}`, 'true');
+          sessionStorage.setItem('interviewx_active_candidate_id', candidateId);
+        } catch (e) {}
+      }
+
       // Find candidate in state or fetch
       const cand = candidates.find((c) => c.id === candidateId) || (await candidateService.getCandidateById(candidateId).catch(() => null));
-      const interviewId = cand?.interviewId || interviews?.[0]?.id;
+      const interviewId = explicitInterviewId || cand?.interviewId || cand?.interview_id || interviews?.[0]?.id;
+
+      if (interviewId) {
+        try {
+          sessionStorage.setItem(`interviewx_completed_${interviewId}`, 'true');
+        } catch (e) {}
+      }
 
       // 1. Persist real answers into Supabase answers table
       if (interviewId && candidateId) {
-        await answerService.submitAllAnswers(interviewId, candidateId, answers, codeAnswers);
+        await answerService.submitAllAnswers(interviewId, candidateId, answers, codeAnswers).catch((err) => {
+          console.warn('Persist answers notice:', err.message);
+        });
       }
 
       // 2. Trigger real backend AI async interview evaluation & report generation
@@ -196,17 +221,24 @@ export const AppProvider = ({ children }) => {
       }
 
       const finalScore = reportData?.overallScore !== undefined ? reportData.overallScore : null;
+      const rec = reportData?.recommendation || (finalScore !== null ? (finalScore >= 85 ? 'STRONG HIRE' : finalScore >= 70 ? 'HIRE' : finalScore >= 55 ? 'HIRE WITH RESERVATIONS' : 'DO NOT HIRE') : null);
 
       // 3. Update candidate assessment completion state in Supabase
       const updatedCand = await candidateService.updateCandidate(candidateId, {
         status: 'Completed',
         overallScore: finalScore,
-        recommendation: reportData?.recommendation || null,
+        recommendation: rec,
         summary: reportData?.summary || 'Completed technical interview assessment.',
         strengths: reportData?.strengths || [],
         weaknesses: reportData?.weaknesses || [],
         completionDate: new Date().toISOString().split('T')[0]
       });
+
+      if (interviewId) {
+        try {
+          await interviewService.updateInterview(interviewId, { status: 'Completed' });
+        } catch (e) {}
+      }
 
       showToast(`Assessment submitted successfully! ${finalScore !== null ? `Evaluation score: ${finalScore}%` : ''}`.trim(), 'success');
       await refreshData();

@@ -10,10 +10,11 @@ const createCandidateSchema = Joi.object({
   name: Joi.string().required().messages({
     'any.required': 'Candidate name is required'
   }),
-  email: Joi.string().email().required().messages({
+  email: Joi.string().email({ tlds: false }).required().messages({
     'any.required': 'Candidate email is required',
     'string.email': 'Please provide a valid email address'
   }),
+  role: Joi.string().allow('', null),
   phone: Joi.string().allow('', null),
   status: Joi.string().valid('Invited', 'In Progress', 'Completed', 'Reviewing').default('Invited'),
   skills: Joi.array().items(Joi.string()),

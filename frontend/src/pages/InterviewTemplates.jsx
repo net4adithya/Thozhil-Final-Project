@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileSpreadsheet, Plus, Clock, FileText, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { FileSpreadsheet, Plus, Clock, FileText, ArrowRight, CheckCircle2, BookOpen } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Card, CardHeader, CardBody, CardFooter } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Spinner } from '../components/ui/Spinner';
+import { EmptyState } from '../components/ui/EmptyState';
+import { BrandLoader } from '../components/common/BrandLoader';
 
 export const InterviewTemplates = () => {
   const { templates, loading, createInterview } = useApp();
@@ -13,8 +13,8 @@ export const InterviewTemplates = () => {
 
   if (loading) {
     return (
-      <div className="flex-grow flex items-center justify-center">
-        <Spinner size="lg" />
+      <div className="flex-grow flex items-center justify-center py-24">
+        <BrandLoader message="Loading assessment blueprints..." subMessage="Fetching role-calibrated technical evaluation templates" />
       </div>
     );
   }
@@ -22,12 +22,14 @@ export const InterviewTemplates = () => {
   const handleQuickLaunch = async (tpl) => {
     try {
       const interviewData = {
-        title: `${tpl.name} Hiring Loop`,
-        department: tpl.department,
+        title: `${tpl.name} Assessment`,
+        department: tpl.department || 'Engineering',
+        type: 'async',
+        interviewType: 'async',
         status: 'Active',
-        duration: tpl.duration,
+        duration: tpl.duration || 30,
         templateId: tpl.id,
-        questions: tpl.questions
+        questions: tpl.questions || []
       };
       
       const newInt = await createInterview(interviewData);
@@ -37,80 +39,89 @@ export const InterviewTemplates = () => {
     }
   };
 
+  const tplList = templates || [];
+
   return (
-    <div className="space-y-8 flex-1 flex flex-col">
+    <div className="space-y-6 flex-1 flex flex-col text-left font-sans text-slate-900">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 select-none">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 select-none">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-brandHeading">Assessment Templates</h1>
-          <p className="text-sm text-brandBody">Deploy pre-configured question sets mapped to core company roles.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Assessment Templates</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Ready-to-use evaluation blueprints mapped to standard technical hiring roles.</p>
         </div>
       </div>
 
       {/* Grid of Templates */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-grow items-start">
-        {templates.map((tpl) => (
-          <Card key={tpl.id} className="hover:shadow-md hover:border-gray-300">
-            <CardBody className="p-5 text-left flex flex-col h-full space-y-4">
-              <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-brandBody">
-                  {tpl.department}
-                </span>
-                <h3 className="text-base font-bold text-brandHeading tracking-tight">
-                  {tpl.name}
-                </h3>
-              </div>
-
-              <p className="text-xs text-brandBody leading-relaxed flex-grow">
-                {tpl.description}
-              </p>
-
-              {/* Skills tags list */}
-              <div className="flex flex-wrap gap-1.5 select-none py-1">
-                {tpl.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="text-[9px] font-semibold bg-gray-100 border border-brandBorder px-2 py-0.5 rounded text-brandBody"
-                  >
-                    {skill}
+      {tplList.length === 0 ? (
+        <EmptyState
+          title="No templates available"
+          description="Pre-configured assessment templates will appear here."
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
+          {tplList.map((tpl) => (
+            <div
+              key={tpl.id}
+              className="bg-white rounded-xl border border-slate-200 p-5 hover:border-slate-300 shadow-xs transition-colors flex flex-col justify-between space-y-4 group"
+            >
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 inline-block">
+                    {tpl.department || 'Engineering'}
                   </span>
-                ))}
+                  <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors tracking-tight">
+                    {tpl.name}
+                  </h3>
+                </div>
+
+                <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
+                  {tpl.description || 'Standard technical evaluation blueprint.'}
+                </p>
+
+                {/* Skills tags list */}
+                {tpl.skills && tpl.skills.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {tpl.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="text-[10px] font-semibold bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md text-slate-600"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Basic configs details */}
-              <div className="grid grid-cols-2 gap-4 border-t border-brandBorder pt-3 text-xs select-none">
-                <div className="space-y-0.5">
-                  <span className="text-brandBody">Total Questions</span>
-                  <div className="flex items-center space-x-1 font-semibold text-brandHeading">
-                    <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span>{tpl.questionCount} prompts</span>
-                  </div>
+              <div className="pt-3 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                  <span className="flex items-center space-x-1">
+                    <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{tpl.questionCount || tpl.questions?.length || 0} Questions</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{tpl.duration || 30} mins</span>
+                  </span>
                 </div>
-                
-                <div className="space-y-0.5">
-                  <span className="text-brandBody">Timer Limit</span>
-                  <div className="flex items-center space-x-1 font-semibold text-brandHeading">
-                    <Clock className="w-3.5 h-3.5 text-brandWarning shrink-0" />
-                    <span>{tpl.duration} mins</span>
-                  </div>
-                </div>
-              </div>
-            </CardBody>
 
-            <CardFooter className="px-5 py-3.5 bg-gray-50/50 flex items-center gap-2 select-none">
-              <Button
-                onClick={() => handleQuickLaunch(tpl)}
-                variant="secondary"
-                size="sm"
-                className="w-full"
-                icon={CheckCircle2}
-              >
-                Quick Launch Loop
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+                <Button
+                  onClick={() => handleQuickLaunch(tpl)}
+                  variant="primary"
+                  size="xs"
+                  className="w-full"
+                  icon={ArrowRight}
+                  iconPosition="right"
+                >
+                  Use Blueprint
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
+
+export default InterviewTemplates;

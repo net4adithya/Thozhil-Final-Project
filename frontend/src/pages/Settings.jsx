@@ -6,7 +6,7 @@ import { Card, CardHeader, CardBody } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
-import { Spinner } from '../components/ui/Spinner';
+import { BrandLoader } from '../components/common/BrandLoader';
 
 export const Settings = () => {
   const { settings, updateRecruiterSettings, loading } = useApp();
@@ -28,27 +28,28 @@ export const Settings = () => {
 
   if (loading) {
     return (
-      <div className="flex-grow flex items-center justify-center">
-        <Spinner size="lg" />
+      <div className="flex-grow flex items-center justify-center py-20">
+        <BrandLoader message="Loading workspace preferences..." subMessage="Syncing enterprise integration settings" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 flex-grow flex flex-col max-w-3xl mx-auto w-full">
+    <div className="space-y-8 flex-grow flex flex-col max-w-3xl mx-auto w-full font-sans text-slate-900">
       {/* Header */}
-      <div className="text-left select-none">
-        <h1 className="text-2xl font-bold tracking-tight text-brandHeading">Workspace Settings</h1>
-        <p className="text-sm text-brandBody">Configure account profiles, integration keys, and local media streams.</p>
+      <div className="text-left select-none pb-2 border-b border-slate-200">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Workspace Settings</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Configure recruiter identity, default hardware devices, and API credentials.</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 text-left">
         {/* Recruiter Details */}
-        <Card>
-          <CardHeader>
-            <h3 className="text-sm font-bold text-brandHeading">Recruiter Profile</h3>
-          </CardHeader>
-          <CardBody className="space-y-4">
+        <div className="bg-white rounded-xl p-6 sm:p-7 shadow-xs border border-slate-200 space-y-5">
+          <div className="border-b border-slate-100 pb-3">
+            <h3 className="text-sm font-bold text-slate-900">Recruiter Profile</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Primary workspace identity and organization details</p>
+          </div>
+          <div className="space-y-4">
             <Input
               label="Full Name"
               icon={User}
@@ -67,15 +68,16 @@ export const Settings = () => {
                 {...register('companyName')}
               />
             </div>
-          </CardBody>
-        </Card>
+          </div>
+        </div>
 
         {/* Media devices configurations */}
-        <Card>
-          <CardHeader>
-            <h3 className="text-sm font-bold text-brandHeading">Media Capture Configuration</h3>
-          </CardHeader>
-          <CardBody className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl p-6 sm:p-7 shadow-xs border border-slate-200 space-y-5">
+          <div className="border-b border-slate-100 pb-3">
+            <h3 className="text-sm font-bold text-slate-900">Media Device Defaults</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Default video optical sensor and audio recording capture streams</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
               label="Default Video Capture Device"
               options={[
@@ -92,15 +94,16 @@ export const Settings = () => {
               ]}
               {...register('micSelected')}
             />
-          </CardBody>
-        </Card>
+          </div>
+        </div>
 
         {/* API configurations */}
-        <Card>
-          <CardHeader>
-            <h3 className="text-sm font-bold text-brandHeading">API Integrations</h3>
-          </CardHeader>
-          <CardBody className="space-y-4">
+        <div className="bg-white rounded-xl p-6 sm:p-7 shadow-xs border border-slate-200 space-y-5">
+          <div className="border-b border-slate-100 pb-3">
+            <h3 className="text-sm font-bold text-slate-900">API & Webhook Integrations</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Connect your ATS integrations (Greenhouse, Lever, Ashby)</p>
+          </div>
+          <div className="space-y-4">
             <Input
               label="Platform Access Secret Key"
               type="text"
@@ -108,14 +111,14 @@ export const Settings = () => {
               readOnly
               {...register('apiKey')}
             />
-            <p className="text-[10px] text-brandBody leading-relaxed">
-              Use this secret access key to connect your ATS integrations. Never share this key on public resources.
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Use this secret access key to connect your ATS integrations (Greenhouse, Lever, Ashby). Keep this secret secure.
             </p>
-          </CardBody>
-        </Card>
+          </div>
+        </div>
 
         {/* Save button controls */}
-        <div className="flex justify-end select-none">
+        <div className="flex justify-end select-none pt-2">
           <Button
             type="submit"
             variant="primary"

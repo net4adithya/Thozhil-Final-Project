@@ -75,9 +75,9 @@ export const useInterviewRecording = ({
   }, []);
 
   /**
-   * Requests camera and microphone streams from browser
+   * Requests camera, microphone, and optional screen streams from browser
    */
-  const prepareMedia = useCallback(async () => {
+  const prepareMedia = useCallback(async ({ includeScreen = false, onScreenEnded = null } = {}) => {
     setErrorMessage('');
     setRecordingState(RECORDING_STATES.REQUESTING_PERMISSION);
 
@@ -87,7 +87,7 @@ export const useInterviewRecording = ({
       }
 
       // Request both video & audio for interview recording
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const userStream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
@@ -99,9 +99,38 @@ export const useInterviewRecording = ({
         }
       });
 
-      mediaStreamRef.current = stream;
+      let finalStream = userStream;
+
+      if (includeScreen && navigator.mediaDevices.getDisplayMedia) {
+        try {
+          const screenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: { displaySurface: 'monitor' },
+            audio: false
+          });
+
+          // Combine screen video track with user microphone audio track
+          const combinedStream = new MediaStream([
+            ...screenStream.getVideoTracks(),
+            ...userStream.getAudioTracks()
+          ]);
+
+          const screenTrack = screenStream.getVideoTracks()[0];
+          if (screenTrack) {
+            screenTrack.onended = () => {
+              console.warn('[useInterviewRecording] Screen sharing ended by user');
+              if (onScreenEnded) onScreenEnded();
+            };
+          }
+
+          finalStream = combinedStream;
+        } catch (screenErr) {
+          console.warn('[useInterviewRecording] Screen share request dismissed, utilizing camera stream:', screenErr.message);
+        }
+      }
+
+      mediaStreamRef.current = finalStream;
       setRecordingState(RECORDING_STATES.MEDIA_READY);
-      return stream;
+      return finalStream;
     } catch (err) {
       console.warn('[useInterviewRecording] Media access notice:', err.message);
       
@@ -124,12 +153,29 @@ export const useInterviewRecording = ({
   /**
    * Starts video & audio recording
    */
-  const startRecording = useCallback(async (existingStream = null) => {
+  const startRecording = useCallback(async (existingStream = null, { includeScreen = false } = {}) => {
     setErrorMessage('');
     let stream = existingStream || mediaStreamRef.current;
 
-    if (!stream || !stream.active) {
-      stream = await prepareMedia();
+    // Ensure stream contains required tracks
+    if (stream && stream.active) {
+      const hasAudio = stream.getAudioTracks().length > 0;
+      if (!hasAudio) {
+        try {
+          const audioStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true }
+          });
+          stream = new MediaStream([
+            ...stream.getVideoTracks(),
+            ...audioStream.getAudioTracks()
+          ]);
+          mediaStreamRef.current = stream;
+        } catch (micErr) {
+          console.warn('[useInterviewRecording] Microphone track attach notice:', micErr.message);
+        }
+      }
+    } else {
+      stream = await prepareMedia({ includeScreen });
       if (!stream) return false;
     }
 
@@ -209,6 +255,8 @@ export const useInterviewRecording = ({
 
         if (onRecordingStopped) onRecordingStopped(blob, finalDuration);
 
+        const localBlobUrl = URL.createObjectURL(blob);
+
         // Upload to backend if autoUpload is active
         if (autoUpload && interviewId && blob.size > 0) {
           try {
@@ -217,8 +265,8 @@ export const useInterviewRecording = ({
             const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
             formData.append('file', blob, `interview_rec_${Date.now()}.${ext}`);
             formData.append('candidateId', candidateId || '');
-            formData.append('sessionId', sessionId || `live-${interviewId}`);
-            formData.append('recordingType', 'live_session');
+            formData.append('sessionId', sessionId || `session-${interviewId}`);
+            formData.append('recordingType', 'screen_recording');
             formData.append('duration', finalDuration);
 
             const uploadRes = await interviewService.uploadRecording(interviewId, formData);
@@ -226,17 +274,17 @@ export const useInterviewRecording = ({
             setRecordingState(RECORDING_STATES.UPLOADED);
 
             if (onUploadSuccess) onUploadSuccess(uploadRes);
-            resolve({ blob, metadata: uploadRes });
+            resolve({ blob, blobUrl: localBlobUrl, metadata: uploadRes });
           } catch (uploadErr) {
             console.error('[useInterviewRecording] Upload error:', uploadErr);
             setRecordingState(RECORDING_STATES.FAILED);
             setErrorMessage(`Failed to upload recording: ${uploadErr.message}`);
             if (onUploadFailed) onUploadFailed(uploadErr);
-            resolve({ blob, error: uploadErr });
+            resolve({ blob, blobUrl: localBlobUrl, error: uploadErr });
           }
         } else {
           setRecordingState(RECORDING_STATES.IDLE);
-          resolve({ blob });
+          resolve({ blob, blobUrl: localBlobUrl });
         }
       };
 

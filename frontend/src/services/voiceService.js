@@ -1,5 +1,8 @@
 import apiClient from './apiClient';
 
+// Set of all active HTMLAudioElement instances for immediate teardown
+const activeAudioInstances = new Set();
+
 export const voiceService = {
   /**
    * Transcribes audio blob using Sarvam Speech-to-Text
@@ -41,7 +44,7 @@ export const voiceService = {
     const payload = {
       text: text.trim(),
       targetLanguageCode: options.targetLanguageCode || 'en-IN',
-      speaker: options.speaker || 'meera',
+      speaker: options.speaker || 'priya',
       pace: options.pace || 1.0,
       pitch: options.pitch || 0
     };
@@ -51,7 +54,7 @@ export const voiceService = {
   },
 
   /**
-   * Helper function to play base64 audio in the browser
+   * Helper function to play base64 audio in the browser with lifecycle tracking
    * @param {string} audioBase64 - Base64 encoded audio string
    * @param {string} [mimeType='audio/wav'] - Audio MIME format
    * @returns {Promise<HTMLAudioElement>}
@@ -63,19 +66,86 @@ export const voiceService = {
       }
 
       try {
-        const audioSrc = `data:${mimeType};base64,${audioBase64}`;
-        const audio = new Audio(audioSrc);
-        audio.onended = () => resolve(audio);
-        audio.onerror = (err) => reject(err);
-        audio.play().catch((playErr) => {
-          // In environments where autoplay is restricted or silent fallback
-          console.warn('Audio playback notice:', playErr.message);
-          resolve(audio);
+        // Stop previous audio to avoid overlapping voices
+        voiceService.stopAllPlayback();
+
+        // Convert base64 to Blob URL for clean browser decoding
+        const binaryString = atob(audioBase64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes.buffer], { type: mimeType });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const audio = new Audio(blobUrl);
+        audio.volume = 1.0;
+        activeAudioInstances.add(audio);
+
+        const cleanup = () => {
+          activeAudioInstances.delete(audio);
+          try {
+            URL.revokeObjectURL(blobUrl);
+          } catch (e) {}
+        };
+
+        audio.addEventListener('ended', cleanup, { once: true });
+        audio.addEventListener('error', cleanup, { once: true });
+        audio.addEventListener('pause', () => {
+          if (audio.currentTime === 0 || audio.ended) {
+            cleanup();
+          }
         });
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              resolve(audio);
+            })
+            .catch((playErr) => {
+              cleanup();
+              console.warn('[VoiceService] Audio autoplay blocked or failed:', playErr.message);
+              reject(playErr);
+            });
+        } else {
+          resolve(audio);
+        }
       } catch (err) {
         reject(err);
       }
     });
+  },
+
+  /**
+   * Immediately terminates all playing audio elements and Web SpeechSynthesis
+   */
+  stopAllPlayback: () => {
+    // 1. Terminate all tracked HTMLAudioElement instances
+    activeAudioInstances.forEach((audio) => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+        if (audio.src) {
+          try {
+            URL.revokeObjectURL(audio.src);
+          } catch (e) {}
+          audio.src = '';
+        }
+      } catch (err) {
+        console.warn('[VoiceService] Audio pause error:', err);
+      }
+    });
+    activeAudioInstances.clear();
+
+    // 2. Terminate Web Speech API Synthesis
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (err) {
+        console.warn('[VoiceService] SpeechSynthesis cancel error:', err);
+      }
+    }
   }
 };
 
