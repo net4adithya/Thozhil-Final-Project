@@ -55,13 +55,35 @@ ENV/
 env.bak/
 venv.bak/
 
-# Environment Variables & Keys
+# Environment Variables, Secrets & API Keys
 .env
-.env.local
 .env.*
+*.env
+.env.local
+.env.development
+.env.test
+.env.production
+secrets.json
+secret*.json
+credentials.json
+key*.json
+keys.json
+token.json
+*.token
+*.pem
+*.key
+*.crt
+secrets/
+config/secrets*
+api_keys.py
+secrets.py
+config_private.py
 
-# SQLite Database
+# SQLite & Local Databases
 database.db
+*.db
+*.sqlite
+*.sqlite3
 *.db-journal
 
 # Uploads directory (keep directory, ignore uploaded files)
