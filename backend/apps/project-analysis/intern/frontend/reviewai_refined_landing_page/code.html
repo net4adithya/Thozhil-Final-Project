@@ -1,0 +1,282 @@
+<!DOCTYPE html><html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ReviewAI - Accelerate Your Career with AI Code Reviews</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#c8c6c8",
+                        "border-subtle": "#F3F4F6",
+                        "on-tertiary-fixed-variant": "#004a7a",
+                        "on-background": "#191c1e",
+                        "inverse-primary": "#adc6ff",
+                        "surface-container": "#eceef0",
+                        "tertiary-fixed": "#d0e4ff",
+                        "primary-fixed-dim": "#adc6ff",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-variant": "#e0e3e5",
+                        "background": "#f7f9fb",
+                        "surface-dim": "#d8dadc",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#e4e2e4",
+                        "on-primary-fixed": "#001a41",
+                        "primary": "#0058bc",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#474649",
+                        "surface-container-low": "#f2f4f6",
+                        "on-surface": "#191c1e",
+                        "surface-muted": "#F9FAFB",
+                        "tertiary-container": "#0079c3",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#1b1b1d",
+                        "on-primary-fixed-variant": "#004493",
+                        "inverse-on-surface": "#eff1f3",
+                        "hero-gradient-start": "#007AFF",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e6e8ea",
+                        "secondary-container": "#e2dfe1",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#717786",
+                        "surface-container-highest": "#e0e3e5",
+                        "inverse-surface": "#2d3133",
+                        "tertiary-fixed-dim": "#9bcbff",
+                        "surface-bright": "#f7f9fb",
+                        "surface-tint": "#005bc1",
+                        "on-surface-variant": "#414755",
+                        "on-primary-container": "#fefcff",
+                        "on-secondary-container": "#636264",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#fdfcff",
+                        "surface": "#f7f9fb",
+                        "outline-variant": "#c1c6d7",
+                        "text-blue-tint": "#EFF6FF",
+                        "tertiary": "#005f9c",
+                        "on-primary": "#ffffff",
+                        "primary-container": "#0070eb",
+                        "hero-gradient-end": "#4FACFE",
+                        "secondary": "#5f5e60",
+                        "on-tertiary-fixed": "#001d34",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "section-padding-y": "96px",
+                        "card-padding": "40px",
+                        "container-max": "1280px",
+                        "gutter": "32px"
+                    },
+                    "fontFamily": {
+                        "title-lg": ["Inter"],
+                        "label-bold": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "title-lg": ["24px", { "lineHeight": "1.3", "fontWeight": "700" }],
+                        "label-bold": ["14px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "headline-md": ["36px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "display-lg-mobile": ["40px", { "lineHeight": "1.2", "fontWeight": "800" }],
+                        "display-lg": ["60px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "body-lg": ["20px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .hero-wave-clip {
+            clip-path: ellipse(150% 100% at 50% 0%);
+        }
+        @media (min-width: 768px) {
+            .hero-wave-clip {
+                clip-path: ellipse(120% 100% at 30% 0%);
+            }
+        }
+        .blob-1 {
+            animation: float 6s ease-in-out infinite;
+        }
+        .blob-2 {
+            animation: float 8s ease-in-out infinite reverse;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container relative overflow-x-hidden">
+<!-- Top Navigation (Generated from JSON) -->
+<nav class="bg-surface/80 dark:bg-on-background/80 backdrop-blur-md docked full-width top-0 sticky z-50 border-b border-border-subtle/20 shadow-sm transition-all duration-300" id="top-nav">
+<div class="flex justify-between items-center px-gutter py-4 max-w-container-max mx-auto">
+<!-- Brand -->
+<a class="font-title-lg text-title-lg font-black text-primary dark:text-primary-fixed tracking-tight hover:opacity-80 transition-opacity" href="#">
+                ReviewAI
+            </a>
+<!-- Desktop Nav Links -->
+<div class="hidden md:flex items-center space-x-2">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors font-body-md text-body-md hover:bg-surface-container-low dark:hover:bg-inverse-surface rounded-lg transition-all duration-300 px-4 py-2 Active: scale-95 transition-transform" href="#">Dashboard</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors font-body-md text-body-md hover:bg-surface-container-low dark:hover:bg-inverse-surface rounded-lg transition-all duration-300 px-4 py-2 Active: scale-95 transition-transform" href="#">Code Reviews</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors font-body-md text-body-md hover:bg-surface-container-low dark:hover:bg-inverse-surface rounded-lg transition-all duration-300 px-4 py-2 Active: scale-95 transition-transform" href="#">Learning Path</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors font-body-md text-body-md hover:bg-surface-container-low dark:hover:bg-inverse-surface rounded-lg transition-all duration-300 px-4 py-2 Active: scale-95 transition-transform" href="#">Community</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors font-body-md text-body-md hover:bg-surface-container-low dark:hover:bg-inverse-surface rounded-lg transition-all duration-300 px-4 py-2 Active: scale-95 transition-transform" href="#">Pricing</a>
+</div>
+<!-- Actions -->
+<div class="flex items-center space-x-4">
+<a class="hidden md:inline-block text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors font-label-bold text-label-bold" href="#">Log In</a>
+<a class="bg-primary text-on-primary font-label-bold text-label-bold px-6 py-2.5 rounded-full hover:shadow-lg hover:scale-105 transition-all duration-300" href="#">Get Started</a>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<header class="relative w-full min-h-[90vh] flex items-center pt-24 pb-section-padding-y overflow-hidden">
+<!-- Dynamic Wave Background -->
+<div class="absolute inset-0 z-0 hero-wave-clip bg-gradient-to-br from-hero-gradient-start to-hero-gradient-end opacity-90"></div>
+<!-- Decorative Blobs (Background) -->
+<div class="absolute top-20 left-10 w-64 h-64 bg-white/10 rounded-full blur-3xl blob-1 z-0 pointer-events-none"></div>
+<div class="absolute bottom-20 right-10 w-96 h-96 bg-primary-fixed/20 rounded-full blur-3xl blob-2 z-0 pointer-events-none"></div>
+<div class="absolute top-1/2 left-1/4 w-32 h-32 bg-secondary-fixed/30 rounded-[40%_60%_70%_30%] blur-xl blob-1 z-0 pointer-events-none" style="animation-delay: -2s;"></div>
+<div class="max-w-container-max mx-auto px-gutter relative z-10 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<!-- Hero Content -->
+<div class="flex flex-col items-start text-white space-y-8 max-w-2xl">
+<div class="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/30 text-white font-label-bold text-label-bold">
+<span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+<span class="">AI-Powered Career Acceleration</span>
+</div>
+<h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-white leading-tight drop-shadow-sm font-display-lg">
+                    Accelerate Your Career with <br><span class="text-tertiary-fixed font-black">AI Code Reviews</span>
+</h1>
+<p class="font-body-lg text-body-lg text-text-blue-tint opacity-90 max-w-xl">
+                    Bridge the gap between junior execution and senior precision. Get instant, constructive feedback on your code and level up your skills faster than ever before.
+                </p>
+<div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto pt-4">
+<a class="flex items-center justify-center space-x-2 bg-surface text-primary font-label-bold text-label-bold px-8 py-4 rounded-full hover:shadow-xl hover:scale-105 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="">Enter as Intern</span>
+</a>
+<a class="flex items-center justify-center space-x-2 bg-on-background text-white font-label-bold text-label-bold px-8 py-4 rounded-full hover:shadow-xl hover:scale-105 transition-all duration-300 border border-transparent hover:border-white/20" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">work</span>
+<span class="">Enter as Manager</span>
+</a>
+</div>
+</div>
+<!-- Hero Imagery (3D Illustration Placeholder) -->
+<div class="relative w-full h-[500px] hidden lg:flex justify-center items-center">
+<!-- Decorative framing -->
+<div class="absolute inset-0 bg-white/5 rounded-full blur-2xl"></div>
+<!-- 3D Illustration Image -->
+<img class="relative z-10 w-full max-w-md h-auto object-contain drop-shadow-2xl hover:-translate-y-4 transition-transform duration-700 ease-out" data-alt="A high-quality 3D rendered illustration of an optimistic, modern professional developer looking through a glowing, high-tech magnifying glass at floating lines of holographic code. The scene is bright and professional, set against a pristine white studio background with subtle ambient lighting. The character wears stylish corporate casual attire. The overall aesthetic is clean, energetic, and aligns with a premium light-mode SaaS brand identity, emphasizing career growth and technical precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUax-WjFbw89Ja34om-nZVqjQKk8EvnZuuiUkpzQiyAsh2kG6XrhkdFR0FfyoXouESoQtc1euriIVtPEFtc-L4_F_mYDHWL4qV7OnrUOMm6hHBo6yNSoJXus8G9omk9bacxyQXFYMmyy03R7N9Q5Y2vPXPPOAZAsNSePLx1afiBeLPQ6PQ4pzYzbOzDa19bNIMDUP2CUVoot3PQo8LwtN3PRQKLgV3GrHY-zjxDZFBi7OmPnJitd8">
+</div>
+</div>
+</header>
+<!-- Features Section: The Reality of Modern Code Review -->
+<section class="py-section-padding-y px-gutter max-w-container-max mx-auto relative">
+<!-- Section Header -->
+<div class="text-center max-w-3xl mx-auto mb-16 space-y-6">
+<h2 class="font-headline-md text-headline-md text-on-background">
+                The Reality of <span class="text-primary">Modern Code Review</span>
+</h2>
+<div class="w-16 h-1 bg-primary mx-auto rounded-full"></div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                Experience the difference between standard reviews and AI-driven precision. Our platform ensures every piece of feedback moves your career forward.
+            </p>
+</div>
+<!-- 3-up Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Feature Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-card-padding border border-border-subtle shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group flex flex-col items-center text-center">
+<div class="w-48 h-48 mb-8 relative flex items-center justify-center bg-surface-muted rounded-full group-hover:bg-primary-fixed/20 transition-colors">
+<img class="w-32 h-32 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-500" data-alt="A sleek, isometric 3D illustration showing a futuristic hourglass surrounded by clean geometric data charts and glowing checkmarks. The style is modern corporate with glassmorphic elements, using a vibrant blue and cyan color palette on a pure white background. It represents automated precision and time-saving efficiency in a professional SaaS environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyYTOCoYeVxAuGlbhNUI43DwPc30tzdODA8PhOxsggAAmSJ3UayQTT8aSWqp3aatwALNjyHNiMeoDbqlxdqyy3BWtPLNS3f5PVy8qGvtE-TvMsVN-3fZh6EIBPeLK9LT5WasbW2pMznl4Ukxae25bcjKg5tMvUUzQDaFbcjcgTqfS26mvHKhHvs5UxcgyA4jFdS7XJ--Bo778C2s4jMldKyf7lDkIJFgC-T2-tQDJWXUI-Ss7KaLk">
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-4">Automated Precision</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Instantly identify anti-patterns, security flaws, and performance bottlenecks before human review begins. Save hours of manual checking.
+                </p>
+</div>
+<!-- Feature Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-card-padding border border-border-subtle shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group flex flex-col items-center text-center">
+<div class="w-48 h-48 mb-8 relative flex items-center justify-center bg-surface-muted rounded-full group-hover:bg-primary-fixed/20 transition-colors">
+<img class="w-32 h-32 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-500" data-alt="A high-quality isometric 3D illustration of a floating, open laptop screen displaying a glowing, supportive chat interface giving constructive feedback to a smaller 3D character below. The scene uses soft organic blobs, bright optimistic lighting, and a modern corporate aesthetic with vibrant blue hues against a white background, symbolizing collaborative and constructive AI feedback." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyuJVnrpnu3mCFDeHPfUUtCJ1qLLfD_7RA21xIgqXKz2wmIdO9IFY_R159FxDKQRr0x4Vsmpbp7i7DWzz-e7ZMDyIqXWqDHhqeOaXfTY7-b_dMyiqRSRrHYbTn1eHR38UbeMafckMHK9-ak4iu0dm7_olefAeCQ2qiYkRGmEmqIMqFskiHhgUuUZzy043cvVe6prQfILodXNY55IytN5NJnOXc-B_LCtKnqZXDahjMCid8vMheri8">
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-4">Constructive Feedback</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Receive detailed, actionable explanations—not just error highlights. Learn the 'why' behind best practices to write better code tomorrow.
+                </p>
+</div>
+<!-- Feature Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-card-padding border border-border-subtle shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group flex flex-col items-center text-center">
+<div class="w-48 h-48 mb-8 relative flex items-center justify-center bg-surface-muted rounded-full group-hover:bg-primary-fixed/20 transition-colors">
+<img class="w-32 h-32 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-500" data-alt="A modern, 3D isometric illustration depicting a stylized career ladder or upward-trending graph made of glassmorphic blocks, with a character placing the final block at the top. The visual style is premium, clean, and optimistic, utilizing vibrant cyan and deep blue gradients on a white background. It represents career growth and placement assistance within a high-energy educational SaaS platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqVWy-VOzfYV-cy-HyUQpIQWSy71Ex4WlcJmA5-yYffP_nmPcHxf3hq0bwmTRXGfhpxYc3jrVC20BjPWEIuiUWuthjvcqWNuzZDDjXbV00Rc9SE4EFTlHZUxPX6M7Z0x9UO8RJ05mKXfiV3VA-0Vd9GaOunh7k3qR92qKumMgY6bJESOToIeIIcx6_Fi5hP3i6pcK_XurR-jFll_W2i34ukvDgAmJyNUNW8Ki3WIBX98JPwnE73Jw">
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-4">Career Growth</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Build a verified portfolio of high-quality, reviewed code. Leverage our analytics to showcase your tangible improvement to future employers.
+                </p>
+</div>
+</div>
+</section>
+<!-- Footer (Generated from JSON) -->
+<footer class="bg-primary dark:bg-on-primary-fixed-variant text-on-primary dark:text-on-primary-fixed font-body-md text-body-md w-full relative overflow-hidden mt-24">
+<!-- Wavy Top Shape -->
+<div class="absolute top-0 left-0 w-full overflow-hidden leading-none z-0" style="transform: translateY(-1px);">
+<svg class="relative block w-[calc(133%+1.3px)] h-[80px] md:h-[120px]" data-name="Layer 1" preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+<path class="fill-background" d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
+</svg>
+</div>
+<div class="flex flex-col md:flex-row justify-between items-center py-section-padding-y px-gutter max-w-container-max mx-auto relative z-10 pt-32">
+<!-- Brand -->
+<div class="mb-8 md:mb-0 text-center md:text-left">
+<span class="font-title-lg text-title-lg font-black text-on-primary block mb-2">ReviewAI</span>
+<p class="text-on-primary/80 max-w-xs text-sm">© 2024 ReviewAI. Accelerating developer careers through AI-driven precision.</p>
+</div>
+<!-- Links -->
+<div class="flex flex-wrap justify-center md:justify-end gap-x-8 gap-y-4">
+<a class="text-on-primary/80 hover:text-on-primary transition-colors hover:underline transition-all hover:scale-105 inline-block font-label-bold" href="#">Product</a>
+<a class="text-on-primary/80 hover:text-on-primary transition-colors hover:underline transition-all hover:scale-105 inline-block font-label-bold" href="#">Features</a>
+<a class="text-on-primary/80 hover:text-on-primary transition-colors hover:underline transition-all hover:scale-105 inline-block font-label-bold" href="#">Security</a>
+<a class="text-on-primary/80 hover:text-on-primary transition-colors hover:underline transition-all hover:scale-105 inline-block font-label-bold" href="#">Privacy Policy</a>
+<a class="text-on-primary/80 hover:text-on-primary transition-colors hover:underline transition-all hover:scale-105 inline-block font-label-bold" href="#">Terms of Service</a>
+</div>
+</div>
+<!-- Decorative Ambient Glow in Footer -->
+<div class="absolute bottom-0 right-0 w-96 h-96 bg-hero-gradient-end/30 rounded-full blur-3xl translate-y-1/2 translate-x-1/4 pointer-events-none z-0"></div>
+</footer>
+<script>
+        // Simple scroll handler for top nav shadow
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('top-nav');
+            if (window.scrollY > 10) {
+                nav.classList.add('shadow-md');
+                nav.classList.remove('shadow-sm');
+            } else {
+                nav.classList.add('shadow-sm');
+                nav.classList.remove('shadow-md');
+            }
+        });
+    </script>
+
+
+</body></html>

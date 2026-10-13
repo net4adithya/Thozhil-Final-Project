@@ -1,0 +1,108 @@
+version: "3.8"
+
+networks:
+  thozhil-network:
+    driver: bridge
+
+services:
+  resume-service:
+    build:
+      context: ./services/resume-service
+      dockerfile: Dockerfile
+    container_name: thozhil-resume-service
+    ports:
+      - "8001:8001"
+    environment:
+      - TARGET_SERVICE_URL=http://host.docker.internal:5020
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    networks:
+      - thozhil-network
+
+  project-service:
+    build:
+      context: ./services/project-service
+      dockerfile: Dockerfile
+    container_name: thozhil-project-service
+    ports:
+      - "8002:8002"
+    environment:
+      - TARGET_SERVICE_URL=http://host.docker.internal:5030
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    networks:
+      - thozhil-network
+
+  coding-service:
+    build:
+      context: ./services/coding-service
+      dockerfile: Dockerfile
+    container_name: thozhil-coding-service
+    ports:
+      - "8003:8003"
+    environment:
+      - TARGET_SERVICE_URL=http://host.docker.internal:5040
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    networks:
+      - thozhil-network
+
+  video-service:
+    build:
+      context: ./services/video-service
+      dockerfile: Dockerfile
+    container_name: thozhil-video-service
+    ports:
+      - "8004:8004"
+    environment:
+      - TARGET_SERVICE_URL=http://host.docker.internal:5010
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    networks:
+      - thozhil-network
+
+  orchestrator:
+    build:
+      context: ./orchestrator
+      dockerfile: Dockerfile
+    container_name: thozhil-orchestrator
+    ports:
+      - "8000:8000"
+    environment:
+      - RESUME_SERVICE_URL=http://resume-service:8001
+      - PROJECT_SERVICE_URL=http://project-service:8002
+      - CODING_SERVICE_URL=http://coding-service:8003
+      - VIDEO_SERVICE_URL=http://video-service:8004
+      - RESUME_MIN_SCORE=60.0
+      - PROJECT_MIN_SCORE=60.0
+      - CODING_MIN_SCORE=60.0
+      - VIDEO_MIN_SCORE=60.0
+      - ORCHESTRATOR_PORT=8000
+    depends_on:
+      resume-service:
+        condition: service_healthy
+      project-service:
+        condition: service_healthy
+      coding-service:
+        condition: service_healthy
+      video-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    networks:
+      - thozhil-network

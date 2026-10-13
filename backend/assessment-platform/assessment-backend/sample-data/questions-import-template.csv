@@ -1,0 +1,7 @@
+type,title,statement,constraints,marks,negativeMarks,difficulty,tags,group,media,options,correctOptions,expectedAnswer,testCaseInputs,testCaseOutputs,testCaseHidden,allowedLanguages,languageVersion,timeLimitMs,memoryLimitKb
+mcq,Capital of France,Which city is the capital of France?,,5,1,easy,geography,Geography Basics,,Paris|London|Berlin|Rome,1,,,,,,,,
+multi_select,Prime numbers,Select all prime numbers.,,5,0,medium,math,Math Basics,,2|3|4|5,1|2|4,,,,,,,,
+true_false,Node.js is single-threaded,Node.js's event loop runs on a single thread.,,3,0,easy,nodejs,Web Basics,,,true,,,,,,,,
+fill_blank,HTTP status for not found,"The HTTP status code for ""not found"" is ____.",,3,0,easy,web,Web Basics,,,,404,,,,,,,
+coding,Sum of Two Numbers,Read two integers from stdin separated by a space and print their sum.,"-1000 <= a, b <= 1000",10,0,easy,basics,Coding Basics,,,,,2 3|10 -4|0 0,5|6|0,false|true|true,python|javascript,3.12.0,2000,256000
+mcq,Landmark identification,Which landmark is shown in the image?,,5,0,easy,geography,Geography Basics,image:https://example.com/eiffel-tower.jpg,Eiffel Tower|Big Ben|Colosseum|Taj Mahal,1,,,,,,,,

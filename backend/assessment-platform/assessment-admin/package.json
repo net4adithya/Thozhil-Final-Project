@@ -1,0 +1,24 @@
+{
+  "name": "assessment-admin",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nx serve",
+    "build": "nx build",
+    "preview": "nx preview"
+  },
+  "dependencies": {
+    "@mdi/font": "^7.4.47",
+    "axios": "^1.7.7",
+    "socket.io-client": "^4.8.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.4.5",
+    "vuetify": "^3.7.6"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.0.5",
+    "vite-plugin-vuetify": "^2.0.4"
+  }
+}

@@ -1,0 +1,379 @@
+// Prisma Schema for Enterprise-Grade AI Coding Review Platform Backend (Phase 1 Foundation)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ------------------------------------------------------
+// Enums
+// ------------------------------------------------------
+
+// AssignmentDifficulty enum removed for SQLite compatibility
+
+// AssignmentStatusEnum enum removed for SQLite compatibility
+
+// ------------------------------------------------------
+// Core Models
+// ------------------------------------------------------
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  isActive     Boolean     @default(true)
+  roleId       String
+  role         Role        @relation(fields: [roleId], references: [id])
+  
+  authority    Authority?
+  intern       Intern?
+  sessions     Session[]
+  auditLogs    AuditLog[]
+  createdAssignments Assignment[] @relation("CreatedAssignments")
+  questionBanks  QuestionBank[] @relation("QuestionBankAuthor")
+  questions      Question[]     @relation("QuestionAuthor")
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g. AUTHORITY, INTERN
+  description String?
+  permissions String // JSON or CSV string for permissions
+  users       User[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model Authority {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department      String
+  designation     String
+  
+  managedInterns  Intern[] @relation("AuthorityInterns")
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("authorities")
+}
+
+model Intern {
+  // existing fields ...
+  submissions Submission[]
+  id            String       @id @default(uuid())
+  userId        String       @unique
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  authorityId   String?
+  authority     Authority?   @relation("AuthorityInterns", fields: [authorityId], references: [id], onDelete: SetNull)
+  
+  institution   String?
+  startDate     DateTime?
+  endDate       DateTime?
+
+  assignments   Assignment[] @relation("InternAssignments")
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("interns")
+}
+
+model Session {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String
+  expiresAt        DateTime
+  ipAddress        String?
+  userAgent        String?
+  isRevoked        Boolean  @default(false)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("sessions")
+}
+
+model ProgrammingLanguage {
+  // existing fields ...
+  submissions Submission[]
+  id          String       @id @default(uuid())
+  name        String       @unique // e.g. TypeScript, Python, Java
+  slug        String       @unique // e.g. typescript, python, java
+  isActive    Boolean      @default(true)
+
+  assignments Assignment[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("programming_languages")
+}
+
+model AssignmentStatus {
+  id          String               @id @default(uuid())
+  name        String               @unique
+  code        String @unique
+  description String?
+
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@map("assignment_statuses")
+}
+
+model Assignment {
+  // existing fields ...
+  submissions Submission[]
+  id                 String               @id @default(uuid())
+  title              String
+  description        String
+  difficulty   String @default("BEGINNER") // was AssignmentDifficulty
+
+  languageId         String
+  language           ProgrammingLanguage  @relation(fields: [languageId], references: [id])
+
+  deadline           DateTime
+  status       String @default("DRAFT") // was AssignmentStatusEnum
+
+  internId           String?
+  intern             Intern?              @relation("InternAssignments", fields: [internId], references: [id], onDelete: SetNull)
+
+  createdById        String
+  createdBy          User                 @relation("CreatedAssignments", fields: [createdById], references: [id])
+
+  // New field for resubmission policy
+  allowResubmission  Boolean              @default(false)
+
+  // Assessment Access Code for interns
+  accessCode         String?              @unique
+
+  resumeEvaluations     ResumeEvaluation[]
+  interviewEvaluations  InterviewEvaluation[]
+  projectLogReviews     ProjectLogReview[]
+
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@map("assignments")
+}
+
+model ResumeEvaluation {
+  id             String      @id @default(uuid())
+  assignmentId   String?
+  assignment     Assignment? @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  candidateName  String
+  candidateEmail String
+  phone          String?
+  location       String?
+  resumeFilename String
+  resumeUrl      String?
+  matchScore     Int         @default(0)
+  skillsScore    Int         @default(0)
+  expScore       Int         @default(0)
+  projectsScore  Int         @default(0)
+  eduScore       Int         @default(0)
+  reqScore       Int         @default(0)
+  recommendation String      @default("REVIEW") // SHORTLIST | REVIEW | REJECT
+  status         String      @default("Done")
+  currentRole    String?
+  expText        String?
+  eduText        String?
+  matchedSkills  String?     // JSON string
+  missingSkills  String?     // JSON string
+  strengths      String?     // JSON string
+  gaps           String?     // JSON string
+  explanation    String?     // Evaluation narrative
+  rawText        String?     // Extracted raw resume text
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([assignmentId])
+  @@map("resume_evaluations")
+}
+
+model InterviewEvaluation {
+  id                 String      @id @default(uuid())
+  assignmentId       String?
+  assignment         Assignment? @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  candidateName      String      @default("Candidate")
+  candidateEmail     String      @default("candidate@example.com")
+  interviewScore     Int         @default(0)
+  technicalScore     Int         @default(0)
+  communicationScore Int         @default(0)
+  confidenceScore    Int         @default(0)
+  recommendation     String      @default("REVIEW") // SHORTLIST | REVIEW | REJECT
+  status             String      @default("COMPLETED")
+  transcript         String?     // JSON string of conversation turns
+  aiSummary          String?     // Evaluation feedback narrative
+  audioUrl           String?     // URL to audio stream/file
+  videoUrl           String?     // URL to video recording file
+  proctoringEvents   String?     // JSON string of tab switch/blur events
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([assignmentId])
+  @@map("interview_evaluations")
+}
+
+model ProjectLogReview {
+  id                 String      @id @default(uuid())
+  assignmentId       String?
+  assignment         Assignment? @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  candidateName      String      @default("Intern")
+  candidateEmail     String      @default("intern@example.com")
+  workDescription    String?     // Published task / prompt description
+  logContent         String      // Intern submitted work log text
+  sourceCode         String?     // Attached source code snippet / file content
+  
+  overallScore       Int         @default(0)
+  correctnessScore   Int         @default(0)
+  qualityScore       Int         @default(0)
+  riskScore          Int         @default(0)
+  recommendation     String      @default("APPROVED") // APPROVED | NEEDS_REVISION | REJECTED
+  
+  strengths          String?     // JSON array string
+  weaknesses         String?     // JSON array string
+  suggestions        String?     // JSON array string
+  missingItems       String?     // JSON array string
+  summary            String?     // AI evaluation summary narrative
+  internalNotes      String?     // Manager / Authority notes
+  
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([assignmentId])
+  @@map("project_log_reviews")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // e.g. USER_LOGIN, CREATE_ASSIGNMENT
+  resource  String   // e.g. auth, assignments
+  details   String? // JSON stored as string
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+// ------------------------------------------------------
+// Future Relation Placeholders (Prepared for Phase 2+)
+// ------------------------------------------------------
+// Submission & versioning models added for Phase 2
+
+// SubmissionStatus enum removed for SQLite compatibility
+
+model Submission {
+  id               String   @id @default(uuid())
+  assignmentId     String
+  internId         String
+  languageId       String
+  status       String @default("DRAFT") // was SubmissionStatus
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  currentVersionId String? @unique
+
+  assignment   Assignment   @relation(fields: [assignmentId], references: [id])
+  intern       Intern       @relation(fields: [internId], references: [id])
+  language     ProgrammingLanguage @relation(fields: [languageId], references: [id])
+  currentVersion SubmissionVersion? @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  versions    SubmissionVersion[] @relation("SubmissionVersions")
+
+  @@index([assignmentId])
+  @@index([internId])
+  @@index([status])
+}
+
+model SubmissionVersion {
+  id           String   @id @default(uuid())
+  submissionId String
+  version      Int
+  sourceCode   String
+  createdAt    DateTime @default(now())
+
+  // Placeholders for future relations
+  // aiReviewId   String?
+  // executionLogId String?
+  // staticAnalysisId String?
+  // reportId String?
+
+  submission   Submission @relation("SubmissionVersions", fields: [submissionId], references: [id])
+  currentOf    Submission? @relation("CurrentVersion")
+
+  @@unique([submissionId, version])
+}
+
+// ─── Question Bank Models ───────────────────────────────────────────────────
+
+model QuestionBank {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  description String?
+  authorId    String
+  author      User       @relation("QuestionBankAuthor", fields: [authorId], references: [id])
+  questions   Question[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("question_banks")
+}
+
+model Question {
+  id             String       @id @default(uuid())
+  title          String
+  difficulty     String       @default("EASY") // EASY | MEDIUM | HARD
+  statement      String       // Full markdown problem description
+  questionBankId String
+  questionBank   QuestionBank @relation(fields: [questionBankId], references: [id], onDelete: Cascade)
+  authorId       String
+  author         User         @relation("QuestionAuthor", fields: [authorId], references: [id])
+  testCases      TestCase[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([questionBankId])
+  @@index([difficulty])
+  @@map("questions")
+}
+
+model TestCase {
+  id             String   @id @default(uuid())
+  questionId     String
+  question       Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  orderIndex     Int      // Ordering within the question
+  stdin          String   @default("")
+  expectedOutput String
+  /// When true, this test case is NEVER sent to the frontend.
+  /// It is evaluated server-side only.
+  isHidden       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@unique([questionId, orderIndex])
+  @@index([questionId])
+  @@map("test_cases")
+}
+

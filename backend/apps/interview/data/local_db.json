@@ -1,0 +1,584 @@
+{
+  "jobs": [
+    {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "title": "Senior Distributed Systems Engineer",
+      "description": "Design, build, and optimize high-throughput distributed architectures, consensus pipelines, and microservices.",
+      "department": "Infrastructure",
+      "experience_level": "Senior",
+      "required_skills": [
+        "Distributed Systems",
+        "Go",
+        "Kafka",
+        "Consensus Algorithms"
+      ],
+      "preferred_skills": [
+        "Raft",
+        "Kubernetes",
+        "Redis",
+        "gRPC"
+      ],
+      "location": "San Francisco, CA / Remote",
+      "employment_type": "Full-time",
+      "status": "Active",
+      "created_at": "2026-09-09T07:55:23.198Z",
+      "updated_at": "2026-09-17T07:55:23.200Z"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000102",
+      "title": "Principal Cloud Systems Engineer",
+      "description": "Lead multi-region cloud topology, resiliency patterns, latency optimization, and automated failover.",
+      "department": "Infrastructure",
+      "experience_level": "Lead",
+      "required_skills": [
+        "Cloud Architecture",
+        "System Design",
+        "Caching",
+        "PostgreSQL"
+      ],
+      "preferred_skills": [
+        "PgBouncer",
+        "Terraform",
+        "AWS"
+      ],
+      "location": "Remote",
+      "employment_type": "Full-time",
+      "status": "Active",
+      "created_at": "2026-09-11T07:55:23.200Z",
+      "updated_at": "2026-09-18T07:55:23.200Z"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000103",
+      "title": "Senior Frontend Architect",
+      "description": "Architect modern Web application interfaces, high-performance UI state engines, and real-time streaming components.",
+      "department": "Engineering",
+      "experience_level": "Senior",
+      "required_skills": [
+        "React",
+        "TypeScript",
+        "WebSockets",
+        "Performance Optimization"
+      ],
+      "preferred_skills": [
+        "WebRTC",
+        "TailwindCSS",
+        "Vite"
+      ],
+      "location": "New York, NY / Hybrid",
+      "employment_type": "Full-time",
+      "status": "Active",
+      "created_at": "2026-09-05T07:55:23.200Z",
+      "updated_at": "2026-09-16T07:55:23.200Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "name": "Alexander Wright",
+      "email": "alex.wright@infra.io",
+      "phone": "+1 (555) 234-5678",
+      "role": "Senior Distributed Systems Engineer",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "status": "Completed",
+      "overall_score": 88,
+      "completion_date": "2026-09-17",
+      "avatar_initials": "AW",
+      "skills": [
+        {
+          "name": "Distributed Systems",
+          "score": 92
+        },
+        {
+          "name": "System Architecture",
+          "score": 88
+        },
+        {
+          "name": "Problem Solving",
+          "score": 86
+        },
+        {
+          "name": "Communication",
+          "score": 85
+        }
+      ],
+      "education": [
+        {
+          "degree": "B.S. in Computer Science",
+          "institution": "University of California, Berkeley",
+          "year": "2018"
+        }
+      ],
+      "experience": [
+        {
+          "title": "Senior Infrastructure Engineer",
+          "company": "CloudScale Networks",
+          "duration": "2021 - Present"
+        },
+        {
+          "title": "Systems Engineer",
+          "company": "CoreData Labs",
+          "duration": "2018 - 2021"
+        }
+      ],
+      "projects": [
+        {
+          "name": "Distributed Log Consensus Engine",
+          "description": "Built an open-source Raft implementation handling 100k writes/sec"
+        }
+      ],
+      "recommendation": "STRONG HIRE",
+      "summary": "Exceptional candidate with deep mastery of distributed consensus, Raft protocol invariants, and network partitioning resilience.",
+      "strengths": [
+        "Exhaustive understanding of leader election and log compaction algorithms.",
+        "Pragmatic approach to payment idempotency with Redis keys and outbox pattern.",
+        "Crisp, articulate technical verbal explanations."
+      ],
+      "weaknesses": [
+        "Could expand on zero-downtime schema evolution strategies under high load."
+      ],
+      "timeline": [
+        {
+          "questionId": "10000000-0000-0000-0000-000000000001",
+          "score": 92,
+          "timeTaken": 75,
+          "comments": "Clear, accurate breakdown of Raft election timers and heartbeats."
+        },
+        {
+          "questionId": "10000000-0000-0000-0000-000000000002",
+          "score": 84,
+          "timeTaken": 90,
+          "comments": "Solid transactional outbox explanation with deduplication guarantees."
+        }
+      ],
+      "profile_image_url": null,
+      "created_at": "2026-09-15T07:55:23.200Z",
+      "updated_at": "2026-09-17T07:55:23.200Z"
+    },
+    {
+      "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "name": "Sarah Jenkins",
+      "email": "sarah.j@frontend.dev",
+      "phone": "+1 (555) 876-5432",
+      "role": "Senior Frontend Architect",
+      "interview_id": "33333333-3333-3333-3333-333333333333",
+      "status": "Completed",
+      "overall_score": 92,
+      "completion_date": "2026-09-18",
+      "avatar_initials": "SJ",
+      "skills": [
+        {
+          "name": "React Internals",
+          "score": 95
+        },
+        {
+          "name": "State Architecture",
+          "score": 92
+        },
+        {
+          "name": "Web Performance",
+          "score": 90
+        },
+        {
+          "name": "Communication",
+          "score": 91
+        }
+      ],
+      "education": [
+        {
+          "degree": "M.S. in Software Systems",
+          "institution": "Georgia Tech",
+          "year": "2019"
+        }
+      ],
+      "experience": [
+        {
+          "title": "Lead Frontend Engineer",
+          "company": "Apex Interactive",
+          "duration": "2020 - Present"
+        }
+      ],
+      "projects": [
+        {
+          "name": "Fluid Streaming UI Canvas",
+          "description": "Real-time multi-track audio-visualizer built on WebGL and AudioContext"
+        }
+      ],
+      "recommendation": "STRONG HIRE",
+      "summary": "Outstanding architectural mastery across modern component lifecycles, memory leak isolation, and WebRTC streaming.",
+      "strengths": [
+        "Mastery over browser rendering pipelines, reflow triggers, and micro-optimizations.",
+        "Demonstrated clean, well-tested code implementation in the IDE sandbox."
+      ],
+      "weaknesses": [
+        "Minimal reservations; excellent candidate."
+      ],
+      "timeline": [],
+      "profile_image_url": null,
+      "created_at": "2026-09-14T07:55:23.200Z",
+      "updated_at": "2026-09-18T07:55:23.200Z"
+    },
+    {
+      "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "name": "Marcus Vance",
+      "email": "m.vance@systems.io",
+      "phone": "+1 (555) 456-7890",
+      "role": "Principal Cloud Systems Engineer",
+      "interview_id": "22222222-2222-2222-2222-222222222222",
+      "status": "Invited",
+      "overall_score": null,
+      "completion_date": null,
+      "avatar_initials": "MV",
+      "skills": [
+        {
+          "name": "System Design",
+          "score": 85
+        },
+        {
+          "name": "Cloud Topology",
+          "score": 82
+        }
+      ],
+      "education": [],
+      "experience": [],
+      "projects": [],
+      "recommendation": null,
+      "summary": "Scheduled for real-time live AI conversational interview.",
+      "strengths": [],
+      "weaknesses": [],
+      "timeline": [],
+      "profile_image_url": null,
+      "created_at": "2026-09-17T07:55:23.200Z",
+      "updated_at": "2026-09-17T07:55:23.200Z"
+    },
+    {
+      "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+      "name": "Priya Sharma",
+      "email": "priya.sharma@cloudtech.com",
+      "phone": "+1 (555) 345-6789",
+      "role": "Senior Distributed Systems Engineer",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "status": "Invited",
+      "overall_score": null,
+      "completion_date": null,
+      "avatar_initials": "PS",
+      "skills": [
+        {
+          "name": "Microservices",
+          "score": 80
+        },
+        {
+          "name": "Kafka",
+          "score": 78
+        }
+      ],
+      "education": [],
+      "experience": [],
+      "projects": [],
+      "recommendation": null,
+      "summary": "Candidate invited to async technical assessment.",
+      "strengths": [],
+      "weaknesses": [],
+      "timeline": [],
+      "profile_image_url": null,
+      "created_at": "2026-09-18T07:55:23.200Z",
+      "updated_at": "2026-09-18T07:55:23.200Z"
+    }
+  ],
+  "interviews": [
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "title": "Senior Distributed Systems Engineer (Async)",
+      "job_role": "Senior Distributed Systems Engineer",
+      "job_id": "00000000-0000-0000-0000-000000000101",
+      "company": "InterviewX Technologies",
+      "candidate_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "type": "async",
+      "status": "Active",
+      "duration": 45,
+      "settings": {
+        "assessmentType": "Hybrid (Coding + Audio)",
+        "proctoringEnabled": true,
+        "fullScreenEnforced": true,
+        "tabSwitchLimit": 3
+      },
+      "started_at": "2026-09-17T07:55:23.200Z",
+      "completed_at": "2026-09-17T08:40:23.200Z",
+      "created_at": "2026-09-13T07:55:23.200Z",
+      "updated_at": "2026-09-17T07:55:23.200Z"
+    },
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "title": "Principal Cloud Systems Live Interview",
+      "job_role": "Principal Cloud Systems Engineer",
+      "job_id": "00000000-0000-0000-0000-000000000102",
+      "company": "InterviewX Technologies",
+      "candidate_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "type": "live",
+      "status": "Active",
+      "duration": 30,
+      "settings": {
+        "assessmentType": "Live AI Conversational",
+        "interviewerVoice": "kavya",
+        "aiPersona": "Ava",
+        "adaptiveFollowups": true
+      },
+      "started_at": null,
+      "completed_at": null,
+      "created_at": "2026-09-16T07:55:23.200Z",
+      "updated_at": "2026-09-18T07:55:23.200Z"
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333333333",
+      "title": "Senior Frontend Architect Assessment",
+      "job_role": "Senior Frontend Architect",
+      "job_id": "00000000-0000-0000-0000-000000000103",
+      "company": "InterviewX Technologies",
+      "candidate_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "type": "async",
+      "status": "Active",
+      "duration": 40,
+      "settings": {
+        "assessmentType": "Coding & Architecture",
+        "proctoringEnabled": true
+      },
+      "started_at": "2026-09-18T07:55:23.200Z",
+      "completed_at": "2026-09-18T08:35:23.200Z",
+      "created_at": "2026-09-14T07:55:23.200Z",
+      "updated_at": "2026-09-18T07:55:23.200Z"
+    }
+  ],
+  "questions": [
+    {
+      "id": "10000000-0000-0000-0000-000000000001",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "text": "Explain how the Raft consensus algorithm handles leader election and log replication during network partitions.",
+      "question": "Explain how the Raft consensus algorithm handles leader election and log replication during network partitions.",
+      "category": "Distributed Systems",
+      "type": "verbal",
+      "question_type": "verbal",
+      "difficulty": "Hard",
+      "order_index": 0,
+      "time_limit": 180,
+      "description": "Focus on randomized election timeouts, majority quorums, split brain avoidance, and uncommitted log entry truncations.",
+      "criteria": "Evaluates deep understanding of distributed consensus mechanics.",
+      "created_at": "2026-09-13T07:55:23.200Z"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000002",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "text": "How do you design an idempotent payment processing pipeline with at-least-once message delivery?",
+      "question": "How do you design an idempotent payment processing pipeline with at-least-once message delivery?",
+      "category": "System Architecture",
+      "type": "verbal",
+      "question_type": "verbal",
+      "difficulty": "Hard",
+      "order_index": 1,
+      "time_limit": 180,
+      "description": "Discuss idempotency keys, database unique constraint locking, caching with TTL, and outbox transactional event patterns.",
+      "criteria": "Evaluates resilience patterns for critical financial transactions.",
+      "created_at": "2026-09-13T07:55:23.200Z"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000003",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "text": "Implement a thread-safe LRU Cache with O(1) get and put time complexity.",
+      "question": "Implement a thread-safe LRU Cache with O(1) get and put time complexity.",
+      "category": "Coding",
+      "type": "code",
+      "question_type": "code",
+      "difficulty": "Medium",
+      "order_index": 2,
+      "time_limit": 300,
+      "description": "Write a JavaScript class or function that maintains an LRU eviction policy using a Hash Map and Doubly Linked List.",
+      "boilerplate": "function createLRUCache(capacity) {\n  const map = new Map();\n  return {\n    get: function(key) {\n      if (!map.has(key)) return -1;\n      const val = map.get(key);\n      map.delete(key);\n      map.set(key, val);\n      return val;\n    },\n    put: function(key, val) {\n      if (map.has(key)) map.delete(key);\n      map.set(key, val);\n      if (map.size > capacity) {\n        const oldest = map.keys().next().value;\n        map.delete(oldest);\n      }\n    }\n  };\n}",
+      "test_cases": [
+        {
+          "input": "{\"capacity\": 2, \"ops\": [[\"put\", 1, 1], [\"put\", 2, 2], [\"get\", 1]]}",
+          "expected": "1"
+        }
+      ],
+      "criteria": "Evaluates clean data structure design and execution.",
+      "created_at": "2026-09-13T07:55:23.200Z"
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000001",
+      "interview_id": "22222222-2222-2222-2222-222222222222",
+      "text": "How do you structure microservices with low-latency caching and handle database connection pool saturation?",
+      "question": "How do you structure microservices with low-latency caching and handle database connection pool saturation?",
+      "category": "System Design",
+      "type": "verbal",
+      "question_type": "verbal",
+      "difficulty": "Hard",
+      "order_index": 0,
+      "time_limit": 180,
+      "description": "Address read-through caching with Redis clusters, stampede prevention via distributed locks, and connection poolers like PgBouncer.",
+      "criteria": "Assesses high-scale cloud database design.",
+      "created_at": "2026-09-16T07:55:23.200Z"
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000002",
+      "interview_id": "22222222-2222-2222-2222-222222222222",
+      "text": "Explain concurrency controls and idempotency in distributed transaction systems.",
+      "question": "Explain concurrency controls and idempotency in distributed transaction systems.",
+      "category": "Backend Engineering",
+      "type": "verbal",
+      "question_type": "verbal",
+      "difficulty": "Hard",
+      "order_index": 1,
+      "time_limit": 180,
+      "description": "Contrast optimistic locking (version numbers) with pessimistic locking, and detail 2-Phase Commit vs Saga patterns.",
+      "criteria": "Assesses transactional consistency in distributed environments.",
+      "created_at": "2026-09-16T07:55:23.200Z"
+    },
+    {
+      "id": "1ba2d763-99c2-4c30-b865-3d192b84442f",
+      "interview_id": "1e815d4f-6cb4-40f3-b82e-eaf53e13b153",
+      "text": "Explain how Raft consensus algorithm handles leader election and log replication during network partitions.",
+      "category": "Distributed Systems",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-19T08:30:59.103Z",
+      "updated_at": "2026-09-19T08:30:59.103Z"
+    },
+    {
+      "id": "3593213b-f1d3-4023-bf06-29f952cde381",
+      "interview_id": "1e815d4f-6cb4-40f3-b82e-eaf53e13b153",
+      "text": "How do you design an idempotent payment processing pipeline with at-least-once message delivery?",
+      "category": "System Architecture",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 1,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-19T08:30:59.105Z",
+      "updated_at": "2026-09-19T08:30:59.105Z"
+    },
+    {
+      "id": "e69939fa-e913-42ae-be95-21608d8d353d",
+      "interview_id": "73ef1fec-acfd-4511-8531-2af5eb4b6c64",
+      "text": "How do you structure microservices with low-latency caching and handle database connection pool saturation?",
+      "category": "System Design",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-19T08:31:14.887Z",
+      "updated_at": "2026-09-19T08:31:14.887Z"
+    },
+    {
+      "id": "ed203bd5-5b78-4768-ad2d-a01c680dc2e4",
+      "interview_id": "73ef1fec-acfd-4511-8531-2af5eb4b6c64",
+      "text": "Explain concurrency controls and idempotency in distributed transaction systems.",
+      "category": "Backend Engineering",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 1,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-19T08:31:14.888Z",
+      "updated_at": "2026-09-19T08:31:14.888Z"
+    }
+  ],
+  "answers": [
+    {
+      "id": "79902132-1e5a-4b3d-b678-2fe5fbc99037",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "candidate_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "question_id": "10000000-0000-0000-0000-000000000001",
+      "transcript": "Raft uses randomized election timers to avoid split votes. When a follower does not hear heartbeats, it transitions to candidate, increments term, votes for itself, and requests votes from peers.",
+      "answer_text": "Raft uses randomized election timers to avoid split votes. When a follower does not hear heartbeats, it transitions to candidate, increments term, votes for itself, and requests votes from peers.",
+      "time_taken": 75,
+      "score": 92,
+      "feedback": "Accurately covered term incrementing and peer quorum votes.",
+      "submitted_at": "2026-09-17T07:55:23.201Z",
+      "created_at": "2026-09-17T07:55:23.201Z"
+    },
+    {
+      "id": "f65064dc-0a7d-4974-994d-23dd15d661c6",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "candidate_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "question_id": "10000000-0000-0000-0000-000000000002",
+      "transcript": "We assign unique idempotency keys to each transaction, store processed keys in Redis with TTL and PostgreSQL unique constraints, and employ transactional outbox with Kafka.",
+      "answer_text": "We assign unique idempotency keys to each transaction, store processed keys in Redis with TTL and PostgreSQL unique constraints, and employ transactional outbox with Kafka.",
+      "time_taken": 90,
+      "score": 84,
+      "feedback": "Well-structured design preventing duplicate charges.",
+      "submitted_at": "2026-09-17T07:55:23.201Z",
+      "created_at": "2026-09-17T07:55:23.201Z"
+    }
+  ],
+  "reports": [
+    {
+      "id": "85b32813-7ad0-4de4-96d6-e2293230511c",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "candidate_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "overall_score": 88,
+      "technical_score": 90,
+      "communication_score": 85,
+      "problem_solving_score": 88,
+      "recommendation": "STRONG HIRE",
+      "summary": "Alexander demonstrated mastery of distributed consensus, state machine replication, and idempotent processing architectures.",
+      "strengths": [
+        "Thorough explanation of Raft leader election invariants.",
+        "Pragmatic deduplication with Redis and database unique constraints.",
+        "Calm, highly structured communication."
+      ],
+      "weaknesses": [
+        "Could elaborate on multi-datacenter cross-region consensus latency."
+      ],
+      "competency_scores": {
+        "Distributed Systems": 92,
+        "System Architecture": 88,
+        "Problem Solving": 86,
+        "Communication": 85
+      },
+      "question_breakdown": [
+        {
+          "questionText": "Explain how the Raft consensus algorithm handles leader election...",
+          "score": 92,
+          "feedback": "Strong explanation."
+        },
+        {
+          "questionText": "How do you design an idempotent payment processing pipeline...",
+          "score": 84,
+          "feedback": "Good handling of idempotency keys."
+        }
+      ],
+      "proctoring_summary": {
+        "tabHiddenCount": 0,
+        "tabVisibleCount": 1,
+        "fullscreenEnteredCount": 1,
+        "fullscreenExitedCount": 0,
+        "violationCount": 0,
+        "integrityScore": 100,
+        "suspicionLevel": "LOW"
+      },
+      "proctoring_logs": [],
+      "candidate_meta": {
+        "name": "Alexander Wright",
+        "email": "alex.wright@infra.io",
+        "role": "Senior Distributed Systems Engineer"
+      },
+      "created_at": "2026-09-17T07:55:23.201Z",
+      "updated_at": "2026-09-17T07:55:23.201Z"
+    }
+  ],
+  "resumes": [],
+  "proctoring_observations": []
+}

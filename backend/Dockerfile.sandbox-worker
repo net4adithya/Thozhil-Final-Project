@@ -1,0 +1,41 @@
+# Dockerfile.sandbox-worker
+# Builds the sandbox worker container.
+# The worker connects to Redis, dequeues jobs, spins up Docker containers
+# (via the host Docker socket), executes code, and stores results.
+
+FROM python:3.12-slim
+
+LABEL maintainer="AI Coding Interviewer"
+LABEL description="Sandbox execution worker — runs isolated Docker containers for code execution"
+
+# System deps: docker CLI (to talk to host daemon via mounted socket)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI (lightweight — only the CLI, not the daemon)
+RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.3.1.tgz \
+    | tar -xz -C /usr/local/bin --strip-components=1 docker/docker
+
+WORKDIR /app
+
+# Install Python dependencies
+COPY python_backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the Python backend source
+COPY python_backend/ .
+
+# Run as non-root user inside the worker container itself,
+# but the worker MUST have access to /var/run/docker.sock to spawn sibling containers.
+# The GID of the docker group on the host is typically 999 or varies;
+# we add group 999 as "docker" and grant access.
+RUN groupadd -g 999 dockerhost 2>/dev/null || true && \
+    useradd -m -u 1001 -G dockerhost worker
+
+USER worker
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+CMD ["python", "-m", "app.sandbox.worker"]

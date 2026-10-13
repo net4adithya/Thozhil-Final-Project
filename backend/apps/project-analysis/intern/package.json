@@ -1,0 +1,32 @@
+{
+  "name": "intern",
+  "version": "1.0.0",
+  "description": "",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev:backend": "node backend/server.js",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:ai": "cd ai-service && uvicorn app:app --port 8000 --host 127.0.0.1",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:ai\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "@supabase/supabase-js": "^2.110.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "multer": "^2.0.3",
+    "pg": "^8.22.0"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.4",
+    "prisma": "^7.8.0"
+  }
+}

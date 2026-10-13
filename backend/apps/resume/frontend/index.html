@@ -1,0 +1,3056 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Thozhil AI - AI Resume Screener</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Google Fonts & Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <!-- TailWind Custom Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#007BFF",
+                        "secondary": "#3ABEF9",
+                        "tertiary": "#000000",
+                        "neutral-bg": "#F8F9FA",
+                        "surface-lowest": "#FFFFFF",
+                        "surface-low": "#F3F4F5",
+                        "surface-container": "#EDEEEF",
+                        "surface-high": "#E7E8E9",
+                        "outline-variant": "#E9ECEF",
+                        "outline": "#717786",
+                        "error": "#BA1A1A",
+                        "error-container": "#FFDAD6",
+                        "success-bg": "#E6F4EA",
+                        "success-text": "#137333"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "container-max": "1280px",
+                        "gutter": "24px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "xl": "40px",
+                        "lg": "24px"
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Native StyleSheet -->
+    <link href="index.css" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-neutral-bg text-[#191C1D] min-h-screen flex antialiased overflow-x-hidden">
+
+    <!-- Top Toast Notification System Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Core App Shell Sidebar -->
+    <aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-lowest border-r border-outline-variant flex flex-col py-lg z-30 md:flex hidden flex-shrink-0">
+        <div class="px-lg mb-xl flex items-center">
+            <a href="#" onclick="switchView('overview')" class="block hover:opacity-90 transition-opacity">
+                <img src="/thozhil.webp" alt="Thozhil" class="h-10 w-auto max-w-[200px] object-contain"/>
+            </a>
+        </div>
+        <nav class="flex-1 px-md flex flex-col gap-sm" id="desktopNav">
+            <a id="nav-screener" class="flex items-center gap-md px-md py-sm rounded-lg text-primary font-bold bg-surface-low border-r-4 border-primary transition-all cursor-pointer" onclick="switchView('overview')">
+                <span class="material-symbols-outlined text-[20px] icon-fill">psychology</span>
+                <span class="text-[14px] font-bold">AI Resume Screener</span>
+            </a>
+            <a id="nav-analytics" class="flex items-center gap-md px-md py-sm rounded-lg text-outline hover:bg-surface-low hover:text-tertiary transition-all cursor-pointer" onclick="switchView('analytics')">
+                <span class="material-symbols-outlined text-[20px]">analytics</span>
+                <span class="text-[14px] font-medium">Analytics</span>
+            </a>
+        </nav>
+        <div class="px-md mt-auto">
+            <a class="flex items-center gap-md px-md py-sm rounded-lg text-outline hover:bg-surface-low transition-colors cursor-pointer" onclick="openSettingsModal()">
+                <span class="material-symbols-outlined text-[20px]">settings</span>
+                <span class="text-[14px] font-medium">Settings</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Mobile Top Navigation Drawer -->
+    <header class="md:hidden fixed top-0 left-0 w-full h-16 bg-surface-lowest border-b border-outline-variant flex justify-between items-center px-md z-40">
+        <div class="flex items-center gap-sm">
+            <button class="text-outline hover:text-primary" onclick="toggleMobileMenu()">
+                <span class="material-symbols-outlined text-[24px]">menu</span>
+            </button>
+            <a href="#" onclick="switchView('overview')" class="block">
+                <img src="/thozhil.webp" alt="Thozhil" class="h-8 w-auto max-w-[150px] object-contain"/>
+            </a>
+        </div>
+        <div class="flex items-center gap-sm">
+        </div>
+    </header>
+
+    <!-- Mobile Menu Backdrop/Sidebar Drawer -->
+    <div class="fixed inset-0 bg-black/40 z-40 hidden transition-opacity duration-200" id="mobileMenuBackdrop" onclick="toggleMobileMenu()"></div>
+    <aside class="fixed left-0 top-0 h-full w-[260px] bg-surface-lowest border-r border-outline-variant flex flex-col py-lg z-50 transform -translate-x-full transition-transform duration-200 ease-out md:hidden" id="mobileMenuDrawer">
+        <div class="px-lg mb-xl flex items-center justify-between">
+            <a href="#" onclick="switchView('overview'); toggleMobileMenu();" class="block">
+                <img src="/thozhil.webp" alt="Thozhil" class="h-8 w-auto max-w-[150px] object-contain"/>
+            </a>
+            <button class="text-outline hover:text-error" onclick="toggleMobileMenu()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <nav class="flex-1 px-sm flex flex-col gap-sm" id="mobileNav">
+            <a id="mob-nav-screener" class="flex items-center gap-md px-md py-sm rounded-lg text-primary font-bold bg-surface-low border-r-4 border-primary transition-all cursor-pointer" onclick="switchView('overview'); toggleMobileMenu();">
+                <span class="material-symbols-outlined text-[20px] icon-fill">psychology</span>
+                <span class="text-[14px] font-bold">AI Resume Screener</span>
+            </a>
+            <a id="mob-nav-analytics" class="flex items-center gap-md px-md py-sm rounded-lg text-outline hover:bg-surface-low hover:text-tertiary transition-all cursor-pointer" onclick="switchView('analytics'); toggleMobileMenu();">
+                <span class="material-symbols-outlined text-[20px]">analytics</span>
+                <span class="text-[14px] font-medium">Analytics</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Layout Outer Canvas -->
+    <div class="flex-1 flex flex-col min-w-0 md:ml-[280px] pt-16 md:pt-0">
+        
+        <!-- Top App Bar Header -->
+        <header class="bg-surface-lowest border-b border-outline-variant flex justify-between items-center w-full px-lg py-md h-16 sticky top-0 z-20 shadow-none">
+            <!-- Left: Search Box (Filters results dynamically if in Results screen) -->
+            <div class="flex items-center">
+                <div class="relative focus-within:ring-2 focus-within:ring-secondary/30 rounded-lg hidden md:block">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+                    <input class="pl-10 pr-4 py-1.5 border border-outline-variant rounded-lg bg-surface-lowest text-[#191C1D] focus:outline-none focus:border-primary font-sans text-[14px] w-72 shadow-sm" placeholder="Search candidates or skills..." type="text" id="globalSearchInput" oninput="handleGlobalSearch(this.value)"/>
+                </div>
+            </div>
+            
+            <!-- Right: Job Context Selector, Notifications & Profile -->
+            <div class="flex items-center gap-md">
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline text-[18px] pointer-events-none">work_outline</span>
+                    <select class="appearance-none bg-surface-lowest border border-outline-variant text-[#191C1D] rounded-lg py-1.5 pl-8 pr-10 focus:outline-none focus:border-primary font-sans text-[14px] font-semibold shadow-sm cursor-pointer" id="jobSelectorDropdown" onchange="handleJobChange(this.value)">
+                        <!-- Dynamic Job Options -->
+                    </select>
+                    <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-outline text-[20px]">arrow_drop_down</span>
+                </div>
+                
+
+            </div>
+        </header>
+
+        <!-- Canvas Body Area (Dynamic Pages Viewport) -->
+        <main class="flex-1 p-md md:p-lg overflow-y-auto space-y-md md:space-y-lg" id="appMainViewport">
+            
+            <!-- STATE CONTAINER: OVERVIEW (HOME) -->
+            <section id="view-overview" class="view-section space-y-md md:space-y-lg">
+
+                
+                <!-- Page Title Header -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h1 class="text-[28px] md:text-[32px] font-bold text-tertiary tracking-tight leading-tight">AI Resume Screener</h1>
+                        <p class="text-[14px] md:text-[16px] text-outline mt-1">Screen, analyze, and rank candidates against your job requirements.</p>
+                    </div>
+                    <button class="btn-primary flex items-center gap-2" onclick="switchView('upload')">
+                        <span class="material-symbols-outlined text-[20px]">add</span>
+                        Start New Screening
+                    </button>
+                </div>
+                
+                <!-- Summary Metrics Cards Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-sm md:gap-md">
+                    <!-- Metrics Card 1 -->
+                    <div class="card-wrapper p-md flex flex-col justify-between interactive">
+                        <p class="text-[12px] font-bold text-outline uppercase tracking-wider">Active Jobs</p>
+                        <div class="flex items-end justify-between mt-sm">
+                            <span class="text-[36px] font-bold leading-none text-tertiary" id="metric-jobs-count">12</span>
+                            <span class="material-symbols-outlined text-outline text-[24px]">work_outline</span>
+                        </div>
+                    </div>
+                    <!-- Metrics Card 2 -->
+                    <div class="card-wrapper p-md flex flex-col justify-between interactive">
+                        <p class="text-[12px] font-bold text-outline uppercase tracking-wider">Resumes Screened</p>
+                        <div class="flex items-end justify-between mt-sm">
+                            <span class="text-[36px] font-bold leading-none text-tertiary" id="metric-resumes-count">248</span>
+                            <span class="material-symbols-outlined text-outline text-[24px]">description</span>
+                        </div>
+                    </div>
+                    <!-- Metrics Card 3 -->
+                    <div class="card-wrapper p-md flex flex-col justify-between interactive">
+                        <p class="text-[12px] font-bold text-outline uppercase tracking-wider">Shortlisted</p>
+                        <div class="flex items-end justify-between mt-sm">
+                            <span class="text-[36px] font-bold leading-none text-[#137333]" id="metric-shortlist-count">42</span>
+                            <span class="material-symbols-outlined text-outline text-[24px]">task_alt</span>
+                        </div>
+                    </div>
+                    <!-- Metrics Card 4 -->
+                    <div class="card-wrapper p-md flex flex-col justify-between interactive">
+                        <p class="text-[12px] font-bold text-outline uppercase tracking-wider">Candidates to Review</p>
+                        <div class="flex items-end justify-between mt-sm">
+                            <span class="text-[36px] font-bold leading-none text-primary" id="metric-review-count">18</span>
+                            <span class="material-symbols-outlined text-primary text-[24px]">hourglass_empty</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bento Layout: Recent Activity vs. Top Candidates -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-md md:gap-lg">
+                    <!-- Left: Recent Activity List -->
+                    <div class="lg:col-span-1 card-wrapper flex flex-col h-full">
+                        <div class="p-md border-b border-outline-variant bg-[#FDFDFD]">
+                            <h3 class="text-[18px] font-semibold text-tertiary">Recent Activity</h3>
+                        </div>
+                        <div class="p-md flex flex-col gap-sm flex-1" id="recentActivityList">
+                            <!-- Dynamic Recent Screenings -->
+                        </div>
+                        <div class="p-md border-t border-outline-variant text-center bg-[#FDFDFD]">
+                            <a class="text-[13px] font-semibold text-primary hover:underline flex items-center justify-center gap-1 cursor-pointer" onclick="switchView('results')">
+                                View Screening History
+                                <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Top Candidates list preview for currently selected job -->
+                    <div class="lg:col-span-2 card-wrapper flex flex-col h-full">
+                        <div class="p-md border-b border-outline-variant bg-[#FDFDFD] flex justify-between items-center">
+                            <h3 class="text-[18px] font-semibold text-tertiary flex items-center gap-2">
+                                Top Candidates: <span class="text-primary font-bold" id="overviewJobName">Software Engineer</span>
+                            </h3>
+                            <button class="btn-secondary py-1 px-3 text-[12px] flex items-center gap-1 shadow-none" onclick="switchView('results')">
+                                <span class="material-symbols-outlined text-[16px]">visibility</span> View All
+                            </button>
+                        </div>
+                        
+                        <!-- Table Wrapper -->
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-left border-collapse" id="topCandidatesPreviewTable">
+                                <thead>
+                                    <tr class="bg-surface-low border-b border-outline-variant text-[11px] font-bold text-outline uppercase tracking-wider">
+                                        <th class="py-3 px-4">Candidate</th>
+                                        <th class="py-3 px-4">Match Score</th>
+                                        <th class="py-3 px-4">Experience</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-[14px] divide-y divide-outline-variant" id="topCandidatesPreviewBody">
+                                    <!-- Dynamic Candidate Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATE CONTAINER: JOB SETUP & UPLOAD -->
+            <section id="view-upload" class="view-section space-y-md md:space-y-lg hidden">
+
+
+                <!-- Section Header -->
+                <div class="border-b border-outline-variant pb-md flex justify-between items-center">
+                    <div>
+                        <h2 class="text-[24px] font-bold text-tertiary tracking-tight">Screening Setup</h2>
+                        <p class="text-[14px] text-outline mt-1">Configure job requirements and upload target candidate resumes.</p>
+                    </div>
+                    <button class="btn-secondary flex items-center gap-1.5" onclick="switchView('overview')">
+                        <span class="material-symbols-outlined text-[20px]">arrow_back</span> Back
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-md md:gap-lg">
+                    <!-- Left: Selected Job Details -->
+                    <div class="lg:col-span-5 flex flex-col gap-md">
+                        <div class="card-wrapper flex flex-col h-full">
+                            <div class="p-md border-b border-outline-variant bg-[#FDFDFD] flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-[18px] font-semibold text-tertiary" id="setupJobName">Software Engineer</h3>
+                                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-[13px] text-outline font-medium" id="setupJobMeta">
+                                        <!-- Dynamic metadata chips -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Job Skills Context -->
+                            <div class="p-md flex-1 space-y-md">
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Required Skills</h4>
+                                    <div class="flex flex-wrap gap-2" id="setupRequiredSkills">
+                                        <!-- Required skill chips -->
+                                    </div>
+                                </div>
+                                <div class="pt-sm border-t border-outline-variant/60">
+                                    <h4 class="text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Preferred Skills</h4>
+                                    <div class="flex flex-wrap gap-2" id="setupPreferredSkills">
+                                        <!-- Preferred skill chips -->
+                                    </div>
+                                </div>
+                                <div class="pt-sm border-t border-outline-variant/60">
+                                    <h4 class="text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Job Description Summary</h4>
+                                    <p class="text-[13px] text-[#414754] leading-relaxed" id="setupJobDesc">
+                                        <!-- Dynamic job description -->
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Footer creation action -->
+                            <div class="p-md border-t border-outline-variant bg-[#FDFDFD] flex justify-between items-center">
+                                <span class="text-[12px] text-outline">Requirements mismatch?</span>
+                                <button class="btn-secondary py-1.5 px-3 text-[12px] flex items-center gap-1" onclick="openCreateJobModal()">
+                                    <span class="material-symbols-outlined text-[16px]">add</span> Create New Job
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Resume Drag-Drop Uploader -->
+                    <div class="lg:col-span-7 flex flex-col gap-md">
+                        <div class="card-wrapper flex flex-col h-full">
+                            <div class="p-md border-b border-outline-variant bg-[#FDFDFD]">
+                                <h3 class="text-[18px] font-semibold text-tertiary">Upload Resumes</h3>
+                                <p class="text-[13px] text-outline">Drag and drop resumes to start comparing them against the requirements.</p>
+                            </div>
+                            
+                            <!-- Interactive File Dropzone -->
+                            <div class="p-md flex-1 space-y-md">
+                                <div class="upload-dropzone p-8 flex flex-col items-center justify-center text-center cursor-pointer border-2" id="dropzoneContainer" onclick="triggerFileInput()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                                    <div class="w-14 h-14 bg-[#E9F2FF] rounded-full flex items-center justify-center mb-md text-primary">
+                                        <span class="material-symbols-outlined text-[32px] icon-fill">cloud_upload</span>
+                                    </div>
+                                    <h4 class="text-[16px] font-semibold text-tertiary mb-1">Drag &amp; drop resumes here</h4>
+                                    <p class="text-[13px] text-outline mb-md">or click to browse from your computer</p>
+                                    <p class="text-[11px] font-bold text-outline uppercase tracking-wider bg-surface-low px-3 py-1 rounded">PDF or DOCX files</p>
+                                    <input type="file" class="hidden" id="hiddenFileInput" multiple accept=".pdf,.docx" onchange="handleFileSelect(event)"/>
+                                </div>
+                                
+                                <!-- File Upload Listing Panel -->
+                                <div>
+                                    <div class="flex justify-between items-center mb-sm">
+                                        <h4 class="text-[12px] font-bold text-outline uppercase tracking-wider" id="uploadListTitle">Ready for Screening (3)</h4>
+                                        <button class="text-[12px] text-primary hover:underline font-bold" id="clearAllUploadsBtn" onclick="clearAllUploads()">Clear All</button>
+                                    </div>
+                                    
+                                    <div class="space-y-sm max-h-[220px] overflow-y-auto pr-1" id="fileUploadListContainer">
+                                        <!-- Dynamic uploaded files items -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Footer Action -->
+                            <div class="p-md border-t border-outline-variant bg-[#FDFDFD] flex justify-end">
+                                <button class="btn-primary flex items-center justify-center gap-sm px-8" id="startScreeningBtn" onclick="startScreeningProcess()">
+                                    Start AI Screening
+                                    <span class="material-symbols-outlined text-[20px]">play_arrow</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATE CONTAINER: SCREENING PROGRESS -->
+            <section id="view-progress" class="view-section space-y-md md:space-y-lg hidden">
+                <!-- Header -->
+                <div>
+                    <h2 class="text-[24px] font-bold text-tertiary tracking-tight">AI Screening In Progress</h2>
+                    <p class="text-[14px] text-outline mt-1">Analyzing candidate resumes against requirements using custom logic.</p>
+                </div>
+                
+                <!-- Main Processing State Card -->
+                <div class="card-wrapper p-lg relative overflow-hidden shadow-sm">
+                    <!-- Light backdrop graphic -->
+                    <div class="absolute right-0 top-0 w-48 h-48 bg-primary/5 rounded-bl-full pointer-events-none"></div>
+                    
+                    <div class="relative z-10 flex flex-col md:flex-row gap-lg md:gap-xl items-start md:items-center">
+                        <!-- Main radial bar progress or percentage block -->
+                        <div class="flex-1 w-full space-y-md border-b md:border-b-0 md:border-r border-outline-variant pb-lg md:pb-0 md:pr-lg">
+                            <div class="flex justify-between items-baseline mb-sm">
+                                <h3 class="text-[20px] font-bold text-tertiary flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary animate-spin-slow">sync</span>
+                                    Screening candidates...
+                                </h3>
+                                <span class="text-[36px] font-bold text-primary" id="progressPercentage">0%</span>
+                            </div>
+                            
+                            <!-- Horizontal Progress Bar -->
+                            <div class="w-full h-3 bg-surface-low rounded-full overflow-hidden">
+                                <div class="h-full bg-primary progress-bar-fill rounded-full" id="progressBarFill" style="width: 0%;"></div>
+                            </div>
+                            
+                            <div class="flex justify-between text-[13px] text-outline font-semibold">
+                                <span id="progressTextCount">0 of 3 resumes processed</span>
+                                <span class="text-primary font-bold animate-pulse-soft" id="currentlyProcessingFile">Preparing files...</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Processing Step list -->
+                        <div class="w-full md:w-80 flex flex-col gap-sm" id="progressStepsContainer">
+                            <h4 class="text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Analysis Stages</h4>
+                            
+                            <div class="flex items-center gap-md text-[14px] font-semibold text-outline" id="step-upload">
+                                <span class="material-symbols-outlined text-[20px]" id="step-upload-icon">radio_button_unchecked</span>
+                                <span>Resumes uploaded</span>
+                            </div>
+                            <div class="flex items-center gap-md text-[14px] font-semibold text-outline" id="step-extract">
+                                <span class="material-symbols-outlined text-[20px]" id="step-extract-icon">radio_button_unchecked</span>
+                                <span>Text extraction &amp; parsing</span>
+                            </div>
+                            <div class="flex items-center gap-md text-[14px] font-semibold text-outline" id="step-profile">
+                                <span class="material-symbols-outlined text-[20px]" id="step-profile-icon">radio_button_unchecked</span>
+                                <span>Candidate profile indexing</span>
+                            </div>
+                            <div class="flex items-center gap-md text-[14px] font-semibold text-outline" id="step-match">
+                                <span class="material-symbols-outlined text-[20px]" id="step-match-icon">radio_button_unchecked</span>
+                                <span>Matching job requirements</span>
+                            </div>
+                            <div class="flex items-center gap-md text-[14px] font-semibold text-outline" id="step-evaluate">
+                                <span class="material-symbols-outlined text-[20px]" id="step-evaluate-icon">radio_button_unchecked</span>
+                                <span>Generating AI report cards</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATE CONTAINER: SCREENING RESULTS -->
+            <section id="view-results" class="view-section space-y-md md:space-y-lg hidden">
+
+
+                <!-- Section Title Header & Search -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-md border-b border-outline-variant pb-md">
+                    <div>
+                        <h2 class="text-[24px] font-bold text-tertiary tracking-tight" id="resultsTitle">Candidate Results</h2>
+                        <p class="text-[14px] text-outline mt-1" id="resultsSubtitle">127 Candidates • 42 Strong Matches</p>
+                    </div>
+                    <div class="flex items-center gap-sm w-full sm:w-auto">
+                        <!-- Select Comparison Button -->
+                        <button class="btn-primary py-2 px-4 text-[13px] flex items-center gap-1.5 hidden shadow-sm" id="compareCandidatesFloatingBtn" onclick="openSelectedComparison()">
+                            <span class="material-symbols-outlined text-[18px]">compare_arrows</span>
+                            Compare Candidates (<span id="selectedCompareCount">0</span>)
+                        </button>
+                        <button class="btn-secondary py-2 px-4 text-[13px] flex items-center gap-1.5" onclick="switchView('upload')">
+                            <span class="material-symbols-outlined text-[18px]">cloud_upload</span> Upload More Resumes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters Control Bar Panel -->
+                <div class="card-wrapper p-md bg-[#FDFDFD]">
+                    <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
+                        <div class="flex-1 relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+                            <input type="text" class="w-full pl-9 pr-4 py-1.5 border border-outline-variant rounded-lg bg-surface-lowest text-[13px] focus:outline-none focus:border-primary font-sans" placeholder="Search by name, email, or skills..." id="resultsSearchInput" oninput="applyResultsFilters()"/>
+                        </div>
+                        
+                        <!-- Dropdown filters -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="relative min-w-[130px]">
+                                <select class="w-full py-1.5 pl-3 pr-8 border border-outline-variant rounded-lg bg-surface-lowest text-[12px] font-semibold focus:outline-none focus:border-primary appearance-none cursor-pointer" id="filterMatchScore" onchange="applyResultsFilters()">
+                                    <option value="any">Match Score: Any</option>
+                                    <option value="90">Strong Match (>90%)</option>
+                                    <option value="80">Good Match (80-89%)</option>
+                                    <option value="70">Moderate Match (70-79%)</option>
+                                    <option value="below70">Low Match (<70%)</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline text-[16px] pointer-events-none">arrow_drop_down</span>
+                            </div>
+                            
+                            <div class="relative min-w-[130px]">
+                                <select class="w-full py-1.5 pl-3 pr-8 border border-outline-variant rounded-lg bg-surface-lowest text-[12px] font-semibold focus:outline-none focus:border-primary appearance-none cursor-pointer" id="filterExperience" onchange="applyResultsFilters()">
+                                    <option value="any">Experience: Any</option>
+                                    <option value="1">1+ Years</option>
+                                    <option value="3">3+ Years</option>
+                                    <option value="5">5+ Years</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline text-[16px] pointer-events-none">arrow_drop_down</span>
+                            </div>
+
+                            <div class="relative min-w-[130px]">
+                                <select class="w-full py-1.5 pl-3 pr-8 border border-outline-variant rounded-lg bg-surface-lowest text-[12px] font-semibold focus:outline-none focus:border-primary appearance-none cursor-pointer" id="filterRecommendation" onchange="applyResultsFilters()">
+                                    <option value="any">Recommendation: Any</option>
+                                    <option value="SHORTLIST">Shortlist</option>
+                                    <option value="REVIEW">Review</option>
+                                    <option value="REJECT">Reject</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline text-[16px] pointer-events-none">arrow_drop_down</span>
+                            </div>
+
+                            <div class="relative min-w-[130px]">
+                                <select class="w-full py-1.5 pl-3 pr-8 border border-outline-variant rounded-lg bg-surface-lowest text-[12px] font-semibold focus:outline-none focus:border-primary appearance-none cursor-pointer" id="filterStatus" onchange="applyResultsFilters()">
+                                    <option value="any">Status: Any</option>
+                                    <option value="Shortlisted">Shortlisted</option>
+                                    <option value="In Review">In Review</option>
+                                    <option value="New">New</option>
+                                    <option value="Rejected">Rejected</option>
+                                </select>
+                                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline text-[16px] pointer-events-none">arrow_drop_down</span>
+                            </div>
+                            
+                            <button class="btn-secondary py-1.5 px-3 text-[12px] flex items-center gap-1 shadow-none" onclick="resetResultsFilters()">
+                                <span class="material-symbols-outlined text-[16px]">restart_alt</span> Reset
+                            </button>
+                            <button class="btn-primary py-1.5 px-3 text-[12px] flex items-center gap-1 shadow-none" onclick="exportCandidatesToCSV()">
+                                <span class="material-symbols-outlined text-[16px]">download</span> Export CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Ranked Table Grid -->
+                <div class="card-wrapper overflow-hidden flex flex-col">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse" id="rankedResultsTable">
+                            <thead>
+                                <tr class="bg-surface-low border-b border-outline-variant text-[11px] font-bold text-outline uppercase tracking-wider">
+                                    <th class="py-3 px-4 w-12 text-center">
+                                        <input type="checkbox" class="rounded border-outline-variant text-primary focus:ring-primary w-4 h-4 cursor-pointer" id="selectAllCheckbox" onchange="toggleSelectAllCandidates(this.checked)"/>
+                                    </th>
+                                    <th class="py-3 px-4 w-16 text-center">Rank</th>
+                                    <th class="py-3 px-4">Candidate</th>
+                                    <th class="py-3 px-4 w-40">Match Score</th>
+                                    <th class="py-3 px-4 w-24 text-center">Skills Fit</th>
+                                    <th class="py-3 px-4 w-24 text-center">Exp Fit</th>
+                                    <th class="py-3 px-4">AI Rec</th>
+                                    <th class="py-3 px-4">Recruiter Status</th>
+                                    <th class="py-3 px-4 text-right w-24">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-[14px] divide-y divide-outline-variant" id="rankedResultsBody">
+                                <!-- Dynamic results rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Table Empty State Container -->
+                    <div class="hidden flex-col items-center justify-center text-center p-xl space-y-3" id="tableEmptyState">
+                        <span class="material-symbols-outlined text-outline text-[48px]">person_search</span>
+                        <h4 class="text-[16px] font-semibold text-tertiary">No Candidates Match Your Filters</h4>
+                        <p class="text-[13px] text-outline">Try clearing search phrases or loosening criteria filters.</p>
+                        <button class="btn-secondary py-1.5 px-3 text-[12px]" onclick="resetResultsFilters()">Reset Filters</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATE CONTAINER: CANDIDATE DETAILS Deep-dive -->
+            <section id="view-details" class="view-section space-y-md md:space-y-lg hidden">
+
+
+                <!-- Candidate Detail Header Card -->
+                <div class="card-wrapper p-lg relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-lg">
+                    <!-- Decorative Top Border -->
+                    <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+                    
+                    <div class="flex items-center gap-lg">
+                        <div class="relative">
+                            <div class="w-20 h-20 rounded-full border border-outline-variant bg-[#E9F2FF] flex items-center justify-center overflow-hidden" id="detailsAvatarContainer">
+                                <!-- Dynamic Avatar Image -->
+                            </div>
+                            <div class="absolute -bottom-1.5 -right-1.5 bg-primary text-surface-lowest rounded-full w-6 h-6 flex items-center justify-center border-2 border-surface-lowest" title="AI Evaluated">
+                                <span class="material-symbols-outlined text-[14px] icon-fill">verified</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap items-center gap-sm mb-1">
+                                <h2 class="text-[24px] font-bold text-tertiary tracking-tight" id="detailsName">Rahul Kumar</h2>
+                                <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full border" id="detailsStatusBadge">Shortlisted</span>
+                            </div>
+                            <p class="text-[14px] text-outline font-medium" id="detailsMetaSubtitle">Backend Engineer • 5+ Years Exp • Bengaluru, IN</p>
+                            <div class="flex flex-wrap items-center gap-x-md gap-y-1 mt-2 text-[13px] text-outline" id="detailsContactInfo">
+                                <!-- Contact Email & Phone -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Match Score Gauge and Decisions -->
+                    <div class="flex flex-col sm:flex-row items-center gap-md w-full md:w-auto border-t md:border-t-0 border-outline-variant/60 pt-md md:pt-0">
+                        <div class="flex flex-col items-center shrink-0 pr-md md:border-r border-outline-variant/60">
+                            <!-- Circular Score Gauge -->
+                            <div class="radial-progress-container" id="detailsScoreRadial">
+                                <!-- Dynamic SVG radial loader code -->
+                            </div>
+                            <span class="text-[10px] font-bold text-outline uppercase mt-1 tracking-wider">Overall Match</span>
+                        </div>
+                        
+                        <!-- Decisions Action buttons -->
+                        <div class="flex flex-col gap-2 w-full sm:w-44">
+                            <button class="btn-primary flex items-center justify-center gap-1.5 py-2 text-[12px] font-bold" id="actionBtnShortlist" onclick="setCandidateDecision('Shortlisted')">
+                                <span class="material-symbols-outlined text-[18px]">how_to_reg</span> Shortlist Candidate
+                            </button>
+                            <button class="btn-secondary flex items-center justify-center gap-1.5 py-2 text-[12px]" id="actionBtnReview" onclick="setCandidateDecision('In Review')">
+                                <span class="material-symbols-outlined text-[18px]">assignment_turned_in</span> Keep in Review
+                            </button>
+                            <button class="text-error border border-transparent hover:border-error-container hover:bg-error-container/30 transition-colors py-2 text-[12px] font-bold rounded-lg flex items-center justify-center gap-1" id="actionBtnReject" onclick="setCandidateDecision('Rejected')">
+                                <span class="material-symbols-outlined text-[18px]">close</span> Reject Application
+                            </button>
+                            <button class="btn-secondary flex items-center justify-center gap-1.5 py-2 text-[12px]" onclick="viewCandidateResume()">
+                                <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span> View Resume PDF
+                            </button>
+                            <button class="text-error border border-error-container hover:bg-error-container/20 transition-colors py-1.5 text-[12px] font-bold rounded-lg flex items-center justify-center gap-1 mt-1" onclick="deleteCurrentCandidateDetail()">
+                                <span class="material-symbols-outlined text-[16px]">delete</span> Delete Candidate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Split Report Grid -->
+                <div class="grid grid-cols-12 gap-md md:gap-lg">
+                    <!-- Left: AI recommendation summary & numeric progress bars -->
+                    <div class="col-span-12 lg:col-span-4 flex flex-col gap-md">
+                        <!-- AI Recommendation Summary Box -->
+                        <div class="card-wrapper overflow-hidden">
+                            <div class="bg-primary/5 p-md border-b border-outline-variant flex items-center gap-sm">
+                                <span class="material-symbols-outlined text-primary font-bold">smart_toy</span>
+                                <h3 class="text-[16px] font-bold text-tertiary">AI Recommendation</h3>
+                            </div>
+                            <div class="p-md flex flex-col items-center text-center space-y-3">
+                                <div class="font-bold text-[14px] px-4 py-1.5 rounded-lg inline-block tracking-wider uppercase" id="detailsRecBadge">
+                                    SHORTLIST
+                                </div>
+                                <p class="text-[13px] text-[#414754] leading-relaxed italic" id="detailsRecQuote">
+                                    "The candidate strongly matches the core backend requirements and demonstrates relevant experience with Python, FastAPI, PostgreSQL, and REST APIs."
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Numeric Evaluation Summary Card -->
+                        <div class="card-wrapper">
+                            <div class="p-md border-b border-outline-variant bg-[#FDFDFD]">
+                                <h3 class="text-[16px] font-bold text-tertiary">Evaluation Summary</h3>
+                            </div>
+                            <div class="p-md space-y-3" id="detailsScoreBarsContainer">
+                                <!-- Dynamic progress indicators for skills, experience, projects, education etc -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Strengths, Missing Requirements, explanation & skills matrices -->
+                    <div class="col-span-12 lg:col-span-8 flex flex-col gap-md">
+                        <!-- Strengths vs Missing Bento cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                            <!-- Strengths -->
+                            <div class="card-wrapper flex flex-col">
+                                <div class="p-md border-b border-outline-variant bg-[#E6F4EA]/40">
+                                    <h3 class="text-[15px] font-bold text-[#137333] flex items-center gap-sm">
+                                        <span class="material-symbols-outlined text-[#137333] icon-fill">add_circle</span>
+                                        Key Strengths
+                                    </h3>
+                                </div>
+                                <div class="p-md flex-1">
+                                    <ul class="space-y-2" id="detailsStrengthsList">
+                                        <!-- Dynamic strengths bullets -->
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Gaps -->
+                            <div class="card-wrapper flex flex-col">
+                                <div class="p-md border-b border-outline-variant bg-error-container/20">
+                                    <h3 class="text-[15px] font-bold text-error flex items-center gap-sm">
+                                        <span class="material-symbols-outlined text-error">remove_circle</span>
+                                        Missing Gaps
+                                    </h3>
+                                </div>
+                                <div class="p-md flex-1">
+                                    <ul class="space-y-2" id="detailsGapsList">
+                                        <!-- Dynamic gaps bullets -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Report Explanation -->
+                        <div class="card-wrapper">
+                            <div class="p-md border-b border-outline-variant bg-[#FDFDFD] flex justify-between items-center">
+                                <h3 class="text-[16px] font-bold text-tertiary">Detailed Match Analysis</h3>
+                                <button class="text-primary hover:bg-surface-low p-1.5 rounded-lg transition-colors flex items-center gap-1 text-[12px] font-semibold" title="Download Report" onclick="downloadCandidateReport()">
+                                    <span class="material-symbols-outlined text-[18px]">download</span> Print Report
+                                </button>
+                            </div>
+                            <div class="p-md text-[14px] text-[#414754] space-y-3 leading-relaxed" id="detailsExplanationText">
+                                <!-- Explanation Paragraphs -->
+                            </div>
+                        </div>
+
+                        <!-- Skill Matching Matrix chips -->
+                        <div class="card-wrapper p-md space-y-md">
+                            <div>
+                                <h4 class="text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Matched Candidate Skills</h4>
+                                <div class="flex flex-wrap gap-2" id="detailsMatchedSkills">
+                                    <!-- chips -->
+                                </div>
+                            </div>
+                            <div class="pt-sm border-t border-outline-variant/60">
+                                <h4 class="text-[11px] font-bold text-outline uppercase tracking-wider mb-2">Missing Skills In Profile</h4>
+                                <div class="flex flex-wrap gap-2" id="detailsMissingSkills">
+                                    <!-- chips -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATE CONTAINER: CANDIDATE COMPARISON -->
+            <section id="view-comparison" class="view-section space-y-md md:space-y-lg hidden">
+
+
+                <!-- Header -->
+                <div class="border-b border-outline-variant pb-md flex justify-between items-center">
+                    <div>
+                        <h2 class="text-[24px] font-bold text-tertiary tracking-tight">Compare Candidates</h2>
+                        <p class="text-[14px] text-outline mt-1">Side-by-side analytical matrix to evaluate fit.</p>
+                    </div>
+                    <button class="btn-secondary py-1.5 px-3 text-[13px] flex items-center gap-1.5" onclick="switchView('results')">
+                        <span class="material-symbols-outlined text-[20px]">arrow_back</span> Back to Results
+                    </button>
+                </div>
+
+                <!-- Comparison Matrix Grid Card -->
+                <div class="card-wrapper overflow-hidden bg-surface-lowest">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse" id="comparisonMatrixTable">
+                            <!-- Comparison table headers and rows will be generated dynamically -->
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATE CONTAINER: RESUME SCREENER ANALYTICS -->
+            <section id="view-analytics" class="view-section space-y-md md:space-y-lg hidden">
+
+
+                <!-- Title -->
+                <div>
+                    <h2 class="text-[24px] font-bold text-tertiary tracking-tight">Resume Screening Analytics</h2>
+                    <p class="text-[14px] text-outline mt-1">Metrics summary and analysis overview for active job pools.</p>
+                </div>
+
+                <!-- Analytical Summary row -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-sm md:gap-md">
+                    <div class="card-wrapper p-md flex flex-col justify-between">
+                        <span class="text-[12px] font-bold text-outline uppercase tracking-wider">Total Resumes</span>
+                        <div class="flex items-end justify-between mt-sm">
+                            <span class="text-[32px] font-bold leading-none text-tertiary" id="analyticsTotalCount">0</span>
+                            <span class="material-symbols-outlined text-outline text-[22px]">description</span>
+                        </div>
+                    </div>
+                    <div class="card-wrapper p-md flex flex-col justify-between">
+                        <span class="text-[12px] font-bold text-outline uppercase tracking-wider">Screened Candidates</span>
+                        <div class="flex items-end justify-between mt-sm">
+                            <span class="text-[32px] font-bold leading-none text-tertiary" id="analyticsScreenedCount">0</span>
+                            <span class="material-symbols-outlined text-outline text-[22px]">person_check</span>
+                        </div>
+                    </div>
+                    <div class="card-wrapper p-md flex flex-col justify-between">
+                        <span class="text-[12px] font-bold text-outline uppercase tracking-wider">Shortlisted Candidates</span>
+                        <div class="flex items-end justify-between mt-sm">
+                            <span class="text-[32px] font-bold leading-none text-[#137333]" id="analyticsShortlistedCount">0</span>
+                            <span class="material-symbols-outlined text-outline text-[22px]">task_alt</span>
+                        </div>
+                    </div>
+                    <div class="card-wrapper p-md flex flex-col justify-between">
+                        <span class="text-[12px] font-bold text-outline uppercase tracking-wider">Average Match Score</span>
+                        <div class="flex items-end justify-between mt-sm">
+                            <span class="text-[32px] font-bold leading-none text-primary" id="analyticsAvgScore">0%</span>
+                            <span class="material-symbols-outlined text-primary text-[22px]">analytics</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bento Charts row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-md md:gap-lg">
+                    <!-- Funnel progress -->
+                    <div class="lg:col-span-1 card-wrapper p-md space-y-md">
+                        <h3 class="text-[16px] font-bold text-tertiary border-b border-outline-variant/60 pb-2">Hiring Funnel</h3>
+                        <div class="space-y-3 pt-2">
+                            <div>
+                                <div class="flex justify-between text-[13px] font-semibold mb-1">
+                                    <span>Applications</span>
+                                    <span id="analyticsFunnelAppliedCount">0</span>
+                                </div>
+                                <div class="w-full bg-surface-low h-3 rounded-full overflow-hidden">
+                                    <div class="bg-tertiary h-full rounded-full" style="width: 100%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[13px] font-semibold mb-1">
+                                    <span>Screened</span>
+                                    <span id="analyticsFunnelScreenedCount">0 (0%)</span>
+                                </div>
+                                <div class="w-full bg-surface-low h-3 rounded-full overflow-hidden">
+                                    <div class="bg-outline h-full rounded-full" id="analyticsFunnelScreenedBar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[13px] font-semibold mb-1">
+                                    <span>Shortlisted</span>
+                                    <span id="analyticsFunnelShortlistedCount">0 (0%)</span>
+                                </div>
+                                <div class="w-full bg-surface-low h-3 rounded-full overflow-hidden">
+                                    <div class="bg-primary h-full rounded-full" id="analyticsFunnelShortlistedBar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[13px] font-semibold mb-1">
+                                    <span>Interviewed</span>
+                                    <span id="analyticsFunnelInterviewedCount">0 (0%)</span>
+                                </div>
+                                <div class="w-full bg-surface-low h-3 rounded-full overflow-hidden">
+                                    <div class="bg-secondary h-full rounded-full" id="analyticsFunnelInterviewedBar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[13px] font-semibold mb-1">
+                                    <span>Hired</span>
+                                    <span id="analyticsFunnelHiredCount">0 (0%)</span>
+                                </div>
+                                <div class="w-full bg-surface-low h-3 rounded-full overflow-hidden">
+                                    <div class="bg-[#137333] h-full rounded-full" id="analyticsFunnelHiredBar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Score Distribution -->
+                    <div class="lg:col-span-1 card-wrapper p-md space-y-md">
+                        <h3 class="text-[16px] font-bold text-tertiary border-b border-outline-variant/60 pb-2">Candidate Match Distribution</h3>
+                        <div class="space-y-2 pt-2">
+                            <div class="flex items-center gap-3">
+                                <span class="text-[12px] font-medium text-outline w-16">90-100%</span>
+                                <div class="flex-1 bg-surface-low h-3 rounded-full overflow-hidden">
+                                    <div class="bg-primary h-full rounded-full" id="analyticsDistBar90" style="width: 0%;"></div>
+                                </div>
+                                <span class="text-[12px] font-bold text-tertiary w-8 text-right" id="analyticsDistVal90">0</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[12px] font-medium text-outline w-16">80-89%</span>
+                                <div class="flex-1 bg-surface-low h-3 rounded-full overflow-hidden">
+                                    <div class="bg-primary h-full rounded-full" id="analyticsDistBar80" style="width: 0%;"></div>
+                                </div>
+                                <span class="text-[12px] font-bold text-tertiary w-8 text-right" id="analyticsDistVal80">0</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[12px] font-medium text-outline w-16">70-79%</span>
+                                <div class="flex-1 bg-surface-low h-3 rounded-full overflow-hidden">
+                                    <div class="bg-primary h-full rounded-full" id="analyticsDistBar70" style="width: 0%;"></div>
+                                </div>
+                                <span class="text-[12px] font-bold text-tertiary w-8 text-right" id="analyticsDistVal70">0</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[12px] font-medium text-outline w-16">60-69%</span>
+                                <div class="flex-1 bg-surface-low h-3 rounded-full overflow-hidden">
+                                    <div class="bg-primary h-full rounded-full" id="analyticsDistBar60" style="width: 0%;"></div>
+                                </div>
+                                <span class="text-[12px] font-bold text-tertiary w-8 text-right" id="analyticsDistVal60">0</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[12px] font-medium text-outline w-16">Below 60%</span>
+                                <div class="flex-1 bg-surface-low h-3 rounded-full overflow-hidden">
+                                    <div class="bg-primary h-full rounded-full" id="analyticsDistBarbelow" style="width: 0%;"></div>
+                                </div>
+                                <span class="text-[12px] font-bold text-tertiary w-8 text-right" id="analyticsDistValbelow">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skills distribution -->
+                    <div class="lg:col-span-1 card-wrapper p-md space-y-md">
+                        <h3 class="text-[16px] font-bold text-tertiary border-b border-outline-variant/60 pb-2">Most Common Skills</h3>
+                        <div class="space-y-2 pt-2" id="analyticsCommonSkillsContainer">
+                            <!-- Dynamic skills rows -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- DIALOG/MODAL: CREATE JOB REQUIREMENTS OVERLAY -->
+    <div class="fixed inset-0 bg-[#000000]/40 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-200" id="createJobModalContainer" onclick="closeCreateJobModalOnBackdrop(event)">
+        <div class="bg-surface-lowest border border-outline-variant rounded-xl shadow-xl w-full max-w-[620px] mx-4 overflow-hidden transform scale-95 transition-transform duration-200 ease-out" id="createJobModalContent">
+            <!-- Header -->
+            <div class="p-md border-b border-outline-variant bg-[#FDFDFD] flex justify-between items-center">
+                <h3 class="text-[18px] font-bold text-tertiary flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-primary">add_box</span>
+                    Create Job Requirements Profile
+                </h3>
+                <button class="text-outline hover:text-error" onclick="closeCreateJobModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <!-- Body form -->
+            <form id="createJobForm" onsubmit="handleCreateJobSubmit(event)" class="p-md md:p-lg space-y-4 max-h-[75vh] overflow-y-auto">
+                <div class="grid grid-cols-2 gap-sm">
+                    <div>
+                        <label class="block text-[12px] font-bold text-outline uppercase tracking-wider mb-1">Job Title *</label>
+                        <input type="text" required class="w-full border border-outline-variant rounded-lg p-2 text-[13px] focus:outline-none focus:border-primary" placeholder="e.g. Backend Lead" name="title"/>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-bold text-outline uppercase tracking-wider mb-1">Department *</label>
+                        <input type="text" required class="w-full border border-outline-variant rounded-lg p-2 text-[13px] focus:outline-none focus:border-primary" placeholder="e.g. Engineering" name="dept"/>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-sm">
+                    <div>
+                        <label class="block text-[12px] font-bold text-outline uppercase tracking-wider mb-1">Location *</label>
+                        <input type="text" required class="w-full border border-outline-variant rounded-lg p-2 text-[13px] focus:outline-none focus:border-primary" placeholder="e.g. Chennai" name="loc"/>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-bold text-outline uppercase tracking-wider mb-1">Employment Type *</label>
+                        <select class="w-full border border-outline-variant rounded-lg p-2 text-[13px] focus:outline-none focus:border-primary cursor-pointer" name="type">
+                            <option>Full-time</option>
+                            <option>Contract</option>
+                            <option>Part-time</option>
+                            <option>Remote</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-bold text-outline uppercase tracking-wider mb-1">Experience *</label>
+                        <input type="text" required class="w-full border border-outline-variant rounded-lg p-2 text-[13px] focus:outline-none focus:border-primary" placeholder="e.g. 2–4 years" name="exp"/>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-bold text-outline uppercase tracking-wider mb-1">Required Skills * (Comma-separated)</label>
+                    <input type="text" required class="w-full border border-outline-variant rounded-lg p-2 text-[13px] focus:outline-none focus:border-primary" placeholder="Python, FastAPI, PostgreSQL, REST APIs" name="reqSkills"/>
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-bold text-outline uppercase tracking-wider mb-1">Preferred Skills (Comma-separated)</label>
+                    <input type="text" class="w-full border border-outline-variant rounded-lg p-2 text-[13px] focus:outline-none focus:border-primary" placeholder="Kubernetes, AWS, Redis, Docker" name="prefSkills"/>
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-bold text-outline uppercase tracking-wider mb-1">Job Description Summary</label>
+                    <textarea class="w-full border border-outline-variant rounded-lg p-2 text-[13px] h-20 focus:outline-none focus:border-primary" placeholder="Outline the main responsibilities..." name="desc"></textarea>
+                </div>
+                
+                <div class="border-t border-outline-variant pt-4 flex justify-end gap-2">
+                    <button type="button" class="btn-secondary text-[12px] py-1.5 px-4" onclick="closeCreateJobModal()">Cancel</button>
+                    <button type="submit" class="btn-primary text-[12px] py-1.5 px-6">Save Job Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Client-Side State Engine script -->
+    <script>
+        // RUNNING STATE VARIABLES
+        let JOBS_DB = {};
+        let CANDIDATES_DB = {};
+        let currentJob = "Software Engineer";
+        let activeView = "overview";
+
+        // File storage for uploads page (cleared after screening)
+        let uploadedFiles = [];
+
+        // List of checked candidates in results table (for comparison)
+        let selectedCandidateIds = new Set();
+
+        // REFRESH JOBS FROM API
+        async function refreshJobsData() {
+            try {
+                const response = await fetch('/api/jobs');
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const data = await response.json();
+                JOBS_DB = {};
+                data.forEach(job => {
+                    JOBS_DB[job.title] = job;
+                });
+            } catch (err) {
+                console.error("Error fetching jobs:", err);
+                showToast("Connection Error", "Failed to retrieve job profiles from backend.", "error");
+            }
+        }
+
+        // REFRESH CANDIDATES FOR CURRENT JOB FROM API
+        async function refreshCandidatesData() {
+            try {
+                const response = await fetch(`/api/jobs/${encodeURIComponent(currentJob)}/candidates`);
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const data = await response.json();
+                CANDIDATES_DB[currentJob] = data;
+            } catch (err) {
+                console.error("Error fetching candidates:", err);
+                showToast("Connection Error", "Failed to retrieve candidate results from backend.", "error");
+            }
+        }
+
+        // RUN ON APP LOAD
+        window.addEventListener('DOMContentLoaded', async () => {
+            await refreshJobsData();
+            // Default to first job if 'Software Engineer' doesn't exist
+            const jobKeys = Object.keys(JOBS_DB);
+            if (jobKeys.length > 0 && !JOBS_DB[currentJob]) {
+                currentJob = jobKeys[0];
+            }
+            await refreshCandidatesData();
+            initializeJobDropdowns();
+            renderActiveJobRequirements();
+            renderDashboardOverview();
+            renderResultsTable();
+        });
+
+        // SIDEBAR ACTIVE STATE CONTROLLER
+        function updateSidebarActiveState(viewId) {
+            const isAnalytics = (viewId === 'analytics');
+
+            const navScreener = document.getElementById('nav-screener');
+            const navAnalytics = document.getElementById('nav-analytics');
+            const mobScreener = document.getElementById('mob-nav-screener');
+            const mobAnalytics = document.getElementById('mob-nav-analytics');
+
+            const activeClass = "flex items-center gap-md px-md py-sm rounded-lg text-primary font-bold bg-surface-low border-r-4 border-primary transition-all cursor-pointer";
+            const inactiveClass = "flex items-center gap-md px-md py-sm rounded-lg text-outline hover:bg-surface-low hover:text-tertiary transition-all cursor-pointer";
+
+            if (isAnalytics) {
+                if (navAnalytics) {
+                    navAnalytics.className = activeClass;
+                    const icon = navAnalytics.querySelector('.material-symbols-outlined');
+                    if (icon) icon.className = "material-symbols-outlined text-[20px] icon-fill text-primary";
+                }
+                if (navScreener) {
+                    navScreener.className = inactiveClass;
+                    const icon = navScreener.querySelector('.material-symbols-outlined');
+                    if (icon) icon.className = "material-symbols-outlined text-[20px] text-outline";
+                }
+                if (mobAnalytics) {
+                    mobAnalytics.className = activeClass;
+                    const icon = mobAnalytics.querySelector('.material-symbols-outlined');
+                    if (icon) icon.className = "material-symbols-outlined text-[20px] icon-fill text-primary";
+                }
+                if (mobScreener) {
+                    mobScreener.className = inactiveClass;
+                    const icon = mobScreener.querySelector('.material-symbols-outlined');
+                    if (icon) icon.className = "material-symbols-outlined text-[20px] text-outline";
+                }
+            } else {
+                if (navScreener) {
+                    navScreener.className = activeClass;
+                    const icon = navScreener.querySelector('.material-symbols-outlined');
+                    if (icon) icon.className = "material-symbols-outlined text-[20px] icon-fill text-primary";
+                }
+                if (navAnalytics) {
+                    navAnalytics.className = inactiveClass;
+                    const icon = navAnalytics.querySelector('.material-symbols-outlined');
+                    if (icon) icon.className = "material-symbols-outlined text-[20px] text-outline";
+                }
+                if (mobScreener) {
+                    mobScreener.className = activeClass;
+                    const icon = mobScreener.querySelector('.material-symbols-outlined');
+                    if (icon) icon.className = "material-symbols-outlined text-[20px] icon-fill text-primary";
+                }
+                if (mobAnalytics) {
+                    mobAnalytics.className = inactiveClass;
+                    const icon = mobAnalytics.querySelector('.material-symbols-outlined');
+                    if (icon) icon.className = "material-symbols-outlined text-[20px] text-outline";
+                }
+            }
+        }
+
+        // VIEW NAVIGATION MACHINE
+        function switchView(viewId) {
+            activeView = viewId;
+            
+            // Update sidebar active visual indicators
+            updateSidebarActiveState(viewId);
+
+            // Hide all view panels
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.add('hidden'));
+            
+            // Show target view panel
+            const targetSec = document.getElementById(`view-${viewId}`);
+            if (targetSec) targetSec.classList.remove('hidden');
+
+            // Toggle top search visibility (Only Results page utilizes table filtering)
+            const searchBar = document.getElementById('globalSearchInput');
+            if (viewId === 'results') {
+                searchBar.placeholder = "Search candidates or skills...";
+            } else {
+                searchBar.placeholder = "Search candidates, jobs...";
+            }
+            searchBar.value = "";
+
+            // Dynamic view rendering triggers
+            if (viewId === 'overview') {
+                renderDashboardOverview();
+            } else if (viewId === 'upload') {
+                updateUploadsQueue();
+                renderUploadView();
+            } else if (viewId === 'results') {
+                selectedCandidateIds.clear();
+                updateComparisonPanelButton();
+                renderResultsTable();
+            } else if (viewId === 'comparison') {
+                renderComparisonMatrix();
+            } else if (viewId === 'analytics') {
+                renderAnalyticsDashboard();
+            }
+            
+            // Auto scroll main canvas to top
+            document.getElementById('appMainViewport').scrollTop = 0;
+        }
+
+        // INITIALIZE JOB DROPDOWN SELECTORS
+        function initializeJobDropdowns() {
+            const selectDropdown = document.getElementById('jobSelectorDropdown');
+            selectDropdown.innerHTML = '';
+            
+            Object.keys(JOBS_DB).forEach(jobKey => {
+                const opt = document.createElement('option');
+                opt.value = jobKey;
+                opt.textContent = jobKey;
+                if (jobKey === currentJob) opt.selected = true;
+                selectDropdown.appendChild(opt);
+            });
+        }
+
+        // HANDLE JOB DROPDOWN CHANGED
+        async function handleJobChange(jobName) {
+            currentJob = jobName;
+            
+            // Display dynamic notification toast
+            showToast("Work Pool Updated", `Loading details for "${jobName}"`, "info");
+            
+            // Sync selected state dropdowns if multiple exist
+            const selectDropdown = document.getElementById('jobSelectorDropdown');
+            selectDropdown.value = jobName;
+            
+            await refreshCandidatesData();
+            renderActiveJobRequirements();
+            
+            // Reset filters & checkboxes
+            resetResultsFilters();
+            selectedCandidateIds.clear();
+            updateComparisonPanelButton();
+
+            // Refresh current active view context
+            if (activeView === 'overview') {
+                renderDashboardOverview();
+            } else if (activeView === 'upload') {
+                updateUploadsQueue();
+                renderUploadView();
+            } else if (activeView === 'results') {
+                renderResultsTable();
+            } else if (activeView === 'analytics') {
+                renderAnalyticsDashboard();
+            }
+        }
+
+        // RENDER ACTIVE JOB REQUIREMENTS
+        function renderActiveJobRequirements() {
+            const jobData = JOBS_DB[currentJob];
+            if (!jobData) return;
+
+            // Overview Home Job Labels
+            const overviewJobText = document.getElementById('overviewJobName');
+            if (overviewJobText) overviewJobText.textContent = currentJob;
+
+            // Job details inside Setup Upload Column
+            const setupJobText = document.getElementById('setupJobName');
+            if (setupJobText) setupJobText.textContent = currentJob;
+
+            // Metadata row for selected job
+            const metaContainer = document.getElementById('setupJobMeta');
+            if (metaContainer) {
+                metaContainer.innerHTML = `
+                    <span class="flex items-center gap-[2px]"><span class="material-symbols-outlined text-[16px]">engineering</span> ${jobData.dept}</span>
+                    <span class="text-outline-variant">•</span>
+                    <span class="flex items-center gap-[2px]"><span class="material-symbols-outlined text-[16px]">location_on</span> ${jobData.loc}</span>
+                    <span class="text-outline-variant">•</span>
+                    <span class="flex items-center gap-[2px]"><span class="material-symbols-outlined text-[16px]">schedule</span> ${jobData.type}</span>
+                    <span class="text-outline-variant">•</span>
+                    <span class="flex items-center gap-[2px]"><span class="material-symbols-outlined text-[16px]">work_history</span> ${jobData.exp}</span>
+                `;
+            }
+
+            // Skills chips renderer
+            const reqContainer = document.getElementById('setupRequiredSkills');
+            if (reqContainer) {
+                reqContainer.innerHTML = '';
+                jobData.reqSkills.forEach(skill => {
+                    const chip = document.createElement('span');
+                    chip.className = 'chip-required';
+                    chip.textContent = skill;
+                    reqContainer.appendChild(chip);
+                });
+            }
+
+            const prefContainer = document.getElementById('setupPreferredSkills');
+            if (prefContainer) {
+                prefContainer.innerHTML = '';
+                jobData.prefSkills.forEach(skill => {
+                    const chip = document.createElement('span');
+                    chip.className = 'chip-preferred';
+                    chip.textContent = skill;
+                    prefContainer.appendChild(chip);
+                });
+            }
+
+            const descText = document.getElementById('setupJobDesc');
+            if (descText) descText.textContent = jobData.desc;
+        }
+
+        // RENDER DASHBOARD HOME SUMMARY
+        function renderDashboardOverview() {
+            const candidatesList = CANDIDATES_DB[currentJob] || [];
+
+            const totalJobsCount = Object.keys(JOBS_DB).length;
+            const shortlistedCount = candidatesList.filter(c => c.status === "Shortlisted").length;
+            const reviewCount = candidatesList.filter(c => c.status === "In Review" || c.status === "New").length;
+            const screenedCount = candidatesList.filter(c => c.screening_status === "Done").length;
+
+            document.getElementById('metric-jobs-count').textContent = totalJobsCount;
+            document.getElementById('metric-shortlist-count').textContent = shortlistedCount;
+            document.getElementById('metric-review-count').textContent = reviewCount;
+            document.getElementById('metric-resumes-count').textContent = screenedCount;
+
+            // Render Recent Activity dynamically from actual job list
+            const activityContainer = document.getElementById('recentActivityList');
+            activityContainer.innerHTML = '';
+
+            const jobIcons = { 'Engineering': 'code', 'Product': 'palette', 'Data Science': 'hub', 'Analytics': 'analytics', 'Design': 'brush', 'Marketing': 'campaign' };
+            const jobColors = [
+                "bg-[#E6F4EA] text-[#137333]", "bg-[#E9F2FF] text-primary",
+                "bg-surface-low text-outline", "bg-[#FFF3E0] text-[#E65100]", "bg-[#F3E5F5] text-[#6A1B9A]"
+            ];
+
+            const jobList = Object.values(JOBS_DB);
+            if (jobList.length === 0) {
+                activityContainer.innerHTML = `<p class="text-[13px] text-outline text-center py-4">No jobs created yet. Click "Start New Screening" to begin.</p>`;
+            } else {
+                jobList.slice(0, 5).forEach((job, idx) => {
+                    const candCount = (CANDIDATES_DB[job.title] || []).filter(c => c.screening_status === 'Done').length;
+                    const icon = jobIcons[job.dept] || 'work_outline';
+                    const color = jobColors[idx % jobColors.length];
+                    const item = document.createElement('div');
+                    item.className = 'flex items-start gap-3 p-3 rounded-lg hover:bg-surface-low transition-colors cursor-pointer border border-transparent hover:border-outline-variant';
+                    item.onclick = () => handleJobChange(job.title);
+                    item.innerHTML = `
+                        <div class="w-10 h-10 rounded ${color} flex items-center justify-center flex-shrink-0">
+                            <span class="material-symbols-outlined text-[20px]">${icon}</span>
+                        </div>
+                        <div>
+                            <h4 class="text-[14px] font-semibold text-tertiary">${job.title}</h4>
+                            <p class="text-[12px] text-outline">${candCount} candidate${candCount !== 1 ? 's' : ''} screened</p>
+                            <p class="text-[10px] font-bold text-outline uppercase mt-1">${job.dept} • ${job.loc}</p>
+                        </div>
+                    `;
+                    activityContainer.appendChild(item);
+                });
+            }
+
+            // Render Top Candidates Table
+            const tableBody = document.getElementById('topCandidatesPreviewBody');
+            tableBody.innerHTML = '';
+
+            if (candidatesList.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-6 text-center text-outline">
+                            No candidates processed for this job profile. Click "Start New Screening" to setup resumes.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const topMatches = [...candidatesList].sort((a,b) => b.match - a.match).slice(0, 3);
+            
+            topMatches.forEach(candidate => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-outline-variant hover:bg-surface-low/30 transition-colors cursor-pointer';
+                row.onclick = () => openCandidateDetails(candidate.id);
+                row.innerHTML = `
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[12px]">
+                                ${candidate.avatar}
+                            </div>
+                            <div>
+                                <p class="font-semibold text-tertiary">${candidate.name}</p>
+                                <p class="text-[11px] text-outline">${candidate.applied}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-primary">${candidate.match}%</span>
+                            <div class="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden">
+                                <div class="h-full bg-primary" style="width: ${candidate.match}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-[#414754] font-medium">${candidate.expText}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${candidate.status === 'Shortlisted' ? 'bg-[#E6F4EA] text-[#137333]' : candidate.status === 'Rejected' ? 'bg-error-container/40 text-error' : 'bg-surface-low text-outline border border-outline-variant'}">
+                            ${candidate.status}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <button class="text-outline hover:text-primary transition-colors p-1 rounded hover:bg-surface-low">
+                            <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // UPDATE FILE LIST FROM CANDIDATES POOL IN QUEUE STATE
+        function updateUploadsQueue() {
+            const list = CANDIDATES_DB[currentJob] || [];
+            uploadedFiles = list
+                .filter(c => c.screening_status === 'Queued' || c.screening_status === 'Processing')
+                .map(c => {
+                    const parts = c.resume_filename.split('_');
+                    const origName = parts.length > 1 ? parts.slice(1).join('_') : c.resume_filename;
+                    return { name: origName, size: "PDF Document", status: "Done", id: c.id };
+                });
+        }
+
+        // RENDER JOB SETUP & UPLOAD VIEW
+        function renderUploadView() {
+            const container = document.getElementById('fileUploadListContainer');
+            container.innerHTML = '';
+            
+            const listTitle = document.getElementById('uploadListTitle');
+            listTitle.textContent = `Ready for Screening (${uploadedFiles.length})`;
+            
+            if (uploadedFiles.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center text-center py-6 border border-outline-variant border-dashed rounded-lg bg-surface-low/30">
+                        <span class="material-symbols-outlined text-outline text-[32px] mb-2">description</span>
+                        <p class="text-[13px] text-outline">No resumes uploaded yet. Drag resumes to this panel.</p>
+                    </div>
+                `;
+                document.getElementById('startScreeningBtn').disabled = true;
+                document.getElementById('startScreeningBtn').style.opacity = '0.5';
+                document.getElementById('clearAllUploadsBtn').classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('startScreeningBtn').disabled = false;
+            document.getElementById('startScreeningBtn').style.opacity = '1';
+            document.getElementById('clearAllUploadsBtn').classList.remove('hidden');
+
+            uploadedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-list-item p-3 flex items-center justify-between bg-surface-lowest hover:bg-surface-low transition-colors border border-outline-variant rounded-lg';
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="text-primary">
+                            <span class="material-symbols-outlined text-[24px] icon-fill">picture_as_pdf</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[13px] font-semibold text-tertiary truncate max-w-[220px]">${file.name}</span>
+                            <span class="text-[11px] text-outline font-medium">${file.size}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-md">
+                        <span class="inline-flex items-center gap-1 text-[11px] font-bold bg-[#E9F2FF] text-primary px-2.5 py-0.5 rounded-full border border-primary/10">
+                            <span class="material-symbols-outlined text-[14px]">check_circle</span> Queued
+                        </span>
+                        <button class="text-outline hover:text-error transition-colors p-1 rounded hover:bg-error-container/30" onclick="removeUploadItem(event, ${index})">
+                            <span class="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // TRIGGER FILE INPUT SELECTOR
+        function triggerFileInput() {
+            document.getElementById('hiddenFileInput').click();
+        }
+
+        // HANDLE FILE SELECT AND UPLOAD
+        async function handleFileSelect(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            
+            const formData = new FormData();
+            let validFilesCount = 0;
+            
+            for (let i = 0; i < files.length; i++) {
+                const f = files[i];
+                const ext = f.name.split('.').pop().toLowerCase();
+                if (ext !== 'pdf' && ext !== 'docx') {
+                    showToast("Unsupported File Format", `"${f.name}" could not be uploaded. We only support PDF or DOCX format.`, "error");
+                    continue;
+                }
+                formData.append("files", f);
+                validFilesCount++;
+            }
+            
+            if (validFilesCount === 0) return;
+            
+            showToast("Uploading Resumes", `Sending ${validFilesCount} file(s) to Thozhil server...`, "info");
+            
+            try {
+                const response = await fetch(`/api/jobs/${encodeURIComponent(currentJob)}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error("Upload request failed");
+                
+                await refreshCandidatesData();
+                updateUploadsQueue();
+                renderUploadView();
+                showToast("Upload Successful", "Files added to screening queue.", "success");
+            } catch (err) {
+                console.error("Upload error:", err);
+                showToast("Upload Failed", "Could not send files to server. Make sure server is running.", "error");
+            }
+            
+            e.target.value = "";
+        }
+
+        // REMOVE FILE UPLOAD ITEM
+        function removeUploadItem(e, index) {
+            e.stopPropagation();
+            uploadedFiles.splice(index, 1);
+            renderUploadView();
+            showToast("Queue Cleaned", "Removed item from active screening session.", "info");
+        }
+
+        // CLEAR ALL UPLOADS
+        function clearAllUploads() {
+            uploadedFiles = [];
+            renderUploadView();
+            showToast("Queue Cleared", "Cleared current screening files", "info");
+        }
+
+        // RUN SCREENING PROCESS
+        async function startScreeningProcess() {
+            if (uploadedFiles.length === 0) {
+                showToast("Empty Upload List", "Please upload at least one resume to screen.", "error");
+                return;
+            }
+
+            const totalFiles = uploadedFiles.length;
+            const fileNamesCopy = [...uploadedFiles.map(f => f.name)];
+            switchView('progress');
+
+            // Reset progress UI
+            let percent = 0;
+            const progressFill = document.getElementById('progressBarFill');
+            const progressPercentText = document.getElementById('progressPercentage');
+            const currentFileText = document.getElementById('currentlyProcessingFile');
+            const countText = document.getElementById('progressTextCount');
+
+            const stepUpload = document.getElementById('step-upload');
+            const stepUploadIcon = document.getElementById('step-upload-icon');
+            const stepExtract = document.getElementById('step-extract');
+            const stepExtractIcon = document.getElementById('step-extract-icon');
+            const stepProfile = document.getElementById('step-profile');
+            const stepProfileIcon = document.getElementById('step-profile-icon');
+            const stepMatch = document.getElementById('step-match');
+            const stepMatchIcon = document.getElementById('step-match-icon');
+            const stepEvaluate = document.getElementById('step-evaluate');
+            const stepEvaluateIcon = document.getElementById('step-evaluate-icon');
+
+            const resetStep = (el, icon) => {
+                el.className = "flex items-center gap-md text-[14px] font-semibold text-outline";
+                icon.textContent = "radio_button_unchecked";
+                icon.className = "material-symbols-outlined text-[20px]";
+            };
+            [stepUpload, stepExtract, stepProfile, stepMatch, stepEvaluate].forEach((el, i) => {
+                const icons = [stepUploadIcon, stepExtractIcon, stepProfileIcon, stepMatchIcon, stepEvaluateIcon];
+                resetStep(el, icons[i]);
+            });
+
+            const markDone = (el, icon) => {
+                el.className = "flex items-center gap-md text-[14px] font-bold text-[#191C1D]";
+                icon.textContent = "check_circle";
+                icon.className = "material-symbols-outlined text-[#137333] text-[20px] icon-fill";
+            };
+            const markActive = (el, icon) => {
+                el.className = "flex items-center gap-md text-[14px] font-bold text-primary";
+                icon.textContent = "sync";
+                icon.className = "material-symbols-outlined text-primary text-[20px] animate-spin-slow";
+            };
+
+            // Start the backend screening (non-blocking)
+            let screenCompleted = false;
+            let screenError = false;
+
+            (async () => {
+                try {
+                    const res = await fetch(`/api/jobs/${encodeURIComponent(currentJob)}/screen`, { method: 'POST' });
+                    if (!res.ok) throw new Error('Screening API failed: ' + res.status);
+
+                    // Poll until all candidates leave the Queued/Processing state (max 90s)
+                    for (let i = 0; i < 90; i++) {
+                        await new Promise(r => setTimeout(r, 1000));
+                        await refreshCandidatesData();
+                        const pendingCount = (CANDIDATES_DB[currentJob] || []).filter(
+                            c => c.screening_status === 'Queued' || c.screening_status === 'Processing'
+                        ).length;
+                        if (pendingCount === 0) { screenCompleted = true; return; }
+                    }
+                    // Timed out — mark as error but don't crash
+                    screenCompleted = true; // allow UI to proceed
+                } catch (err) {
+                    console.error("Screening error:", err);
+                    screenError = true;
+                }
+            })();
+
+            // Animate the progress bar (cosmetic — real status is polled above)
+            const intervalDuration = 45;
+            const interval = setInterval(() => {
+                if (screenError) {
+                    clearInterval(interval);
+                    showToast("Screening Failed", "Error analyzing uploaded resumes. Check server logs.", "error");
+                    switchView('upload');
+                    return;
+                }
+
+                if (percent < 88) {
+                    percent += 1;
+                } else if (percent >= 88 && screenCompleted) {
+                    percent = Math.min(percent + 2, 100);
+                }
+                // Don't advance past 88% until screenCompleted
+
+                progressFill.style.width = `${percent}%`;
+                progressPercentText.textContent = `${percent}%`;
+
+                if (fileNamesCopy.length > 0) {
+                    const currentFileIndex = Math.min(Math.floor((percent / 100) * fileNamesCopy.length), fileNamesCopy.length - 1);
+                    currentFileText.textContent = `Analyzing: ${fileNamesCopy[currentFileIndex]}`;
+                    countText.textContent = `${Math.min(currentFileIndex + 1, totalFiles)} of ${totalFiles} resumes processed`;
+                }
+
+                if (percent < 20) { markActive(stepUpload, stepUploadIcon); }
+                else if (percent < 40) { markDone(stepUpload, stepUploadIcon); markActive(stepExtract, stepExtractIcon); }
+                else if (percent < 60) { markDone(stepExtract, stepExtractIcon); markActive(stepProfile, stepProfileIcon); }
+                else if (percent < 80) { markDone(stepProfile, stepProfileIcon); markActive(stepMatch, stepMatchIcon); }
+                else if (percent < 100) { markDone(stepMatch, stepMatchIcon); markActive(stepEvaluate, stepEvaluateIcon); }
+
+                if (percent >= 100) {
+                    markDone(stepEvaluate, stepEvaluateIcon);
+                    currentFileText.textContent = "AI evaluation generated successfully!";
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        uploadedFiles = [];
+                        showToast("Screening Complete", `${totalFiles} resume(s) screened and ranked.`, "success");
+                        switchView('results');
+                    }, 850);
+                }
+            }, intervalDuration);
+        }
+
+        // RENDER RANKED CANDIDATES RESULTS TABLE
+        function renderResultsTable() {
+            const tableBody = document.getElementById('rankedResultsBody');
+            const emptyState = document.getElementById('tableEmptyState');
+            tableBody.innerHTML = '';
+            
+            const list = CANDIDATES_DB[currentJob] || [];
+            
+            // resultsBreadcrumbJob is optional — only update if present
+            const breadcrumbEl = document.getElementById('resultsBreadcrumbJob');
+            if (breadcrumbEl) breadcrumbEl.textContent = `${currentJob} Pool`;
+            
+            const titleEl = document.getElementById('resultsTitle');
+            if (titleEl) titleEl.textContent = `${currentJob} Match Results`;
+            
+            const strongMatchCount = list.filter(c => c.match >= 90).length;
+            const subtitleEl = document.getElementById('resultsSubtitle');
+            if (subtitleEl) subtitleEl.textContent = `${list.length} Candidates • ${strongMatchCount} Strong Matches`;
+
+            const selectAllEl = document.getElementById('selectAllCheckbox');
+            if (selectAllEl) selectAllEl.checked = false;
+
+            if (list.length === 0) {
+                emptyState.classList.remove('hidden');
+                document.getElementById('rankedResultsTable').classList.add('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            document.getElementById('rankedResultsTable').classList.remove('hidden');
+
+            const filteredCandidates = getFilteredCandidatesList();
+
+            if (filteredCandidates.length === 0) {
+                emptyState.classList.remove('hidden');
+                document.getElementById('rankedResultsTable').classList.add('hidden');
+                return;
+            }
+
+            filteredCandidates.forEach((candidate, idx) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-surface-low/30 transition-colors group cursor-pointer';
+                row.setAttribute('data-id', candidate.id);
+                
+                row.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'INPUT' && !e.target.closest('button')) {
+                        openCandidateDetails(candidate.id);
+                    }
+                });
+
+                const isChecked = selectedCandidateIds.has(candidate.id) ? 'checked' : '';
+                const rankNum = (idx + 1).toString().padStart(2, '0');
+                
+                let recClass = '';
+                if (candidate.recommend === 'SHORTLIST') {
+                    recClass = 'bg-primary/10 text-primary border border-primary/20';
+                } else if (candidate.recommend === 'REVIEW') {
+                    recClass = 'bg-[#EDEEEF] text-[#414754] border border-outline-variant';
+                } else {
+                    recClass = 'bg-error-container/30 text-error border border-error-container';
+                }
+
+                let scoreColor = 'text-primary';
+                if (candidate.match >= 90) {
+                    scoreColor = 'text-primary';
+                } else if (candidate.match >= 80) {
+                    scoreColor = 'text-primary';
+                } else if (candidate.match >= 70) {
+                    scoreColor = 'text-[#414754]';
+                } else {
+                    scoreColor = 'text-error';
+                }
+
+                row.innerHTML = `
+                    <td class="py-3 px-4 text-center">
+                        <input type="checkbox" ${isChecked} class="rounded border-outline-variant text-primary focus:ring-primary w-4 h-4 cursor-pointer" onchange="toggleSelectCandidate('${candidate.id}', this.checked)"/>
+                    </td>
+                    <td class="py-3 px-4 text-center font-bold text-outline">${rankNum}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-[#E9F2FF] text-primary flex items-center justify-center font-bold text-[12px] shrink-0">
+                                ${candidate.avatar}
+                            </div>
+                            <div>
+                                <p class="font-bold text-tertiary">${candidate.name}</p>
+                                <p class="text-[11px] text-outline">${candidate.applied}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold ${scoreColor}">${candidate.match}%</span>
+                            <div class="w-20 h-2 bg-surface-low rounded-full overflow-hidden">
+                                <div class="h-full bg-primary" style="width: ${candidate.match}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-center font-semibold text-tertiary">${candidate.skills}%</td>
+                    <td class="py-3 px-4 text-center font-semibold text-tertiary">${candidate.experience}%</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${recClass}">
+                            <span class="material-symbols-outlined text-[14px]">${candidate.recommend === 'REJECT' ? 'close' : 'thumb_up'}</span>
+                            ${candidate.recommend}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${candidate.status === 'Shortlisted' ? 'bg-[#E6F4EA] text-[#137333]' : candidate.status === 'Rejected' ? 'bg-error-container/40 text-error' : 'bg-surface-low text-outline border border-outline-variant'}">
+                            ${candidate.status}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-1">
+                            <button class="text-outline hover:text-primary transition-colors p-1 rounded hover:bg-surface-low" title="View Resume PDF" onclick="event.stopPropagation(); openResumeModal('${candidate.id}')">
+                                <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+                            </button>
+                            <button class="text-outline hover:text-primary transition-colors p-1 rounded hover:bg-surface-low" title="View Candidate Details" onclick="openCandidateDetails('${candidate.id}')">
+                                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                            </button>
+                            <button class="text-outline hover:text-error transition-colors p-1 rounded hover:bg-surface-low" title="Delete Profile" onclick="deleteCandidate('${candidate.id}')">
+                                <span class="material-symbols-outlined text-[20px]">delete</span>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // GET FILTERED CANDIDATES LIST
+        function getFilteredCandidatesList() {
+            const list = CANDIDATES_DB[currentJob] || [];
+            
+            const searchVal = document.getElementById('resultsSearchInput').value.toLowerCase().trim();
+            const scoreFilter = document.getElementById('filterMatchScore').value;
+            const expFilter = document.getElementById('filterExperience').value;
+            const recFilter = document.getElementById('filterRecommendation').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+
+            return list.filter(candidate => {
+                if (searchVal) {
+                    const matchText = (candidate.name + ' ' + candidate.email + ' ' + candidate.roleText + ' ' + candidate.strengths.join(' ')).toLowerCase();
+                    if (!matchText.includes(searchVal)) return false;
+                }
+
+                if (scoreFilter !== 'any') {
+                    if (scoreFilter === '90' && candidate.match < 90) return false;
+                    if (scoreFilter === '80' && (candidate.match < 80 || candidate.match >= 90)) return false;
+                    if (scoreFilter === '70' && (candidate.match < 70 || candidate.match >= 80)) return false;
+                    if (scoreFilter === 'below70' && candidate.match >= 70) return false;
+                }
+
+                if (expFilter !== 'any') {
+                    const parsedExp = parseFloat(candidate.expText);
+                    if (isNaN(parsedExp)) return false;
+                    if (expFilter === '1' && parsedExp < 1) return false;
+                    if (expFilter === '3' && parsedExp < 3) return false;
+                    if (expFilter === '5' && parsedExp < 5) return false;
+                }
+
+                if (recFilter !== 'any' && candidate.recommend !== recFilter) return false;
+                if (statusFilter !== 'any' && candidate.status !== statusFilter) return false;
+
+                return true;
+            });
+        }
+
+        // RESET RESULTS TABLE FILTERS
+        function resetResultsFilters() {
+            document.getElementById('resultsSearchInput').value = '';
+            document.getElementById('filterMatchScore').value = 'any';
+            document.getElementById('filterExperience').value = 'any';
+            document.getElementById('filterRecommendation').value = 'any';
+            document.getElementById('filterStatus').value = 'any';
+            
+            applyResultsFilters();
+        }
+
+        // TRIGGER RESULTS FILTER
+        function applyResultsFilters() {
+            renderResultsTable();
+        }
+
+        // MULTI-SELECT CHECKBOX LOGIC
+        function toggleSelectCandidate(id, checked) {
+            if (checked) {
+                selectedCandidateIds.add(id);
+            } else {
+                selectedCandidateIds.delete(id);
+            }
+            updateComparisonPanelButton();
+        }
+
+        function toggleSelectAllCandidates(checked) {
+            const filtered = getFilteredCandidatesList();
+            filtered.forEach(c => {
+                if (checked) {
+                    selectedCandidateIds.add(c.id);
+                } else {
+                    selectedCandidateIds.delete(c.id);
+                }
+            });
+
+            document.querySelectorAll('#rankedResultsBody input[type="checkbox"]').forEach(chk => {
+                chk.checked = checked;
+            });
+            updateComparisonPanelButton();
+        }
+
+        // UPDATE COMPARISON BUTTON
+        function updateComparisonPanelButton() {
+            const compareBtn = document.getElementById('compareCandidatesFloatingBtn');
+            const countSpan = document.getElementById('selectedCompareCount');
+            
+            if (selectedCandidateIds.size >= 2) {
+                compareBtn.classList.remove('hidden');
+                countSpan.textContent = selectedCandidateIds.size;
+            } else {
+                compareBtn.classList.add('hidden');
+            }
+        }
+
+        // VIEW CANDIDATE EVALUATION DETAILS PAGE
+        function openCandidateDetails(candidateId) {
+            const list = CANDIDATES_DB[currentJob] || [];
+            const candidate = list.find(c => c.id === candidateId);
+            if (!candidate) return;
+
+            switchView('details');
+
+            // Avatar & Basic info
+            const avatar = document.getElementById('detailsAvatarContainer');
+            avatar.innerHTML = `<span class="text-[28px] font-bold text-primary">${candidate.avatar}</span>`;
+            
+            document.getElementById('detailsName').textContent = candidate.name;
+            
+            const badge = document.getElementById('detailsStatusBadge');
+            badge.textContent = candidate.status;
+            badge.className = `px-2.5 py-0.5 text-[11px] font-bold rounded-full border ${candidate.status === 'Shortlisted' ? 'bg-[#E6F4EA] text-[#137333] border-[#137333]/20' : candidate.status === 'Rejected' ? 'bg-error-container/40 text-error border-error-container' : 'bg-surface-low text-outline border-outline-variant'}`;
+
+            document.getElementById('detailsMetaSubtitle').textContent = `${candidate.roleText} • ${candidate.expText} Exp • ${candidate.locText}`;
+
+            document.getElementById('detailsContactInfo').innerHTML = `
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">mail</span> ${candidate.email}</span>
+                <span class="text-outline-variant hidden sm:inline">•</span>
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">call</span> ${candidate.phone}</span>
+                <span class="text-outline-variant hidden sm:inline">•</span>
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">domain</span> ${candidate.currentRole}</span>
+            `;
+
+            // SVG Radial Match Gauge
+            const scoreContainer = document.getElementById('detailsScoreRadial');
+            const circumference = 2 * Math.PI * 40; 
+            const offset = circumference - (candidate.match / 100) * circumference;
+            
+            scoreContainer.innerHTML = `
+                <svg class="radial-progress-circle w-24 h-24">
+                    <circle cx="48" cy="48" r="40" class="radial-progress-bg" />
+                    <circle cx="48" cy="48" r="40" class="radial-progress-bar" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" />
+                </svg>
+                <div class="absolute flex flex-col items-center justify-center">
+                    <span class="text-[24px] font-bold text-primary leading-none">${candidate.match}<span class="text-[12px] font-semibold">%</span></span>
+                </div>
+            `;
+
+            resetActionButtonsHighlight(candidate.status);
+
+            // AI Recommendation Card
+            const recBadge = document.getElementById('detailsRecBadge');
+            recBadge.textContent = candidate.recommend;
+            
+            let recClass = '';
+            if (candidate.recommend === 'SHORTLIST') {
+                recClass = 'bg-primary text-surface-lowest shadow-sm';
+            } else if (candidate.recommend === 'REVIEW') {
+                recClass = 'bg-[#EDEEEF] text-[#414754]';
+            } else {
+                recClass = 'bg-error-container text-error';
+            }
+            recBadge.className = `font-bold text-[14px] px-4 py-1.5 rounded-lg inline-block tracking-wider uppercase ${recClass}`;
+
+            document.getElementById('detailsRecQuote').textContent = `"${candidate.explanation.split('.')[0]}."`;
+
+            // Evaluation breakdown sliders
+            const barContainer = document.getElementById('detailsScoreBarsContainer');
+            barContainer.innerHTML = '';
+            
+            const attributes = [
+                { label: "Skills Fit", val: candidate.skills },
+                { label: "Experience Level", val: candidate.experience },
+                { label: "Projects Matching", val: candidate.projects },
+                { label: "Education Level", val: candidate.education },
+                { label: "Requirements Alignment", val: candidate.requirements }
+            ];
+
+            attributes.forEach(attr => {
+                const row = document.createElement('div');
+                row.innerHTML = `
+                    <div class="flex justify-between items-center text-[12px] font-medium mb-1">
+                        <span class="text-[#414754]">${attr.label}</span>
+                        <span class="font-bold text-tertiary">${attr.val}%</span>
+                    </div>
+                    <div class="w-full bg-surface-low h-2 rounded-full overflow-hidden">
+                        <div class="bg-primary h-full rounded-full transition-all duration-500" style="width: ${attr.val}%"></div>
+                    </div>
+                `;
+                barContainer.appendChild(row);
+            });
+
+            // Key Strengths bullet lists
+            const strengthsList = document.getElementById('detailsStrengthsList');
+            strengthsList.innerHTML = '';
+            candidate.strengths.forEach(str => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start gap-2 text-[13px] text-[#414754] font-medium';
+                li.innerHTML = `
+                    <span class="material-symbols-outlined text-[#137333] text-[18px] mt-[1px] icon-fill">check</span>
+                    <span>${str}</span>
+                `;
+                strengthsList.appendChild(li);
+            });
+
+            // Gaps bullet lists
+            const gapsList = document.getElementById('detailsGapsList');
+            gapsList.innerHTML = '';
+            candidate.gaps.forEach(gp => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start gap-2 text-[13px] text-[#414754] font-medium';
+                li.innerHTML = `
+                    <span class="material-symbols-outlined text-error text-[18px] mt-[1px]">remove</span>
+                    <span>${gp}</span>
+                `;
+                gapsList.appendChild(li);
+            });
+
+            // Match Explanation report content
+            const explanationBlock = document.getElementById('detailsExplanationText');
+            explanationBlock.innerHTML = '';
+            
+            const paragraphs = candidate.explanation.split('\n\n');
+            paragraphs.forEach(p => {
+                const para = document.createElement('p');
+                para.textContent = p;
+                explanationBlock.appendChild(para);
+            });
+
+            // Matched vs Missing Skills chips — use backend data (matched_skills / missing_skills)
+            const matchedSkillsContainer = document.getElementById('detailsMatchedSkills');
+            const missingSkillsContainer = document.getElementById('detailsMissingSkills');
+
+            matchedSkillsContainer.innerHTML = '';
+            missingSkillsContainer.innerHTML = '';
+
+            const matchedSkills = Array.isArray(candidate.matched_skills) ? candidate.matched_skills : [];
+            const missingSkills = Array.isArray(candidate.missing_skills) ? candidate.missing_skills : [];
+
+            // If backend has structured skill data, use it
+            if (matchedSkills.length > 0 || missingSkills.length > 0) {
+                matchedSkills.forEach(skill => {
+                    const chip = document.createElement('span');
+                    chip.className = 'chip-required';
+                    chip.textContent = skill;
+                    matchedSkillsContainer.appendChild(chip);
+                });
+                missingSkills.forEach(skill => {
+                    const chip = document.createElement('span');
+                    chip.className = 'chip-preferred';
+                    chip.textContent = skill;
+                    missingSkillsContainer.appendChild(chip);
+                });
+            } else {
+                // Fallback: derive from job skills + gaps text
+                const jobData = JOBS_DB[currentJob];
+                const candGapsText = candidate.gaps.join(' ').toLowerCase();
+                const candStrengthsText = candidate.strengths.join(' ').toLowerCase();
+                const candExplText = candidate.explanation.toLowerCase();
+
+                (jobData ? jobData.reqSkills.concat(jobData.prefSkills) : []).forEach(skill => {
+                    const skillLower = skill.toLowerCase();
+                    const chip = document.createElement('span');
+                    // A skill is missing if explicitly mentioned in gaps or not in explanation/strengths
+                    const inGaps = candGapsText.includes(skillLower);
+                    const inStrengths = candStrengthsText.includes(skillLower) || candExplText.includes(skillLower);
+                    if (!inGaps && inStrengths) {
+                        chip.className = 'chip-required';
+                        matchedSkillsContainer.appendChild(chip);
+                    } else {
+                        chip.className = 'chip-preferred';
+                        missingSkillsContainer.appendChild(chip);
+                    }
+                    chip.textContent = skill;
+                });
+            }
+
+            if (matchedSkillsContainer.innerHTML === '') {
+                matchedSkillsContainer.innerHTML = '<span class="text-[12px] text-outline italic">No matched skills identified</span>';
+            }
+            if (missingSkillsContainer.innerHTML === '') {
+                missingSkillsContainer.innerHTML = '<span class="text-[12px] text-outline italic">No missing skills identified</span>';
+            }
+
+            document.getElementById('view-details').setAttribute('data-candidate-id', candidateId);
+        }
+
+        // RESET ACTION BUTTONS HIGHLIGHTS IN CANDIDATE DETAILS
+        function resetActionButtonsHighlight(status) {
+            const btnS = document.getElementById('actionBtnShortlist');
+            const btnR = document.getElementById('actionBtnReview');
+            const btnJ = document.getElementById('actionBtnReject');
+
+            if (!btnS || !btnR || !btnJ) return;
+
+            btnS.className = "btn-secondary flex items-center justify-center gap-1.5 py-2 text-[12px] font-bold";
+            btnR.className = "btn-secondary flex items-center justify-center gap-1.5 py-2 text-[12px]";
+            btnJ.className = "text-[#717786] border border-transparent hover:border-[#EDEEEF] hover:bg-surface-low transition-colors py-2 text-[12px] font-bold rounded-lg flex items-center justify-center gap-1";
+
+            if (status === 'Shortlisted') {
+                btnS.className = "btn-primary flex items-center justify-center gap-1.5 text-[12px] font-bold py-2 shadow-sm" + " bg-[#137333] hover:bg-[#137333]/90 border-0";
+                btnS.style.backgroundColor = '#137333';
+            } else if (status === 'In Review') {
+                btnR.className = "btn-primary flex items-center justify-center gap-1.5 text-[12px] font-bold py-2 shadow-sm";
+                btnR.style.backgroundColor = '';
+            } else if (status === 'Rejected') {
+                btnJ.className = "bg-error-container/50 text-error border border-error-container transition-colors py-2 text-[12px] font-bold rounded-lg flex items-center justify-center gap-1";
+            }
+
+            // Reset inline styles on others
+            if (status !== 'Shortlisted') btnS.style.backgroundColor = '';
+        }
+
+        // SET RECRUITER CHOICE DECISION (Shortlist, Review, Reject)
+        async function setCandidateDecision(newStatus) {
+            const viewPanel = document.getElementById('view-details');
+            const candidateId = viewPanel.getAttribute('data-candidate-id');
+            
+            try {
+                const response = await fetch(`/api/candidates/${candidateId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                if (!response.ok) throw new Error("Failed to update status");
+                
+                await refreshCandidatesData();
+                
+                const list = CANDIDATES_DB[currentJob] || [];
+                const candidate = list.find(c => c.id === candidateId);
+                if (!candidate) return;
+                
+                const badge = document.getElementById('detailsStatusBadge');
+                badge.textContent = newStatus;
+                badge.className = `px-2.5 py-0.5 text-[11px] font-bold rounded-full border ${newStatus === 'Shortlisted' ? 'bg-[#E6F4EA] text-[#137333] border-[#137333]/20' : newStatus === 'Rejected' ? 'bg-error-container/40 text-error border-error-container' : 'bg-surface-low text-outline border-outline-variant'}`;
+
+                const recBadge = document.getElementById('detailsRecBadge');
+                recBadge.textContent = candidate.recommend;
+                
+                let recClass = '';
+                if (candidate.recommend === 'SHORTLIST') {
+                    recClass = 'bg-primary text-surface-lowest shadow-sm';
+                } else if (candidate.recommend === 'REVIEW') {
+                    recClass = 'bg-[#EDEEEF] text-[#414754]';
+                } else {
+                    recClass = 'bg-error-container text-error';
+                }
+                recBadge.className = `font-bold text-[14px] px-4 py-1.5 rounded-lg inline-block tracking-wider uppercase ${recClass}`;
+
+                resetActionButtonsHighlight(newStatus);
+                showToast("Application Updated", `Candidate ${candidate.name} moved to "${newStatus}"`, "success");
+            } catch (err) {
+                console.error("Error setting status:", err);
+                showToast("Update Failed", "Could not sync status changes with server.", "error");
+            }
+        }
+
+        // RENDER SIDE-BY-SIDE MATRIX COMPARISON
+        function renderComparisonMatrix() {
+            const table = document.getElementById('comparisonMatrixTable');
+            table.innerHTML = '';
+
+            const list = CANDIDATES_DB[currentJob] || [];
+            const selectedCandidates = list.filter(c => selectedCandidateIds.has(c.id));
+
+            if (selectedCandidates.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td class="p-lg text-center text-outline">
+                            No candidates selected for comparison. Back to results table and check candidate boxes.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let headRow = `
+                <tr class="bg-surface-low border-b border-outline-variant">
+                    <th class="p-md text-[13px] font-bold text-outline uppercase tracking-wider w-48">Evaluation Model</th>
+            `;
+            
+            selectedCandidates.forEach(cand => {
+                headRow += `
+                    <th class="p-md border-l border-outline-variant min-w-[200px]">
+                        <div class="flex flex-col items-center text-center space-y-2">
+                            <div class="w-12 h-12 rounded-full bg-[#E9F2FF] text-primary flex items-center justify-center font-bold text-[16px]">
+                                ${cand.avatar}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-[#191C1D] text-[15px]">${cand.name}</h4>
+                                <p class="text-[12px] text-outline">${cand.roleText}</p>
+                            </div>
+                            <div class="flex gap-1.5 w-full justify-center">
+                                <button class="bg-[#137333] hover:bg-[#137333]/90 text-surface-lowest py-1 px-2.5 rounded text-[11px] font-bold flex items-center gap-0.5" onclick="setComparisonStatus('${cand.id}', 'Shortlisted')">
+                                    <span class="material-symbols-outlined text-[12px]">check</span> Short
+                                </button>
+                                <button class="bg-error hover:bg-error/90 text-surface-lowest py-1 px-2.5 rounded text-[11px] font-bold flex items-center gap-0.5" onclick="setComparisonStatus('${cand.id}', 'Rejected')">
+                                    <span class="material-symbols-outlined text-[12px]">close</span> Rej
+                                </button>
+                            </div>
+                        </div>
+                    </th>
+                `;
+            });
+            headRow += `</tr>`;
+            
+            const metrics = [
+                { key: "match", label: "Overall Match Score", suffix: "%", bold: true, color: "text-primary" },
+                { key: "skills", label: "Skills Fit Score", suffix: "%" },
+                { key: "experience", label: "Experience Fit Score", suffix: "%" },
+                { key: "projects", label: "Projects Fit Score", suffix: "%" },
+                { key: "education", label: "Education Match Score", suffix: "%" },
+                { key: "status", label: "Recruitment Status", isBadge: true }
+            ];
+
+            let bodyContent = '';
+            metrics.forEach(m => {
+                bodyContent += `<tr class="border-b border-outline-variant hover:bg-surface-low/20 transition-colors">`;
+                bodyContent += `<td class="p-md text-[13px] font-bold text-[#414754]">${m.label}</td>`;
+                
+                selectedCandidates.forEach(cand => {
+                    const val = cand[m.key];
+                    bodyContent += `<td class="p-md border-l border-outline-variant text-center">`;
+                    
+                    if (m.isBadge) {
+                        bodyContent += `
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${val === 'Shortlisted' ? 'bg-[#E6F4EA] text-[#137333]' : val === 'Rejected' ? 'bg-error-container/40 text-error' : 'bg-surface-low text-outline'}">
+                                ${val}
+                            </span>
+                        `;
+                    } else {
+                        const styleClass = m.bold ? `font-bold text-[16px] ${m.color || 'text-tertiary'}` : 'font-medium text-[#191C1D]';
+                        bodyContent += `<span class="${styleClass}">${val}${m.suffix || ''}</span>`;
+                    }
+                    bodyContent += `</td>`;
+                });
+                bodyContent += `</tr>`;
+            });
+
+            bodyContent += `<tr class="border-b border-outline-variant">`;
+            bodyContent += `<td class="p-md text-[13px] font-bold text-[#414754]">Key Strengths</td>`;
+            selectedCandidates.forEach(cand => {
+                let listHtml = `<ul class="space-y-1 text-left list-disc list-inside">`;
+                cand.strengths.slice(0, 3).forEach(s => {
+                    listHtml += `<li class="text-[12px] text-[#414754] truncate">${s}</li>`;
+                });
+                listHtml += `</ul>`;
+                bodyContent += `<td class="p-md border-l border-outline-variant">${listHtml}</td>`;
+            });
+            bodyContent += `</tr>`;
+
+            bodyContent += `<tr>`;
+            bodyContent += `<td class="p-md text-[13px] font-bold text-[#414754]">Missing Requirements</td>`;
+            selectedCandidates.forEach(cand => {
+                let listHtml = `<ul class="space-y-1 text-left list-disc list-inside">`;
+                cand.gaps.slice(0, 2).forEach(g => {
+                    listHtml += `<li class="text-[12px] text-[#414754] truncate">${g}</li>`;
+                });
+                listHtml += `</ul>`;
+                bodyContent += `<td class="p-md border-l border-outline-variant">${listHtml}</td>`;
+            });
+            bodyContent += `</tr>`;
+
+            table.innerHTML = headRow + bodyContent;
+        }
+
+        // TRIGGER DECISION STATUS INSIDE COMPARISON MATRIX
+        async function setComparisonStatus(candidateId, newStatus) {
+            try {
+                const response = await fetch(`/api/candidates/${candidateId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                if (!response.ok) throw new Error("Failed to update status");
+                
+                await refreshCandidatesData();
+                renderComparisonMatrix();
+                showToast("Choice Registered", `Candidate updated to ${newStatus}`, "success");
+            } catch (err) {
+                console.error("Comparison status update error:", err);
+                showToast("Update Failed", "Failed to save candidate status.", "error");
+            }
+        }
+
+        // OPEN CHOSEN CHECKED CANDIDATES FOR COMPARISON VIEW
+        function openSelectedComparison() {
+            if (selectedCandidateIds.size < 2) {
+                showToast("Selection Needed", "Please select 2 or more candidates to compare side-by-side.", "info");
+                return;
+            }
+            switchView('comparison');
+        }
+
+        // RENDER ANALYTICS DASHBOARD DYNAMICALLY
+        async function renderAnalyticsDashboard() {
+            try {
+                const response = await fetch(`/api/jobs/${encodeURIComponent(currentJob)}/analytics`);
+                const data = await response.json();
+                
+                document.getElementById('analyticsTotalCount').textContent = data.total;
+                document.getElementById('analyticsScreenedCount').textContent = data.screened;
+                document.getElementById('analyticsShortlistedCount').textContent = data.shortlisted;
+                document.getElementById('analyticsAvgScore').textContent = data.average_score;
+                
+                const total = data.total || 1;
+                const screenedPct = Math.round((data.screened / total) * 100);
+                const shortlistedPct = Math.round((data.shortlisted / total) * 100);
+                
+                document.getElementById('analyticsFunnelAppliedCount').textContent = data.total;
+                document.getElementById('analyticsFunnelScreenedCount').textContent = `${data.screened} (${screenedPct}%)`;
+                document.getElementById('analyticsFunnelScreenedBar').style.width = `${screenedPct}%`;
+                document.getElementById('analyticsFunnelShortlistedCount').textContent = `${data.shortlisted} (${shortlistedPct}%)`;
+                document.getElementById('analyticsFunnelShortlistedBar').style.width = `${shortlistedPct}%`;
+                
+                const interviewedCount = Math.round(data.shortlisted * 0.4);
+                const hiredCount = Math.round(interviewedCount * 0.3);
+                const interviewedPct = Math.round((interviewedCount / total) * 100);
+                const hiredPct = Math.round((hiredCount / total) * 100);
+                
+                document.getElementById('analyticsFunnelInterviewedCount').textContent = `${interviewedCount} (${interviewedPct}%)`;
+                document.getElementById('analyticsFunnelInterviewedBar').style.width = `${interviewedPct}%`;
+                document.getElementById('analyticsFunnelHiredCount').textContent = `${hiredCount} (${hiredPct}%)`;
+                document.getElementById('analyticsFunnelHiredBar').style.width = `${hiredPct}%`;
+
+                const dist = data.distribution;
+                const updateDistBar = (id, percent) => {
+                    const bar = document.getElementById(`analyticsDistBar${id}`);
+                    const val = document.getElementById(`analyticsDistVal${id}`);
+                    if (bar && val) {
+                        bar.style.width = `${percent}%`;
+                        const count = Math.round((percent / 100) * data.total);
+                        val.textContent = count;
+                    }
+                };
+                updateDistBar("90", dist["90"] || 0);
+                updateDistBar("80", dist["80"] || 0);
+                updateDistBar("70", dist["70"] || 0);
+                updateDistBar("60", dist["60"] || 0);
+                updateDistBar("below", dist["below"] || 0);
+                
+                const skillsContainer = document.getElementById('analyticsCommonSkillsContainer');
+                skillsContainer.innerHTML = '';
+                
+                if (!data.skills || data.skills.length === 0) {
+                    skillsContainer.innerHTML = `<p class="text-[12px] text-outline text-center py-4">No skills registered.</p>`;
+                    return;
+                }
+                
+                data.skills.forEach(s => {
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center gap-3';
+                    row.innerHTML = `
+                        <span class="text-[12px] font-medium text-outline w-16 font-mono">${s.name}</span>
+                        <div class="flex-1 bg-surface-low h-3 rounded-full overflow-hidden">
+                            <div class="bg-secondary h-full rounded-full" style="width: ${s.percentage}%;"></div>
+                        </div>
+                        <span class="text-[12px] font-bold text-tertiary w-8 text-right">${s.percentage}%</span>
+                    `;
+                    skillsContainer.appendChild(row);
+                });
+            } catch (err) {
+                console.error("Error loading analytics:", err);
+            }
+        }
+
+        // CREATE NEW JOB EVENT HANDLER
+        async function handleCreateJobSubmit(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const title = formData.get('title').trim();
+            const dept = formData.get('dept').trim();
+            const loc = formData.get('loc').trim();
+            const type = formData.get('type');
+            const exp = formData.get('exp').trim();
+            const reqSkills = formData.get('reqSkills').split(',').map(s => s.trim()).filter(Boolean);
+            const prefSkills = formData.get('prefSkills').split(',').map(s => s.trim()).filter(Boolean);
+            const desc = formData.get('desc').trim() || `No job description summary registered for "${title}".`;
+
+            if (!title || !dept || !loc || !exp || reqSkills.length === 0) {
+                showToast("Required Fields Missing", "Please fill in all mandatory job attributes.", "error");
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title, dept, loc, type, exp, reqSkills, prefSkills, desc
+                    })
+                });
+                
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Failed to create job profile");
+                }
+                
+                await refreshJobsData();
+                await refreshCandidatesData();
+                
+                e.target.reset();
+                initializeJobDropdowns();
+                closeCreateJobModal();
+                handleJobChange(title);
+                
+                showToast("Job Profile Created", `"${title}" has been successfully added to Thozhil.`, "success");
+            } catch (err) {
+                console.error("Job creation error:", err);
+                showToast("Job Creation Failed", err.message || "Failed to save job requirements profile.", "error");
+            }
+        }
+
+        // MODAL TOGGLES
+        function openCreateJobModal() {
+            const container = document.getElementById('createJobModalContainer');
+            const content = document.getElementById('createJobModalContent');
+            
+            container.classList.remove('hidden');
+            setTimeout(() => {
+                container.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeCreateJobModal() {
+            const container = document.getElementById('createJobModalContainer');
+            const content = document.getElementById('createJobModalContent');
+            
+            container.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                container.classList.add('hidden');
+            }, 200);
+        }
+
+        function closeCreateJobModalOnBackdrop(e) {
+            if (e.target === document.getElementById('createJobModalContainer')) {
+                closeCreateJobModal();
+            }
+        }
+
+        // GLOBAL SEARCH (top app bar)
+        function handleGlobalSearch(val) {
+            if (activeView === 'results') {
+                document.getElementById('resultsSearchInput').value = val;
+                applyResultsFilters();
+            } else {
+                switchView('results');
+                document.getElementById('resultsSearchInput').value = val;
+                applyResultsFilters();
+            }
+        }
+
+        // MOBILE DRAWER MENU TOGGLE
+        function toggleMobileMenu() {
+            const backdrop = document.getElementById('mobileMenuBackdrop');
+            const drawer = document.getElementById('mobileMenuDrawer');
+            
+            if (drawer.classList.contains('-translate-x-full')) {
+                backdrop.classList.remove('hidden');
+                drawer.classList.remove('-translate-x-full');
+            } else {
+                backdrop.classList.add('hidden');
+                drawer.classList.add('-translate-x-full');
+            }
+        }
+
+        // EXPORT CANDIDATES CSV
+        function exportCandidatesToCSV() {
+            const list = CANDIDATES_DB[currentJob] || [];
+            if (!list || list.length === 0) {
+                showToast("Export Failed", "No candidates available to export.", "error");
+                return;
+            }
+
+            const headers = ["Candidate ID", "Job Title", "Full Name", "Match Score (%)", "Skills Fit (%)", "Experience Fit (%)", "Education Fit (%)", "Recommendation", "Status", "Email", "Phone", "Location", "Strengths", "Gaps"];
+            
+            const rows = list.map(c => [
+                `"${c.id}"`,
+                `"${c.job_title || currentJob}"`,
+                `"${(c.name || '').replace(/"/g, '""')}"`,
+                c.match,
+                c.skills,
+                c.experience,
+                c.education,
+                `"${c.recommend}"`,
+                `"${c.status}"`,
+                `"${c.email}"`,
+                `"${c.phone}"`,
+                `"${c.locText}"`,
+                `"${(c.strengths || []).join('; ').replace(/"/g, '""')}"`,
+                `"${(c.gaps || []).join('; ').replace(/"/g, '""')}"`
+            ]);
+
+            const csvData = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Candidate_Screening_${currentJob.replace(/\s+/g, '_')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast("Export Successful", `Downloaded CSV report with ${list.length} candidate(s).`, "success");
+        }
+
+        // DOWNLOAD PRINTABLE CANDIDATE REPORT
+        function downloadCandidateReport() {
+            const candId = document.getElementById('view-details').getAttribute('data-candidate-id');
+            const list = CANDIDATES_DB[currentJob] || [];
+            const cand = list.find(c => c.id === candId);
+            if (!cand) {
+                showToast("Report Error", "Candidate details not found.", "error");
+                return;
+            }
+
+            const reportWindow = window.open('', '_blank');
+            const reportHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Screening Report - ${cand.name}</title>
+                    <style>
+                        body { font-family: 'Inter', sans-serif; padding: 40px; color: #191C1D; max-width: 800px; margin: 0 auto; line-height: 1.5; }
+                        h1 { color: #0059BB; margin-bottom: 4px; font-size: 24px; }
+                        .subtitle { color: #717786; font-size: 13px; margin-bottom: 20px; }
+                        .badge { display: inline-block; padding: 4px 12px; font-weight: bold; border-radius: 4px; background: #007BFF; color: white; font-size: 12px; }
+                        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+                        .card { border: 1px solid #E9ECEF; padding: 16px; border-radius: 8px; background: #F8F9FA; }
+                        .score { font-size: 32px; font-weight: bold; color: #007BFF; }
+                        ul { padding-left: 20px; font-size: 13px; }
+                        li { margin-bottom: 6px; }
+                        hr { border: none; border-top: 1px solid #E9ECEF; margin: 20px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h1>${cand.name}</h1>
+                    <div class="subtitle">${cand.roleText} • ${cand.expText} Experience • ${cand.locText}</div>
+                    <p style="font-size:13px"><strong>Email:</strong> ${cand.email} | <strong>Phone:</strong> ${cand.phone}</p>
+                    <p style="font-size:13px"><strong>Target Job:</strong> ${currentJob}</p>
+                    <hr/>
+                    <div class="grid">
+                        <div class="card">
+                            <h3 style="margin-top:0;font-size:14px">Overall AI Score</h3>
+                            <div class="score">${cand.match}%</div>
+                            <p style="margin-bottom:0;font-size:13px">Recommendation: <span class="badge">${cand.recommend}</span></p>
+                        </div>
+                        <div class="card">
+                            <h3 style="margin-top:0;font-size:14px">Scores Breakdown</h3>
+                            <p style="margin:4px 0;font-size:13px">Skills Fit: <strong>${cand.skills}%</strong></p>
+                            <p style="margin:4px 0;font-size:13px">Experience Fit: <strong>${cand.experience}%</strong></p>
+                            <p style="margin:4px 0;font-size:13px">Projects Alignment: <strong>${cand.projects}%</strong></p>
+                            <p style="margin:4px 0;font-size:13px">Education Fit: <strong>${cand.education}%</strong></p>
+                        </div>
+                    </div>
+                    <h3 style="font-size:15px;color:#137333">Key Strengths</h3>
+                    <ul>${(cand.strengths || []).map(s => `<li>${s}</li>`).join('')}</ul>
+                    <h3 style="font-size:15px;color:#BA1A1A">Identified Missing Gaps</h3>
+                    <ul>${(cand.gaps || []).map(g => `<li>${g}</li>`).join('')}</ul>
+                    <h3 style="font-size:15px">Detailed AI Evaluation Analysis</h3>
+                    <p style="font-size:13px;color:#414754">${cand.explanation}</p>
+                    <script>
+                        window.onload = function() { window.print(); }
+                    <\/script>
+                </body>
+                </html>
+            `;
+            reportWindow.document.write(reportHtml);
+            reportWindow.document.close();
+        }
+
+        // RESUME VIEWER MODAL CONTROLLER & ACTIONS
+        let activeResumeCandidateId = null;
+        let activeResumeData = null;
+
+        function viewCandidateResume() {
+            const candId = document.getElementById('view-details').getAttribute('data-candidate-id');
+            if (!candId) {
+                showToast("Resume Unavailable", "No candidate selected.", "error");
+                return;
+            }
+            openResumeModal(candId);
+        }
+
+        async function openResumeModal(candidateId) {
+            if (!candidateId) {
+                const detailsSec = document.getElementById('view-details');
+                candidateId = detailsSec ? detailsSec.getAttribute('data-candidate-id') : null;
+            }
+            if (!candidateId) {
+                showToast("Resume Unavailable", "No candidate selected.", "error");
+                return;
+            }
+
+            activeResumeCandidateId = candidateId;
+            const modal = document.getElementById('resumeModal');
+            if (!modal) return;
+
+            // Reset tab to PDF view
+            switchResumeTab('pdf');
+            
+            // Show modal
+            modal.classList.remove('hidden');
+            const loader = document.getElementById('resumeIframeLoader');
+            if (loader) loader.classList.remove('hidden');
+
+            try {
+                const res = await fetch(`/api/candidates/${candidateId}/resume-info`);
+                if (!res.ok) throw new Error("Could not load candidate resume info");
+                const data = await res.json();
+                activeResumeData = data;
+
+                // Populate header info
+                const initials = (data.name || 'CN').split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
+                document.getElementById('resumeModalAvatar').textContent = initials;
+                document.getElementById('resumeModalName').textContent = data.name;
+                document.getElementById('resumeModalScoreBadge').textContent = `${data.match}% Match`;
+                document.getElementById('resumeModalTypeBadge').textContent = `${data.file_type} • ${data.file_size}`;
+                document.getElementById('resumeModalSubtext').textContent = `${data.job_title} • ${data.filename}`;
+
+                // Set iframe src
+                const iframe = document.getElementById('resumePdfIframe');
+                const viewUrl = `/api/candidates/${candidateId}/resume?t=${Date.now()}#toolbar=1&navpanes=0`;
+                iframe.src = viewUrl;
+                document.getElementById('resumeDirectLink').href = `/api/candidates/${candidateId}/resume`;
+
+                // Handle DOCX download button visibility
+                const rawBtn = document.getElementById('resumeModalDownloadRawBtn');
+                if (data.is_docx) {
+                    rawBtn.classList.remove('hidden');
+                    rawBtn.classList.add('flex');
+                } else {
+                    rawBtn.classList.add('hidden');
+                    rawBtn.classList.remove('flex');
+                }
+
+                // Populate Extracted Text Tab
+                document.getElementById('resumeModalAnalysisSummary').textContent = data.explanation || "No AI explanation available.";
+                document.getElementById('resumeModalRawText').textContent = data.extracted_text || "No text extracted.";
+                document.getElementById('resumeModalCharCount').textContent = `${(data.extracted_text || '').length.toLocaleString()} characters extracted`;
+
+                // Skills
+                const matchedCont = document.getElementById('resumeModalMatchedSkills');
+                const missingCont = document.getElementById('resumeModalMissingSkills');
+                matchedCont.innerHTML = '';
+                missingCont.innerHTML = '';
+
+                (data.matched_skills || []).forEach(s => {
+                    const span = document.createElement('span');
+                    span.className = 'chip-required';
+                    span.textContent = s;
+                    matchedCont.appendChild(span);
+                });
+                if (!data.matched_skills || data.matched_skills.length === 0) {
+                    matchedCont.innerHTML = '<span class="text-[12px] text-outline italic">No matched skills recorded</span>';
+                }
+
+                (data.missing_skills || []).forEach(s => {
+                    const span = document.createElement('span');
+                    span.className = 'chip-preferred';
+                    span.textContent = s;
+                    missingCont.appendChild(span);
+                });
+                if (!data.missing_skills || data.missing_skills.length === 0) {
+                    missingCont.innerHTML = '<span class="text-[12px] text-outline italic">None missing</span>';
+                }
+
+            } catch (err) {
+                console.error("Error loading resume modal info:", err);
+                // Fallback direct load into iframe
+                const iframe = document.getElementById('resumePdfIframe');
+                iframe.src = `/api/candidates/${candidateId}/resume#toolbar=1`;
+                const loader = document.getElementById('resumeIframeLoader');
+                if (loader) loader.classList.add('hidden');
+            }
+        }
+
+        function closeResumeModal() {
+            const modal = document.getElementById('resumeModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                const iframe = document.getElementById('resumePdfIframe');
+                if (iframe) iframe.src = '';
+            }
+            activeResumeCandidateId = null;
+            activeResumeData = null;
+        }
+
+        function closeResumeModalOnBackdrop(e) {
+            if (e.target.id === 'resumeModal') {
+                closeResumeModal();
+            }
+        }
+
+        function switchResumeTab(tab) {
+            const pdfTab = document.getElementById('resumeViewerTabPdf');
+            const textTab = document.getElementById('resumeViewerTabText');
+            const btnPdf = document.getElementById('resumeTabBtnPdf');
+            const btnText = document.getElementById('resumeTabBtnText');
+
+            if (!pdfTab || !textTab) return;
+
+            if (tab === 'pdf') {
+                pdfTab.classList.remove('hidden');
+                textTab.classList.add('hidden');
+                btnPdf.className = "px-3 py-1 rounded bg-surface-lowest text-primary shadow-xs flex items-center gap-1 transition-all";
+                btnText.className = "px-3 py-1 rounded text-outline hover:text-tertiary flex items-center gap-1 transition-all";
+            } else {
+                pdfTab.classList.add('hidden');
+                textTab.classList.remove('hidden');
+                btnText.className = "px-3 py-1 rounded bg-surface-lowest text-primary shadow-xs flex items-center gap-1 transition-all";
+                btnPdf.className = "px-3 py-1 rounded text-outline hover:text-tertiary flex items-center gap-1 transition-all";
+            }
+        }
+
+        function openResumeInNewTab() {
+            if (!activeResumeCandidateId) return;
+            window.open(`/api/candidates/${activeResumeCandidateId}/resume`, '_blank');
+        }
+
+        function downloadResumePdf() {
+            if (!activeResumeCandidateId) return;
+            window.location.href = `/api/candidates/${activeResumeCandidateId}/resume?download=true`;
+        }
+
+        function downloadResumeRaw() {
+            if (!activeResumeCandidateId) return;
+            window.location.href = `/api/candidates/${activeResumeCandidateId}/resume?download=true&format=raw`;
+        }
+
+        function copyExtractedResumeText() {
+            const text = document.getElementById('resumeModalRawText').textContent;
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                const lbl = document.getElementById('copyTextBtnLabel');
+                if (lbl) lbl.textContent = "Copied!";
+                showToast("Copied", "Resume text copied to clipboard.", "success");
+                setTimeout(() => { if (lbl) lbl.textContent = "Copy Text"; }, 2000);
+            }).catch(err => {
+                showToast("Copy Failed", err.message, "error");
+            });
+        }
+
+        // DELETE CANDIDATE FROM DETAILS VIEW
+        async function deleteCurrentCandidateDetail() {
+            const candId = document.getElementById('view-details').getAttribute('data-candidate-id');
+            if (candId) {
+                await deleteCandidate(candId);
+            }
+        }
+
+        // DELETE CANDIDATE API ACTION
+        async function deleteCandidate(candidateId) {
+            if (!confirm("Are you sure you want to delete this candidate profile?")) return;
+            try {
+                const res = await fetch(`/api/candidates/${candidateId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast("Candidate Deleted", "Candidate profile removed successfully.", "success");
+                    await refreshCandidatesData();
+                    switchView('results');
+                } else {
+                    showToast("Delete Failed", "Failed to remove candidate profile.", "error");
+                }
+            } catch (err) {
+                console.error("Error deleting candidate:", err);
+                showToast("Delete Error", err.message, "error");
+            }
+        }
+
+        // DELETE JOB API ACTION
+        async function deleteJob(jobTitle) {
+            if (!confirm(`Are you sure you want to delete the position "${jobTitle}" and all associated candidate screening records?`)) return;
+            try {
+                const res = await fetch(`/api/jobs/${encodeURIComponent(jobTitle)}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast("Job Deleted", `Position "${jobTitle}" was deleted.`, "success");
+                    await refreshJobsData();
+                    // Navigate to the first remaining job (not the deleted one)
+                    const remainingJobs = Object.keys(JOBS_DB);
+                    if (remainingJobs.length > 0) {
+                        await handleJobChange(remainingJobs[0]);
+                    } else {
+                        currentJob = '';
+                    }
+                    switchView('overview');
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    showToast("Delete Failed", errData.detail || "Failed to remove job profile.", "error");
+                }
+            } catch (err) {
+                console.error("Error deleting job:", err);
+                showToast("Delete Error", err.message, "error");
+            }
+        }
+
+        // SETTINGS MODAL FUNCTIONS
+        function openSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            if (modal) {
+                document.getElementById('settingsApiKeyInput').value = localStorage.getItem('GEMINI_API_KEY') || '';
+                document.getElementById('settingsShortlistThresholdInput').value = localStorage.getItem('SHORTLIST_THRESHOLD') || 85;
+                document.getElementById('thresholdVal').textContent = document.getElementById('settingsShortlistThresholdInput').value;
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function saveSettings() {
+            const apiKey = document.getElementById('settingsApiKeyInput').value.trim();
+            const threshold = document.getElementById('settingsShortlistThresholdInput').value;
+
+            if (apiKey) {
+                localStorage.setItem('GEMINI_API_KEY', apiKey);
+            } else {
+                localStorage.removeItem('GEMINI_API_KEY');
+            }
+
+            localStorage.setItem('SHORTLIST_THRESHOLD', threshold);
+
+            closeSettingsModal();
+            showToast("Settings Saved", "Preferences updated successfully.", "success");
+        }
+
+        // TOAST NOTIFICATIONS HELPER
+        function showToast(title, message, type = "success") {
+            const container = document.getElementById('toastContainer');
+            const item = document.createElement('div');
+            item.className = 'toast-item';
+            
+            if (type === 'success') {
+                item.style.borderColor = '#137333';
+            } else if (type === 'error') {
+                item.style.borderColor = '#BA1A1A';
+            } else if (type === 'info') {
+                item.style.borderColor = '#007BFF';
+            }
+
+            let iconName = 'info';
+            let iconColor = 'text-primary';
+            if (type === 'success') { iconName = 'check_circle'; iconColor = 'text-[#137333]'; }
+            else if (type === 'error') { iconName = 'error'; iconColor = 'text-error'; }
+
+            item.innerHTML = `
+                <span class="material-symbols-outlined ${iconColor} text-[22px]">${iconName}</span>
+                <div class="flex-1">
+                    <p class="text-[13px] font-bold text-[#191C1D]">${title}</p>
+                    <p class="text-[11px] text-outline font-medium mt-[2px] leading-tight">${message}</p>
+                </div>
+                <button class="text-outline hover:text-tertiary transition-colors" onclick="this.parentElement.remove()">
+                    <span class="material-symbols-outlined text-[16px]">close</span>
+                </button>
+            `;
+
+            container.appendChild(item);
+            
+            setTimeout(() => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(-10px)';
+                item.style.transition = 'all 0.3s ease';
+                setTimeout(() => item.remove(), 300);
+            }, 3500);
+        }
+
+        function showCoreAppToast(pageName) {
+            showToast("Thozhil Core Integration", `The "${pageName}" section is managed by the main Thozhil application.`, "info");
+        }
+
+        // ─── DRAG AND DROP HANDLERS ───────────────────────────────────────────────
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const dropzone = document.getElementById('dropzoneContainer');
+            if (dropzone) dropzone.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const dropzone = document.getElementById('dropzoneContainer');
+            if (dropzone) dropzone.classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const dropzone = document.getElementById('dropzoneContainer');
+            if (dropzone) dropzone.classList.remove('dragover');
+
+            const files = event.dataTransfer?.files;
+            if (!files || files.length === 0) return;
+
+            handleFilesFromList(files);
+        }
+
+        async function handleFileSelect(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            await handleFilesFromList(files);
+            e.target.value = '';
+        }
+
+        async function handleFilesFromList(files) {
+            const formData = new FormData();
+            let validFilesCount = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const f = files[i];
+                const ext = f.name.split('.').pop().toLowerCase();
+
+                if (ext !== 'pdf' && ext !== 'docx') {
+                    showToast("Unsupported Format", `"${f.name}" is not supported. Only PDF or DOCX files are allowed.`, "error");
+                    continue;
+                }
+
+                const maxSizeMB = 5;
+                if (f.size > maxSizeMB * 1024 * 1024) {
+                    showToast("File Too Large", `"${f.name}" exceeds the ${maxSizeMB} MB size limit.`, "error");
+                    continue;
+                }
+
+                formData.append('files', f);
+                validFilesCount++;
+            }
+
+            if (validFilesCount === 0) return;
+
+            showToast("Uploading Resumes", `Sending ${validFilesCount} file(s) to Thozhil server...`, "info");
+
+            try {
+                const response = await fetch(`/api/jobs/${encodeURIComponent(currentJob)}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.detail || 'Upload failed');
+                }
+
+                const result = await response.json();
+                if (result.warnings && result.warnings.length > 0) {
+                    result.warnings.forEach(w => showToast("Upload Warning", w, "error"));
+                }
+
+                await refreshCandidatesData();
+                updateUploadsQueue();
+                renderUploadView();
+                showToast("Upload Successful", `${result.candidate_ids.length} file(s) added to screening queue.`, "success");
+            } catch (err) {
+                console.error("Upload error:", err);
+                showToast("Upload Failed", err.message || "Could not send files to server.", "error");
+            }
+        }
+
+        // ─── RETRY FAILED SCREENING ───────────────────────────────────────────────
+
+        async function retryScreening(candidateId) {
+            try {
+                showToast("Retrying", "Restarting AI screening for failed candidate...", "info");
+                const res = await fetch(`/api/candidates/${candidateId}/retry`, { method: 'POST' });
+                if (!res.ok) throw new Error('Retry failed');
+                await refreshCandidatesData();
+                showToast("Retry Started", "Screening restarted. Results will appear shortly.", "success");
+                for (let i = 0; i < 30; i++) {
+                    await new Promise(r => setTimeout(r, 2000));
+                    await refreshCandidatesData();
+                    const cand = (CANDIDATES_DB[currentJob] || []).find(c => c.id === candidateId);
+                    if (cand && cand.screening_status === 'Done') {
+                        openCandidateDetails(candidateId);
+                        showToast("Retry Complete", "Candidate screening completed successfully.", "success");
+                        return;
+                    }
+                    if (cand && cand.screening_status === 'Failed') {
+                        showToast("Retry Failed", "Screening failed again. Check server logs.", "error");
+                        return;
+                    }
+                }
+            } catch (err) {
+                showToast("Retry Error", err.message, "error");
+            }
+        }
+
+        // Global ESC key listener to close modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeResumeModal();
+                closeSettingsModal();
+                closeCreateJobModal();
+            }
+        });
+
+    </script>
+
+    <!-- Interactive Resume Viewer Modal -->
+    <div id="resumeModal" class="fixed inset-0 bg-[#000000]/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 hidden transition-opacity duration-200" onclick="closeResumeModalOnBackdrop(event)">
+        <div class="bg-surface-lowest rounded-xl max-w-5xl w-full h-[90vh] max-h-[900px] flex flex-col border border-outline-variant shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+            
+            <!-- Modal Header -->
+            <div class="px-4 py-3 border-b border-outline-variant bg-[#FDFDFD] flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-full bg-[#E9F2FF] text-primary flex items-center justify-center font-bold text-[14px] shrink-0" id="resumeModalAvatar">
+                        CN
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="font-bold text-[16px] text-tertiary truncate" id="resumeModalName">Candidate Name</h3>
+                            <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-primary/10 text-primary border border-primary/20" id="resumeModalScoreBadge">85% Match</span>
+                            <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-surface-low text-outline border border-outline-variant uppercase" id="resumeModalTypeBadge">PDF</span>
+                        </div>
+                        <p class="text-[12px] text-outline truncate" id="resumeModalSubtext">Software Engineer • Filename: resume.pdf</p>
+                    </div>
+                </div>
+
+                <!-- Tabs & Quick Actions -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- Tab Switcher -->
+                    <div class="flex items-center bg-surface-low p-1 rounded-lg border border-outline-variant/60 text-[12px] font-semibold">
+                        <button class="px-3 py-1 rounded bg-surface-lowest text-primary shadow-xs flex items-center gap-1 transition-all" id="resumeTabBtnPdf" onclick="switchResumeTab('pdf')">
+                            <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                            <span>Document Preview</span>
+                        </button>
+                        <button class="px-3 py-1 rounded text-outline hover:text-tertiary flex items-center gap-1 transition-all" id="resumeTabBtnText" onclick="switchResumeTab('text')">
+                            <span class="material-symbols-outlined text-[16px]">description</span>
+                            <span>Extracted Text</span>
+                        </button>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <button class="btn-secondary py-1.5 px-3 text-[12px] flex items-center gap-1" id="resumeModalOpenTabBtn" onclick="openResumeInNewTab()" title="Open PDF in New Browser Tab">
+                        <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+                        <span class="hidden sm:inline">New Tab</span>
+                    </button>
+                    
+                    <button class="btn-primary py-1.5 px-3 text-[12px] flex items-center gap-1" id="resumeModalDownloadBtn" onclick="downloadResumePdf()" title="Download PDF Resume">
+                        <span class="material-symbols-outlined text-[16px]">download</span>
+                        <span class="hidden sm:inline">Download PDF</span>
+                    </button>
+
+                    <button class="btn-secondary py-1.5 px-3 text-[12px] hidden items-center gap-1" id="resumeModalDownloadRawBtn" onclick="downloadResumeRaw()" title="Download Original DOCX">
+                        <span class="material-symbols-outlined text-[16px]">file_download</span>
+                        <span class="hidden sm:inline">Download DOCX</span>
+                    </button>
+
+                    <button class="text-outline hover:text-error p-1.5 rounded-lg hover:bg-surface-low transition-colors ml-1" onclick="closeResumeModal()" title="Close Viewer">
+                        <span class="material-symbols-outlined text-[22px]">close</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Content Area -->
+            <div class="flex-1 relative bg-surface-low overflow-hidden">
+                
+                <!-- TAB 1: Live PDF Document Viewer -->
+                <div id="resumeViewerTabPdf" class="w-full h-full flex flex-col relative">
+                    <!-- Loading indicator -->
+                    <div id="resumeIframeLoader" class="absolute inset-0 bg-surface-lowest/90 z-10 flex flex-col items-center justify-center gap-3">
+                        <span class="material-symbols-outlined text-primary text-[36px] animate-spin">progress_activity</span>
+                        <p class="text-[13px] font-semibold text-outline">Loading candidate resume preview...</p>
+                    </div>
+                    
+                    <iframe id="resumePdfIframe" class="w-full h-full border-0 bg-white" src="" onload="const l = document.getElementById('resumeIframeLoader'); if(l) l.classList.add('hidden')"></iframe>
+                    
+                    <!-- Fallback notice bar if needed -->
+                    <div class="p-2 bg-surface-lowest border-t border-outline-variant flex items-center justify-between text-[12px] text-outline px-4">
+                        <span class="flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px] text-primary">info</span>
+                            <span>Resume preview powered by Thozhil AI Document Engine.</span>
+                        </span>
+                        <a href="#" id="resumeDirectLink" target="_blank" class="text-primary hover:underline font-semibold flex items-center gap-1">
+                            <span>Open directly in new tab</span>
+                            <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Structured Extracted Text & Summary -->
+                <div id="resumeViewerTabText" class="w-full h-full p-4 md:p-6 overflow-y-auto hidden bg-surface-lowest">
+                    <div class="max-w-4xl mx-auto space-y-4">
+                        <!-- AI Match Evaluation Summary Banner -->
+                        <div class="card-wrapper p-4 bg-primary/5 border border-primary/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div>
+                                <h4 class="font-bold text-[15px] text-tertiary flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-primary">psychology</span>
+                                    <span>AI Resume Screening Summary</span>
+                                </h4>
+                                <p class="text-[13px] text-[#414754] mt-1" id="resumeModalAnalysisSummary">Analysis summary loading...</p>
+                            </div>
+                            <div class="shrink-0 flex items-center gap-2">
+                                <button class="btn-secondary text-[12px] py-1 px-3 flex items-center gap-1" onclick="copyExtractedResumeText()">
+                                    <span class="material-symbols-outlined text-[16px]">content_copy</span>
+                                    <span id="copyTextBtnLabel">Copy Text</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Matched & Missing Skills Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="card-wrapper p-3.5 bg-[#E6F4EA]/30 border border-[#137333]/20">
+                                <h5 class="text-[13px] font-bold text-[#137333] flex items-center gap-1 mb-2">
+                                    <span class="material-symbols-outlined text-[16px] icon-fill">check_circle</span>
+                                    Matched Job Skills
+                                </h5>
+                                <div class="flex flex-wrap gap-1.5" id="resumeModalMatchedSkills"></div>
+                            </div>
+                            <div class="card-wrapper p-3.5 bg-surface-low border border-outline-variant">
+                                <h5 class="text-[13px] font-bold text-outline flex items-center gap-1 mb-2">
+                                    <span class="material-symbols-outlined text-[16px]">help_outline</span>
+                                    Missing / Unverified Skills
+                                </h5>
+                                <div class="flex flex-wrap gap-1.5" id="resumeModalMissingSkills"></div>
+                            </div>
+                        </div>
+
+                        <!-- Full Extracted Resume Text Content -->
+                        <div class="card-wrapper overflow-hidden">
+                            <div class="p-3 bg-[#FDFDFD] border-b border-outline-variant flex items-center justify-between">
+                                <h5 class="text-[13px] font-bold text-tertiary flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-primary text-[18px]">article</span>
+                                    Full Extracted Text & Content
+                                </h5>
+                                <span class="text-[11px] text-outline" id="resumeModalCharCount">0 characters extracted</span>
+                            </div>
+                            <pre class="p-4 text-[13px] text-[#2D3139] font-mono leading-relaxed whitespace-pre-wrap max-h-[450px] overflow-y-auto bg-surface-low/30 select-text" id="resumeModalRawText"></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-tertiary/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" onclick="closeSettingsModal()">
+        <div class="bg-surface-lowest rounded-xl max-w-md w-full border border-outline-variant shadow-xl overflow-hidden" onclick="event.stopPropagation()">
+            <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-[#FDFDFD]">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">settings</span>
+                    <h3 class="font-bold text-[18px] text-tertiary">Recruitment Portal Settings</h3>
+                </div>
+                <button class="text-outline hover:text-tertiary p-1 rounded-lg" onclick="closeSettingsModal()">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+            <div class="p-lg space-y-md">
+                <div>
+                    <label class="block text-[13px] font-bold text-tertiary mb-1">Google Gemini API Key</label>
+                    <input type="password" id="settingsApiKeyInput" class="w-full px-3 py-2 border border-outline-variant rounded-lg text-[13px] focus:outline-none focus:border-primary font-mono" placeholder="AIzaSy... (Leave empty for simulation mode)"/>
+                    <p class="text-[11px] text-outline mt-1">When configured, real-time Gemini AI will screen uploaded resumes.</p>
+                </div>
+                <div>
+                    <label class="block text-[13px] font-bold text-tertiary mb-1">Auto-Shortlist Score Threshold (%): <span id="thresholdVal">85</span></label>
+                    <input type="range" id="settingsShortlistThresholdInput" min="60" max="95" value="85" class="w-full cursor-pointer accent-primary" oninput="document.getElementById('thresholdVal').textContent = this.value"/>
+                </div>
+            </div>
+            <div class="px-lg py-md border-t border-outline-variant bg-[#FDFDFD] flex justify-end gap-2">
+                <button class="btn-secondary text-[13px] py-1.5 px-4" onclick="closeSettingsModal()">Cancel</button>
+                <button class="btn-primary text-[13px] py-1.5 px-4" onclick="saveSettings()">Save Preferences</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "admin-shell",
+  "projectType": "application",
+  "sourceRoot": "apps/admin-shell/src",
+  "tags": ["scope:shell", "type:app"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx vite",
+        "cwd": "apps/admin-shell"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx vite build",
+        "cwd": "apps/admin-shell"
+      }
+    }
+  }
+}

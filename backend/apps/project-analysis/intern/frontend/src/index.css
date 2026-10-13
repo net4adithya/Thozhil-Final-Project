@@ -1,0 +1,267 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────
+   DESIGN TOKEN LAYER — "Industrial Logic"
+   Brand: Thozhil Blue (#1D78F8)
+───────────────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --surface:          #F8F9FF;
+  --surface-card:     #FFFFFF;
+  --on-surface:       #0B1C30;
+  --on-surface-muted: #64748B;
+
+  /* Brand blue — primary interactive */
+  --brand:            #1D78F8;
+  --brand-hover:      #1558C0;
+  --brand-light:      #E8F1FF;
+  --on-brand:         #FFFFFF;
+
+  /* Borders */
+  --border:           #E2E8F0;
+  --border-focus:     #1D78F8;
+
+  /* Shadows */
+  --shadow-card:      0 1px 4px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+  --shadow-hover:     0 4px 16px rgba(15,23,42,0.10);
+  --shadow-modal:     0 8px 32px rgba(15,23,42,0.14);
+
+  /* Semantic */
+  --success:          #10B981;
+  --warning:          #F59E0B;
+  --error:            #EF4444;
+
+  /* Shape */
+  --radius:           0.5rem;
+  --radius-pill:      9999px;
+}
+
+.dark {
+  --surface:          #0B1C30;
+  --surface-card:     #131B2E;
+  --on-surface:       #EAF1FF;
+  --on-surface-muted: #7C8FA6;
+  --border:           #1E2D45;
+  --brand-light:      #0D2445;
+}
+
+/* ─────────────────────────────────────────────
+   BASE
+───────────────────────────────────────────── */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-bgLight text-textPrimary-light antialiased transition-colors duration-200;
+  }
+
+  body.dark {
+    @apply bg-bgDark text-textPrimary-dark;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'IBM Plex Sans', Inter, system-ui, sans-serif;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   LABEL CAPS — JetBrains Mono, uppercase
+───────────────────────────────────────────── */
+.label-caps {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ─────────────────────────────────────────────
+   STATUS CHIPS — Pill badges (JetBrains Mono)
+   Matching sample: Low Risk (green), Medium Risk (amber)
+───────────────────────────────────────────── */
+.status-chip {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.625rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.status-chip-success {
+  background-color: rgba(16, 185, 129, 0.10);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.dark .status-chip-success {
+  background-color: rgba(16, 185, 129, 0.08);
+  color: #34D399;
+  border-color: rgba(16, 185, 129, 0.20);
+}
+
+.status-chip-warning {
+  background-color: rgba(245, 158, 11, 0.10);
+  color: #B45309;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.dark .status-chip-warning {
+  background-color: rgba(245, 158, 11, 0.08);
+  color: #FBBF24;
+  border-color: rgba(245, 158, 11, 0.20);
+}
+
+.status-chip-error {
+  background-color: rgba(239, 68, 68, 0.10);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.dark .status-chip-error {
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #F87171;
+  border-color: rgba(239, 68, 68, 0.20);
+}
+
+.status-chip-neutral {
+  background-color: rgba(100, 116, 139, 0.08);
+  color: #475569;
+  border: 1px solid rgba(100, 116, 139, 0.20);
+}
+.dark .status-chip-neutral {
+  background-color: rgba(124, 143, 166, 0.08);
+  color: #94A3B8;
+  border-color: rgba(124, 143, 166, 0.12);
+}
+
+/* Brand blue chip */
+.status-chip-blue {
+  background-color: rgba(29, 120, 248, 0.10);
+  color: #1D78F8;
+  border: 1px solid rgba(29, 120, 248, 0.20);
+}
+.dark .status-chip-blue {
+  background-color: rgba(29, 120, 248, 0.08);
+  color: #60A5FA;
+  border-color: rgba(29, 120, 248, 0.20);
+}
+
+/* Role badge — inline pill (INTERN / MANAGER style from samples) */
+.role-badge {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.role-badge-intern {
+  background-color: rgba(29, 120, 248, 0.12);
+  color: #1D78F8;
+  border: 1px solid rgba(29, 120, 248, 0.25);
+}
+
+.role-badge-authority {
+  background-color: rgba(11, 28, 48, 0.08);
+  color: #0B1C30;
+  border: 1px solid rgba(11, 28, 48, 0.15);
+}
+.dark .role-badge-authority {
+  background-color: rgba(234, 241, 255, 0.08);
+  color: #EAF1FF;
+  border-color: rgba(234, 241, 255, 0.15);
+}
+
+/* ─────────────────────────────────────────────
+   SHIMMER LOADING
+───────────────────────────────────────────── */
+.shimmer-glow {
+  background: linear-gradient(90deg, #EFF4FF 25%, #DCE9FF 50%, #EFF4FF 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+.dark .shimmer-glow {
+  background: linear-gradient(90deg, #1E2D45 25%, #243145 50%, #1E2D45 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* ─────────────────────────────────────────────
+   SCROLLBARS
+───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb { background: #1E2D45; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #2D3F55; }
+
+.custom-scroll::-webkit-scrollbar { width: 4px; }
+.custom-scroll::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 9999px;
+}
+.dark .custom-scroll::-webkit-scrollbar-thumb { background: #1E2D45; }
+
+.modal-scroll::-webkit-scrollbar { width: 4px; }
+.modal-scroll::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+.dark .modal-scroll::-webkit-scrollbar-thumb { background: #1E2D45; }
+
+/* ─────────────────────────────────────────────
+   LINE CLAMP
+───────────────────────────────────────────── */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ─────────────────────────────────────────────
+   FOCUS RING — Brand blue ring
+───────────────────────────────────────────── */
+.focus-ring:focus {
+  outline: 2px solid #1D78F8;
+  outline-offset: 2px;
+}
+
+/* ─────────────────────────────────────────────
+   INPUT FOCUS — Brand blue border
+───────────────────────────────────────────── */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #1D78F8 !important;
+  box-shadow: 0 0 0 3px rgba(29, 120, 248, 0.12);
+}

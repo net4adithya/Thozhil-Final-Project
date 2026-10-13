@@ -1,0 +1,21 @@
+{
+  "name": "assessment-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nx serve",
+    "build": "nx build",
+    "preview": "nx preview"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "monaco-editor": "^0.52.2",
+    "vue": "^3.5.13",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.0.5"
+  }
+}

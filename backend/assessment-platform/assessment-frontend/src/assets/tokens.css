@@ -1,0 +1,80 @@
+:root {
+  /* Color — Thozhil.in Blue & White Palette */
+  --ink: #F8FAFC;
+  --panel: #FFFFFF;
+  --panel-raised: #F1F5F9;
+  --border: #CBD5E1;
+  --text: #0F172A;
+  --text-muted: #475569;
+  --text-faint: #64748B;
+
+  --accent: #006491; /* Thozhil primary blue */
+  --accent-dim: #0284C7;
+  --signal-amber: #D97706; /* timer warning */
+  --signal-red: #DC2626; /* timer critical / fail / violation */
+  --signal-green: #059669; /* pass / correct */
+
+  /* Type */
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

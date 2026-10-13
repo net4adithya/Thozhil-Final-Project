@@ -1,0 +1,39 @@
+# Environment variables
+.env
+*.env
+
+# Dependencies & Build output
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+
+# Python Virtual Environments & Caches
+venv/
+venv2/
+python_backend/venv/
+python_backend/venv2/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Temporary scratch scripts
+fix_*.js
+test_*.js
+verify_*.js
+check_*.js
+seed_*.js
+inject_*.js
+replace.js
+e2e_test.js
+
+# Artifacts & Local workspace temporary files
+Coding/
+Interviewer/
+
+
+
+.nx/cache
+.nx/workspace-data
+.nx/migrate-runs
+vite.config.*.timestamp*

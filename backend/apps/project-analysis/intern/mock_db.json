@@ -1,0 +1,59 @@
+{
+  "WorkDescription": [
+    {
+      "id": "desc-1",
+      "projectId": "proj-stripe",
+      "authorityId": "auth-jenkins",
+      "description": "### Sprint Objective\nComplete the integration of Stripe Customer Portal with direct sync to our billing schema.\n\n### Core Tasks\n1. Set up an Express endpoint `/api/billing/portal` mapping user tokens to Customer Portal sessions.\n2. Handle `customer.subscription.updated` and `invoice.payment_succeeded` webhook operations with absolute consistency.\n3. Implement proper client-side loading spinners and error screens.\n\n### Expectations\nEnsure all DB updates are wrapped in clean transactions. Write unit tests for the webhook handler. Submit a draft log listing endpoint responses, DB schemas modified, and test results.",
+      "createdAt": "2026-07-29T17:11:18.307Z"
+    },
+    {
+      "id": "desc-2",
+      "projectId": "proj-linear",
+      "authorityId": "auth-rivers",
+      "description": "### Sync Architecture Objective\nImplement conflict resolution handlers on the WebSocket channel.\n\n### Core Tasks\n- Hook up a last-write-wins CRDT strategy for updating card states.\n- Create a mock latency network testing suite inside `/test/network.ts`.\n- Write proper logs showing concurrent resolution outputs.\n\n### Requirements\nLogs should explicitly show how conflicts are resolved when two users drag cards simultaneously.",
+      "createdAt": "2026-07-31T17:11:18.308Z"
+    }
+  ],
+  "Log": [
+    {
+      "id": "log-1",
+      "projectId": "proj-stripe",
+      "internId": "intern-sanjay",
+      "content": "Completed task 1 and 2. I have added the backend routing in `server.js` matching client customer logins to Stripe portal URLs. Also added Supabase DB listeners for user plan mapping. Webhook signatures are validated using standard credentials. All webhook handlers run successfully. Added unit tests for payment success and billing updates. 100% of tests are passing.",
+      "fileNames": [
+        "server.js",
+        "auth.js"
+      ],
+      "uploadedAt": "2026-08-02T17:11:18.308Z",
+      "descriptionId": "desc-1"
+    },
+    {
+      "id": "log-2",
+      "projectId": "proj-linear",
+      "internId": "intern-aditi",
+      "content": "Started conflict resolver setups. Created websocket client scripts. Resolved index errors.",
+      "fileNames": [
+        "client.js"
+      ],
+      "uploadedAt": "2026-08-01T17:11:18.308Z",
+      "descriptionId": "desc-2"
+    }
+  ],
+  "Review": [
+    {
+      "id": "rev-1",
+      "logId": "log-1",
+      "score": 92,
+      "feedback": "{\"summary\":\"Outstanding log submission. Sanjay has covered all components including webhook routing, database hooks, signature verification, and full test suites. Very structured and detailed developer update.\",\"speechText\":\"Outstanding log submission. Sanjay has covered all components including webhook routing, database hooks, signature verification, and full test suites. Very structured and detailed developer update.\",\"strengths\":[\"Addressed both backend routing and Supabase integration tasks.\",\"Validating webhook signatures properly.\",\"Included unit tests with 100% success rate.\"],\"weaknesses\":[\"Did not document visual feedback states or client-side loader integration in detail.\"],\"suggestions\":[\"Add a brief mention of frontend loading skeletons for user portal transitions in the next sprint.\"]}",
+      "createdAt": "2026-08-02T17:11:18.308Z"
+    },
+    {
+      "id": "rev-2",
+      "logId": "log-2",
+      "score": 42,
+      "feedback": "{\"summary\":\"The log is extremely short and does not address core requirements. Missing the concurrent resolution details, test suites, and latency resolution outputs requested by the architect.\",\"speechText\":\"The log is extremely short and does not address core requirements. Missing the concurrent resolution details, test suites, and latency resolution outputs requested by the architect.\",\"strengths\":[\"Initiated websocket script configurations.\"],\"weaknesses\":[\"Very brief summary with minimal details (under 15 words).\",\"Completely skipped the CRDT synchronization mechanics.\",\"No mock network test runs or resolution logs provided.\"],\"suggestions\":[\"Expand log files to include file modifications, terminal logs, and resolved issues.\",\"Review the sprint requirements and document testing workflows explicitly.\"]}",
+      "createdAt": "2026-08-01T17:11:18.308Z"
+    }
+  ]
+}

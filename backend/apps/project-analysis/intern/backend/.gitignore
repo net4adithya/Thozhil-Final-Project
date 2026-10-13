@@ -1,0 +1,5 @@
+# SECURITY FIX (ISSUE-001): Prevent .env files from being committed to version control.
+.env
+.env.local
+.env.*.local
+node_modules

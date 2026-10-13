@@ -1,0 +1,16 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "gateway",
+  "projectType": "application",
+  "sourceRoot": "packages/gateway",
+  "tags": ["scope:gateway", "type:service"],
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node server.js",
+        "cwd": "packages/gateway"
+      }
+    }
+  }
+}

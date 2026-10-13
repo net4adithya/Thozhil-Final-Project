@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+}
+
+model WorkDescription {
+  id          String   @id @default(uuid())
+  projectId   String
+  authorityId String
+  description String
+  createdAt   DateTime @default(now())
+  logs        Log[]
+}
+
+model Log {
+  id            String           @id @default(uuid())
+  projectId     String
+  internId      String
+  content       String
+  fileUrl       String?
+  uploadedAt    DateTime         @default(now())
+  description   WorkDescription? @relation(fields: [descriptionId], references: [id])
+  descriptionId String?
+  review        Review?
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  logId     String   @unique
+  score     Int
+  feedback  String
+  createdAt DateTime @default(now())
+  log       Log      @relation(fields: [logId], references: [id])
+}

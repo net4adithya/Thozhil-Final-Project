@@ -1,0 +1,15 @@
+node_modules/
+dist/
+
+# Keep environment variables out of version control
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Python cache & test files
+__pycache__/
+*.pyc
+.pytest_cache/
+
+/generated/prisma

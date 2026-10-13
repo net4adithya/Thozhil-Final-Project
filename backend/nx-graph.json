@@ -1,0 +1,994 @@
+{
+  "graph": {
+    "nodes": {
+      "assessment-frontend": {
+        "name": "assessment-frontend",
+        "type": "app",
+        "data": {
+          "root": "assessment-platform/assessment-frontend",
+          "projectType": "application",
+          "metadata": {},
+          "targets": {
+            "build": {
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "default",
+                "^default",
+                {
+                  "externalDependencies": [
+                    "vite"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist"
+              ],
+              "metadata": {
+                "technologies": [
+                  "vite"
+                ],
+                "description": "Run Vite build",
+                "help": {
+                  "command": "npx vite build --help",
+                  "example": {
+                    "options": {
+                      "sourcemap": true,
+                      "manifest": "manifest.json"
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "assessment-platform/assessment-frontend",
+                "command": "vite build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve": {
+              "continuous": true,
+              "metadata": {
+                "technologies": [
+                  "vite"
+                ],
+                "description": "Starts Vite dev server",
+                "help": {
+                  "command": "npx vite --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                },
+                "deprecated": "Use devTargetName instead. This option will be removed in Nx 22."
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "assessment-platform/assessment-frontend",
+                "command": "vite"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev": {
+              "continuous": true,
+              "metadata": {
+                "technologies": [
+                  "vite"
+                ],
+                "description": "Starts Vite dev server",
+                "help": {
+                  "command": "npx vite --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "cache": false,
+              "options": {
+                "cwd": "assessment-platform/assessment-frontend",
+                "command": "vite"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "preview": {
+              "continuous": true,
+              "dependsOn": [
+                "build"
+              ],
+              "metadata": {
+                "technologies": [
+                  "vite"
+                ],
+                "description": "Locally preview Vite production build",
+                "help": {
+                  "command": "npx vite preview --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "assessment-platform/assessment-frontend",
+                "command": "vite preview"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve-static": {
+              "continuous": true,
+              "executor": "@nx/web:file-server",
+              "options": {
+                "buildTarget": "build",
+                "spa": true
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx nx watch --projects assessment-frontend --includeDependencies -- npx nx build-deps assessment-frontend"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "assessment-frontend",
+          "implicitDependencies": [],
+          "tags": []
+        }
+      },
+      "assessment-admin": {
+        "name": "assessment-admin",
+        "type": "app",
+        "data": {
+          "root": "assessment-platform/assessment-admin",
+          "projectType": "application",
+          "metadata": {},
+          "targets": {
+            "build": {
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "default",
+                "^default",
+                {
+                  "externalDependencies": [
+                    "vite"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist"
+              ],
+              "metadata": {
+                "technologies": [
+                  "vite"
+                ],
+                "description": "Run Vite build",
+                "help": {
+                  "command": "npx vite build --help",
+                  "example": {
+                    "options": {
+                      "sourcemap": true,
+                      "manifest": "manifest.json"
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "assessment-platform/assessment-admin",
+                "command": "vite build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve": {
+              "continuous": true,
+              "metadata": {
+                "technologies": [
+                  "vite"
+                ],
+                "description": "Starts Vite dev server",
+                "help": {
+                  "command": "npx vite --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                },
+                "deprecated": "Use devTargetName instead. This option will be removed in Nx 22."
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "assessment-platform/assessment-admin",
+                "command": "vite"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev": {
+              "continuous": true,
+              "metadata": {
+                "technologies": [
+                  "vite"
+                ],
+                "description": "Starts Vite dev server",
+                "help": {
+                  "command": "npx vite --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "cache": false,
+              "options": {
+                "cwd": "assessment-platform/assessment-admin",
+                "command": "vite"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "preview": {
+              "continuous": true,
+              "dependsOn": [
+                "build"
+              ],
+              "metadata": {
+                "technologies": [
+                  "vite"
+                ],
+                "description": "Locally preview Vite production build",
+                "help": {
+                  "command": "npx vite preview --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "assessment-platform/assessment-admin",
+                "command": "vite preview"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve-static": {
+              "continuous": true,
+              "executor": "@nx/web:file-server",
+              "options": {
+                "buildTarget": "build",
+                "spa": true
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx nx watch --projects assessment-admin --includeDependencies -- npx nx build-deps assessment-admin"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "assessment-admin",
+          "implicitDependencies": [],
+          "tags": []
+        }
+      },
+      "ai-coding-interviewer-frontend": {
+        "name": "ai-coding-interviewer-frontend",
+        "type": "app",
+        "data": {
+          "root": "assessment-platform/user-frontend",
+          "projectType": "application",
+          "metadata": {},
+          "targets": {
+            "build": {
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "default",
+                "^default",
+                {
+                  "externalDependencies": [
+                    "vite"
+                  ]
+                }
+              ],
+              "outputs": [
+                "{projectRoot}/dist"
+              ],
+              "metadata": {
+                "technologies": [
+                  "vite",
+                  "vite"
+                ],
+                "description": "Run Vite build",
+                "help": {
+                  "command": "npx vite build --help",
+                  "example": {
+                    "options": {
+                      "sourcemap": true,
+                      "manifest": "manifest.json"
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "assessment-platform/user-frontend",
+                "command": "vite build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve": {
+              "continuous": true,
+              "metadata": {
+                "technologies": [
+                  "vite",
+                  "vite"
+                ],
+                "description": "Starts Vite dev server",
+                "help": {
+                  "command": "npx vite --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                },
+                "deprecated": "Use devTargetName instead. This option will be removed in Nx 22."
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "assessment-platform/user-frontend",
+                "command": "vite"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev": {
+              "continuous": true,
+              "metadata": {
+                "technologies": [
+                  "vite",
+                  "vite"
+                ],
+                "description": "Starts Vite dev server",
+                "help": {
+                  "command": "npx vite --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "cache": false,
+              "options": {
+                "cwd": "assessment-platform/user-frontend",
+                "command": "vite"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "preview": {
+              "continuous": true,
+              "dependsOn": [
+                "build"
+              ],
+              "metadata": {
+                "technologies": [
+                  "vite",
+                  "vite"
+                ],
+                "description": "Locally preview Vite production build",
+                "help": {
+                  "command": "npx vite preview --help",
+                  "example": {
+                    "options": {
+                      "port": 3000
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "assessment-platform/user-frontend",
+                "command": "vite preview"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve-static": {
+              "continuous": true,
+              "executor": "@nx/web:file-server",
+              "options": {
+                "buildTarget": "build",
+                "spa": true
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "typecheck": {
+              "cache": true,
+              "inputs": [
+                "default",
+                "^default",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "metadata": {
+                "description": "Runs type-checking for the project.",
+                "technologies": [
+                  "typescript",
+                  "typescript"
+                ],
+                "help": {
+                  "command": "npx tsc -p tsconfig.json --help",
+                  "example": {
+                    "options": {
+                      "noEmit": true
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "assessment-platform/user-frontend",
+                "command": "tsc --noEmit -p tsconfig.json"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx nx watch --projects ai-coding-interviewer-frontend --includeDependencies -- npx nx build-deps ai-coding-interviewer-frontend"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "ai-coding-interviewer-frontend",
+          "implicitDependencies": [],
+          "tags": []
+        }
+      },
+      "shared-config": {
+        "name": "shared-config",
+        "type": "lib",
+        "data": {
+          "root": "packages/shared-config",
+          "name": "shared-config",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "packages/shared-config/src",
+          "tags": [
+            "scope:shared",
+            "type:lib"
+          ],
+          "targets": {},
+          "implicitDependencies": []
+        }
+      },
+      "project-analysis": {
+        "name": "project-analysis",
+        "type": "app",
+        "data": {
+          "root": "apps/project-analysis",
+          "targets": {
+            "build": {
+              "cache": true,
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx vite build",
+                "cwd": "C:/Users/USER/Thozhil Final/project_c_intern/intern/frontend"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve:backend": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "cmd /c \"set PORT=5030 && node server.js\"",
+                "cwd": "C:/Users/USER/Thozhil Final/project_c_intern/intern/backend"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve:ai": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "uvicorn app:app --reload --port 5031",
+                "cwd": "C:/Users/USER/Thozhil Final/project_c_intern/intern/ai-service"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve:frontend": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx vite --port 5032",
+                "cwd": "C:/Users/USER/Thozhil Final/project_c_intern/intern/frontend"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "project-analysis",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/project-analysis",
+          "tags": [
+            "scope:module",
+            "type:app",
+            "module:project-analyser"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "shared-types": {
+        "name": "shared-types",
+        "type": "lib",
+        "data": {
+          "root": "packages/shared-types",
+          "name": "shared-types",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "packages/shared-types/src",
+          "tags": [
+            "scope:shared",
+            "type:lib"
+          ],
+          "targets": {},
+          "implicitDependencies": []
+        }
+      },
+      "admin-shell": {
+        "name": "admin-shell",
+        "type": "app",
+        "data": {
+          "root": "apps/admin-shell",
+          "targets": {
+            "build": {
+              "cache": true,
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "echo [admin-shell] Not yet implemented."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev": {
+              "cache": false,
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "echo [admin-shell] Not yet implemented. Run npm run dev inside apps/admin-shell when created."
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "admin-shell",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/admin-shell/src",
+          "tags": [
+            "scope:shell",
+            "type:app"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "interview": {
+        "name": "interview",
+        "type": "app",
+        "data": {
+          "root": "apps/interview",
+          "targets": {
+            "build": {
+              "cache": true,
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx vite build",
+                "cwd": "C:/Users/USER/Thozhil Final/project_a/frontend"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev": {
+              "cache": false,
+              "executor": "nx:run-commands",
+              "parallel": true,
+              "options": {
+                "commands": [
+                  "cmd /c \"set PORT=5010 && node src/server.js\"",
+                  "cmd /c \"npx vite --port 5011\""
+                ],
+                "cwd": "C:/Users/USER/Thozhil Final/project_a"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve:backend": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "cmd /c \"set PORT=5010 && node src/server.js\"",
+                "cwd": "C:/Users/USER/Thozhil Final/project_a/server"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve:frontend": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx vite --port 5011",
+                "cwd": "C:/Users/USER/Thozhil Final/project_a/frontend"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "interview",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/interview",
+          "tags": [
+            "scope:module",
+            "type:app",
+            "module:video-interviewer"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "shared-auth": {
+        "name": "shared-auth",
+        "type": "lib",
+        "data": {
+          "root": "packages/auth",
+          "name": "shared-auth",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "packages/auth/src",
+          "tags": [
+            "scope:shared",
+            "type:lib"
+          ],
+          "targets": {},
+          "implicitDependencies": []
+        }
+      },
+      "coding": {
+        "name": "coding",
+        "type": "app",
+        "data": {
+          "root": "apps/coding",
+          "name": "coding",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/coding",
+          "tags": [
+            "scope:module",
+            "type:app",
+            "module:coding-interviewer"
+          ],
+          "targets": {
+            "serve:backend": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "cmd /c \"set PORT=5040 && node src/server.js\"",
+                "cwd": "C:/Users/USER/Thozhil Final/project_d/assessment-platform/assessment-backend"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve:admin": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx vite --port 5041",
+                "cwd": "C:/Users/USER/Thozhil Final/project_d/assessment-platform/assessment-admin"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve:candidate": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx vite --port 5042",
+                "cwd": "C:/Users/USER/Thozhil Final/project_d/assessment-platform/assessment-frontend"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build:admin": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx vite build",
+                "cwd": "C:/Users/USER/Thozhil Final/project_d/assessment-platform/assessment-admin"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build:candidate": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx vite build",
+                "cwd": "C:/Users/USER/Thozhil Final/project_d/assessment-platform/assessment-frontend"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "resume": {
+        "name": "resume",
+        "type": "app",
+        "data": {
+          "root": "apps/resume",
+          "targets": {
+            "dev": {
+              "cache": false,
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "uvicorn app:app --reload --port 5020",
+                "cwd": "C:/Users/USER/Thozhil Final/project_b"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "uvicorn app:app --host 0.0.0.0 --port 5020",
+                "cwd": "C:/Users/USER/Thozhil Final/project_b"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "resume",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/resume",
+          "tags": [
+            "scope:module",
+            "type:app",
+            "module:resume-screener"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "ai-coding-review-platform-backend": {
+        "name": "ai-coding-review-platform-backend",
+        "type": "app",
+        "data": {
+          "root": ".",
+          "targets": {
+            "build": {
+              "cache": true,
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "nest build",
+                "runCommand": "npm run build"
+              },
+              "options": {
+                "script": "build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "format": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "prettier --write \"src/**/*.ts\"",
+                "runCommand": "npm run format"
+              },
+              "options": {
+                "script": "format"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "start": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "nest start",
+                "runCommand": "npm run start"
+              },
+              "options": {
+                "script": "start"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "start:dev": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "nest start --watch",
+                "runCommand": "npm run start:dev"
+              },
+              "options": {
+                "script": "start:dev"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "start:debug": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "nest start --debug --watch",
+                "runCommand": "npm run start:debug"
+              },
+              "options": {
+                "script": "start:debug"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "start:prod": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "node dist/src/main",
+                "runCommand": "npm run start:prod"
+              },
+              "options": {
+                "script": "start:prod"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "prisma:generate": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "prisma generate",
+                "runCommand": "npm run prisma:generate"
+              },
+              "options": {
+                "script": "prisma:generate"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "prisma:migrate": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "prisma migrate dev",
+                "runCommand": "npm run prisma:migrate"
+              },
+              "options": {
+                "script": "prisma:migrate"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "prisma:seed": {
+              "executor": "nx:run-script",
+              "metadata": {
+                "scriptContent": "ts-node prisma/seed.ts",
+                "runCommand": "npm run prisma:seed"
+              },
+              "options": {
+                "script": "prisma:seed"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "ai-coding-review-platform-backend",
+          "tags": [
+            "npm:private"
+          ],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "build",
+                "format",
+                "start",
+                "start:dev",
+                "start:debug",
+                "start:prod",
+                "prisma:generate",
+                "prisma:migrate",
+                "prisma:seed"
+              ]
+            },
+            "description": "Enterprise-Grade AI Coding Review Platform Backend Foundation",
+            "js": {
+              "packageName": "ai-coding-review-platform-backend",
+              "packageVersion": "1.0.0",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "assessment-frontend": [],
+      "assessment-admin": [],
+      "ai-coding-interviewer-frontend": [],
+      "shared-config": [],
+      "project-analysis": [],
+      "shared-types": [],
+      "admin-shell": [],
+      "interview": [],
+      "shared-auth": [],
+      "coding": [],
+      "resume": [],
+      "ai-coding-review-platform-backend": []
+    }
+  }
+}

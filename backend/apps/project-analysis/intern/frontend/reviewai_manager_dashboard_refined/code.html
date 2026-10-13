@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ReviewAI - Manager Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-fixed-dim": "#c8c6c8",
+                      "border-subtle": "#F3F4F6",
+                      "on-tertiary-fixed-variant": "#004a7a",
+                      "on-background": "#191c1e",
+                      "inverse-primary": "#adc6ff",
+                      "surface-container": "#eceef0",
+                      "tertiary-fixed": "#d0e4ff",
+                      "primary-fixed-dim": "#adc6ff",
+                      "primary-fixed": "#d8e2ff",
+                      "surface-variant": "#e0e3e5",
+                      "background": "#f7f9fb",
+                      "surface-dim": "#d8dadc",
+                      "on-error": "#ffffff",
+                      "secondary-fixed": "#e4e2e4",
+                      "on-primary-fixed": "#001a41",
+                      "primary": "#0058bc",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed-variant": "#474649",
+                      "surface-container-low": "#f2f4f6",
+                      "on-surface": "#191c1e",
+                      "surface-muted": "#F9FAFB",
+                      "tertiary-container": "#0079c3",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-fixed": "#1b1b1d",
+                      "on-primary-fixed-variant": "#004493",
+                      "inverse-on-surface": "#eff1f3",
+                      "hero-gradient-start": "#007AFF",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#e6e8ea",
+                      "secondary-container": "#e2dfe1",
+                      "on-tertiary": "#ffffff",
+                      "outline": "#717786",
+                      "surface-container-highest": "#e0e3e5",
+                      "inverse-surface": "#2d3133",
+                      "tertiary-fixed-dim": "#9bcbff",
+                      "surface-bright": "#f7f9fb",
+                      "surface-tint": "#005bc1",
+                      "on-surface-variant": "#414755",
+                      "on-primary-container": "#fefcff",
+                      "on-secondary-container": "#636264",
+                      "error": "#ba1a1a",
+                      "on-tertiary-container": "#fdfcff",
+                      "surface": "#f7f9fb",
+                      "outline-variant": "#c1c6d7",
+                      "text-blue-tint": "#EFF6FF",
+                      "tertiary": "#005f9c",
+                      "on-primary": "#ffffff",
+                      "primary-container": "#0070eb",
+                      "hero-gradient-end": "#4FACFE",
+                      "secondary": "#5f5e60",
+                      "on-tertiary-fixed": "#001d34",
+                      "on-secondary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "4px",
+                      "section-padding-y": "96px",
+                      "card-padding": "40px",
+                      "container-max": "1280px",
+                      "gutter": "32px"
+              },
+              "fontFamily": {
+                      "title-lg": [
+                              "Inter"
+                      ],
+                      "label-bold": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "display-lg-mobile": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "title-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-bold": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "36px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "40px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "800"
+                              }
+                      ],
+                      "display-lg": [
+                              "60px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "800"
+                              }
+                      ],
+                      "body-lg": [
+                              "20px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .hero-wave {
+            background: linear-gradient(135deg, #007AFF 0%, #4FACFE 100%);
+            clip-path: ellipse(150% 100% at 50% 0%);
+        }
+        
+        /* Smooth transitions for interactive elements */
+        .interactive-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .interactive-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+      </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col md:flex-row overflow-x-hidden">
+<!-- TopNavBar (Rendered as Top Bar for Desktop/Mobile integration) -->
+<header class="bg-surface/80 dark:bg-on-background/80 backdrop-blur-md font-body-md text-body-md docked full-width top-0 sticky z-50 border-b border-border-subtle/20 shadow-sm md:hidden flex justify-between items-center px-gutter py-4 w-full">
+<div class="font-title-lg text-title-lg font-black text-primary dark:text-primary-fixed">ReviewAI</div>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-primary dark:text-inverse-primary font-bold border-b-2 border-primary pb-1 hover:bg-surface-container-low dark:hover:bg-inverse-surface rounded-lg transition-all duration-300 px-3 py-2" href="#">Dashboard</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low dark:hover:bg-inverse-surface rounded-lg transition-all duration-300 px-3 py-2" href="#">Code Reviews</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low dark:hover:bg-inverse-surface rounded-lg transition-all duration-300 px-3 py-2" href="#">Learning Path</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low dark:hover:bg-inverse-surface rounded-lg transition-all duration-300 px-3 py-2" href="#">Community</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low dark:hover:bg-inverse-surface rounded-lg transition-all duration-300 px-3 py-2" href="#">Pricing</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="hidden md:block text-on-surface font-label-bold">Log In</button>
+<button class="bg-primary text-on-primary font-label-bold px-6 py-2 rounded-full hover:scale-105 shadow-lg transition-all">Get Started</button>
+</div>
+</header>
+<!-- Side Navigation (Desktop) -->
+<aside class="hidden md:flex flex-col w-64 bg-surface-container-lowest border-r border-border-subtle h-screen sticky top-0 shrink-0">
+<div class="p-6">
+<div class="font-title-lg text-title-lg font-black text-primary mb-8">ReviewAI</div>
+<nav class="space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-label-bold" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors font-body-md" href="#">
+<span class="material-symbols-outlined">code_blocks</span>
+                    Tasks
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors font-body-md" href="#">
+<span class="material-symbols-outlined">group</span>
+                    Interns
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors font-body-md" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                    Reports
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors font-body-md mt-8" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+</nav>
+</div>
+<div class="mt-auto p-6 border-t border-border-subtle">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold">JD</div>
+<div>
+<div class="font-label-bold text-on-surface">Jane Doe</div>
+<div class="text-sm text-on-surface-variant">Engineering Manager</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 p-6 md:p-gutter max-w-container-max mx-auto w-full relative">
+<!-- Decorative blobs -->
+<div class="absolute top-0 right-0 w-96 h-96 bg-tertiary-fixed opacity-30 rounded-full blur-3xl -z-10 transform translate-x-1/3 -translate-y-1/3"></div>
+<div class="absolute bottom-0 left-0 w-80 h-80 bg-primary-fixed opacity-30 rounded-full blur-3xl -z-10 transform -translate-x-1/3 translate-y-1/3"></div>
+<header class="mb-8">
+<h1 class="font-headline-md text-headline-md text-on-surface mb-2">Manager Dashboard</h1>
+<p class="text-on-surface-variant">Oversee intern progress and manage assessment tasks.</p>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Left Column: Create Task -->
+<section class="lg:col-span-1 space-y-6">
+<div class="bg-surface-container-lowest rounded-xl p-card-padding shadow-sm border border-border-subtle interactive-card relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-hero-gradient-start to-hero-gradient-end"></div>
+<h2 class="font-title-lg text-title-lg text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">add_task</span>
+                        Create New Task
+                    </h2>
+<form class="space-y-4">
+<div>
+<label class="block font-label-bold text-on-surface-variant mb-1" for="projectId">Project ID / Module</label>
+<input class="w-full bg-surface-muted border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-shadow text-on-surface" id="projectId" placeholder="e.g., REA-Frontend-01" type="text"/>
+</div>
+<div>
+<label class="block font-label-bold text-on-surface-variant mb-1" for="taskDesc">Task Description</label>
+<textarea class="w-full bg-surface-muted border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-shadow text-on-surface resize-none" id="taskDesc" placeholder="Describe the code assessment requirements..." rows="4"></textarea>
+</div>
+<div>
+<label class="block font-label-bold text-on-surface-variant mb-1" for="assignee">Assign To</label>
+<select class="w-full bg-surface-muted border border-outline-variant rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-shadow text-on-surface" id="assignee">
+<option>All Active Interns</option>
+<option>Cohort A</option>
+<option>Cohort B</option>
+</select>
+</div>
+<button class="w-full bg-primary text-on-primary font-label-bold py-3 rounded-full hover:scale-[1.02] shadow-lg transition-all flex items-center justify-center gap-2 mt-4" type="button">
+<span class="material-symbols-outlined">send</span>
+                            Assign Task
+                        </button>
+</form>
+</div>
+</section>
+<!-- Right Column: Recent Submissions -->
+<section class="lg:col-span-2">
+<div class="bg-surface-container-lowest rounded-xl p-6 md:p-8 shadow-sm border border-border-subtle">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-title-lg text-title-lg text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">history</span>
+                            Recent Submissions
+                        </h2>
+<button class="text-primary font-label-bold hover:underline flex items-center gap-1">
+                            View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="space-y-4">
+<!-- Submission Item 1 -->
+<div class="p-4 rounded-lg border border-border-subtle bg-surface hover:bg-surface-container-low transition-colors group">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center font-bold">AS</div>
+<div>
+<h3 class="font-label-bold text-on-surface text-lg">Alex Smith</h3>
+<p class="text-sm text-on-surface-variant">React Component Refactor</p>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+<div class="flex items-center gap-2">
+<div class="px-3 py-1 rounded-full bg-[#E6F4EA] text-[#137333] font-label-bold text-xs flex items-center gap-1 border border-[#CEEAD6]">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                            Low Risk
+                                        </div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs text-on-surface-variant mb-1">AI Score</span>
+<div class="flex items-baseline gap-1">
+<span class="font-title-lg text-primary font-black">92</span>
+<span class="text-sm text-outline">/100</span>
+</div>
+</div>
+<button class="px-4 py-2 bg-white border border-outline-variant text-on-surface font-label-bold rounded-lg hover:bg-surface-container-lowest hover:border-primary transition-colors flex items-center gap-2 shadow-sm">
+                                        Review
+                                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_right_alt</span>
+</button>
+</div>
+</div>
+<div class="mt-3 text-sm text-on-surface-variant border-t border-border-subtle pt-3">
+<span class="font-semibold text-on-surface">AI Summary:</span> Excellent code structure. Minor improvements suggested for error boundary handling.
+                            </div>
+</div>
+<!-- Submission Item 2 -->
+<div class="p-4 rounded-lg border border-border-subtle bg-surface hover:bg-surface-container-low transition-colors group">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-bold">MJ</div>
+<div>
+<h3 class="font-label-bold text-on-surface text-lg">Maya Johnson</h3>
+<p class="text-sm text-on-surface-variant">API Endpoint Optimization</p>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+<div class="flex items-center gap-2">
+<div class="px-3 py-1 rounded-full bg-[#FEF7E0] text-[#B06000] font-label-bold text-xs flex items-center gap-1 border border-[#FEEFC3]">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                                            Medium Risk
+                                        </div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs text-on-surface-variant mb-1">AI Score</span>
+<div class="flex items-baseline gap-1">
+<span class="font-title-lg text-[#B06000] font-black">74</span>
+<span class="text-sm text-outline">/100</span>
+</div>
+</div>
+<button class="px-4 py-2 bg-white border border-outline-variant text-on-surface font-label-bold rounded-lg hover:bg-surface-container-lowest hover:border-primary transition-colors flex items-center gap-2 shadow-sm">
+                                        Review
+                                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_right_alt</span>
+</button>
+</div>
+</div>
+<div class="mt-3 text-sm text-on-surface-variant border-t border-border-subtle pt-3">
+<span class="font-semibold text-on-surface">AI Summary:</span> Logic is sound, but significant performance bottleneck detected in nested loops. Requires manual review.
+                            </div>
+</div>
+<!-- Submission Item 3 -->
+<div class="p-4 rounded-lg border border-border-subtle bg-surface hover:bg-surface-container-low transition-colors group">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-error-container text-on-error-container flex items-center justify-center font-bold">RL</div>
+<div>
+<h3 class="font-label-bold text-on-surface text-lg">Ryan Lee</h3>
+<p class="text-sm text-on-surface-variant">Authentication Middleware</p>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+<div class="flex items-center gap-2">
+<div class="px-3 py-1 rounded-full bg-[#FCE8E6] text-[#C5221F] font-label-bold text-xs flex items-center gap-1 border border-[#FAD2CF]">
+<span class="material-symbols-outlined text-[14px]">error</span>
+                                            High Risk
+                                        </div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-xs text-on-surface-variant mb-1">AI Score</span>
+<div class="flex items-baseline gap-1">
+<span class="font-title-lg text-error font-black">45</span>
+<span class="text-sm text-outline">/100</span>
+</div>
+</div>
+<button class="px-4 py-2 bg-error text-on-error font-label-bold rounded-lg hover:bg-[#A50E0E] transition-colors flex items-center gap-2 shadow-sm">
+                                        Review Urgent
+                                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_right_alt</span>
+</button>
+</div>
+</div>
+<div class="mt-3 text-sm text-on-surface-variant border-t border-border-subtle pt-3">
+<span class="font-semibold text-error">AI Alert:</span> Potential security vulnerability identified. Hardcoded credentials detected in testing environment scope.
+                            </div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

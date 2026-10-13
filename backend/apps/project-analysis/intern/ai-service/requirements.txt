@@ -1,0 +1,29 @@
+# Module 3 – AI Reviewer Engine
+# Dependencies pinned to current stable versions for production reliability.
+# Run: pip install -r requirements.txt
+#
+# To upgrade a dependency:
+#   1. Change the version pin here.
+#   2. Test the full review pipeline (uvicorn + test_api.py).
+#   3. Run: pytest tests/
+#   4. Commit the updated requirements.txt.
+
+# ── Core API framework ────────────────────────────────────────────────────────
+fastapi==0.135.1
+uvicorn[standard]==0.41.0
+
+# ── AI provider ───────────────────────────────────────────────────────────────
+google-genai==1.66.0
+
+# ── Data validation ───────────────────────────────────────────────────────────
+pydantic==2.12.5
+pydantic-settings==2.13.1
+python-dotenv==1.2.2
+
+# ── Rate limiting ─────────────────────────────────────────────────────────────
+slowapi==0.1.10
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+# httpx is required by FastAPI's TestClient for async route testing.
+pytest==9.1.1
+httpx==0.28.1

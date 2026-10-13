@@ -1,0 +1,23 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "resume",
+  "projectType": "application",
+  "sourceRoot": "apps/resume",
+  "tags": ["scope:module", "type:app", "module:resume-screener"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uvicorn app:app --reload --port 5020",
+        "cwd": "apps/resume/backend"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uvicorn app:app --host 0.0.0.0 --port 5020",
+        "cwd": "apps/resume/backend"
+      }
+    }
+  }
+}

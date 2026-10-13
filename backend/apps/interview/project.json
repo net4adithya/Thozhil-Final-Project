@@ -1,0 +1,41 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "interview",
+  "projectType": "application",
+  "sourceRoot": "apps/interview",
+  "tags": ["scope:module", "type:app", "module:video-interviewer"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "parallel": true,
+      "options": {
+        "commands": [
+          "cmd /c \"set PORT=5010 && node src/server.js\"",
+          "cmd /c \"npx vite --port 5011\""
+        ],
+        "cwd": "C:/Users/USER/Thozhil Final/project_a"
+      }
+    },
+    "serve:backend": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cmd /c \"set PORT=5010 && node src/server.js\"",
+        "cwd": "C:/Users/USER/Thozhil Final/project_a/server"
+      }
+    },
+    "serve:frontend": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx vite --port 5011",
+        "cwd": "C:/Users/USER/Thozhil Final/project_a/frontend"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx vite build",
+        "cwd": "C:/Users/USER/Thozhil Final/project_a/frontend"
+      }
+    }
+  }
+}

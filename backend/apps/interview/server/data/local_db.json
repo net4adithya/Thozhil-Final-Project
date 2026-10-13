@@ -1,0 +1,1482 @@
+{
+  "jobs": [
+    {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "title": "Senior Distributed Systems Engineer",
+      "description": "Design, build, and optimize high-throughput distributed architectures, consensus pipelines, and microservices.",
+      "department": "Infrastructure",
+      "experience_level": "Senior",
+      "required_skills": [
+        "Distributed Systems",
+        "Go",
+        "Kafka",
+        "Consensus Algorithms"
+      ],
+      "preferred_skills": [
+        "Raft",
+        "Kubernetes",
+        "Redis",
+        "gRPC"
+      ],
+      "location": "San Francisco, CA / Remote",
+      "employment_type": "Full-time",
+      "status": "Active",
+      "created_at": "2026-09-07T03:48:24.285Z",
+      "updated_at": "2026-09-15T03:48:24.286Z"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000102",
+      "title": "Principal Cloud Systems Engineer",
+      "description": "Lead multi-region cloud topology, resiliency patterns, latency optimization, and automated failover.",
+      "department": "Infrastructure",
+      "experience_level": "Lead",
+      "required_skills": [
+        "Cloud Architecture",
+        "System Design",
+        "Caching",
+        "PostgreSQL"
+      ],
+      "preferred_skills": [
+        "PgBouncer",
+        "Terraform",
+        "AWS"
+      ],
+      "location": "Remote",
+      "employment_type": "Full-time",
+      "status": "Active",
+      "created_at": "2026-09-09T03:48:24.286Z",
+      "updated_at": "2026-09-16T03:48:24.286Z"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000103",
+      "title": "Senior Frontend Architect",
+      "description": "Architect modern Web application interfaces, high-performance UI state engines, and real-time streaming components.",
+      "department": "Engineering",
+      "experience_level": "Senior",
+      "required_skills": [
+        "React",
+        "TypeScript",
+        "WebSockets",
+        "Performance Optimization"
+      ],
+      "preferred_skills": [
+        "WebRTC",
+        "TailwindCSS",
+        "Vite"
+      ],
+      "location": "New York, NY / Hybrid",
+      "employment_type": "Full-time",
+      "status": "Active",
+      "created_at": "2026-09-03T03:48:24.286Z",
+      "updated_at": "2026-09-14T03:48:24.286Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "name": "Alexander Wright",
+      "email": "alex.wright@infra.io",
+      "phone": "+1 (555) 234-5678",
+      "role": "la",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "status": "Completed",
+      "overall_score": 88,
+      "completion_date": "2026-09-15",
+      "avatar_initials": "AW",
+      "skills": [
+        {
+          "name": "Distributed Systems",
+          "score": 92
+        },
+        {
+          "name": "System Architecture",
+          "score": 88
+        },
+        {
+          "name": "Problem Solving",
+          "score": 86
+        },
+        {
+          "name": "Communication",
+          "score": 85
+        }
+      ],
+      "education": [
+        {
+          "degree": "B.S. in Computer Science",
+          "institution": "University of California, Berkeley",
+          "year": "2018"
+        }
+      ],
+      "experience": [
+        {
+          "title": "Senior Infrastructure Engineer",
+          "company": "CloudScale Networks",
+          "duration": "2021 - Present"
+        },
+        {
+          "title": "Systems Engineer",
+          "company": "CoreData Labs",
+          "duration": "2018 - 2021"
+        }
+      ],
+      "projects": [
+        {
+          "name": "Distributed Log Consensus Engine",
+          "description": "Built an open-source Raft implementation handling 100k writes/sec"
+        }
+      ],
+      "recommendation": "STRONG HIRE",
+      "summary": "Exceptional candidate with deep mastery of distributed consensus, Raft protocol invariants, and network partitioning resilience.",
+      "strengths": [
+        "Exhaustive understanding of leader election and log compaction algorithms.",
+        "Pragmatic approach to payment idempotency with Redis keys and outbox pattern.",
+        "Crisp, articulate technical verbal explanations."
+      ],
+      "weaknesses": [
+        "Could expand on zero-downtime schema evolution strategies under high load."
+      ],
+      "timeline": [
+        {
+          "questionId": "10000000-0000-0000-0000-000000000001",
+          "score": 92,
+          "timeTaken": 75,
+          "comments": "Clear, accurate breakdown of Raft election timers and heartbeats."
+        },
+        {
+          "questionId": "10000000-0000-0000-0000-000000000002",
+          "score": 84,
+          "timeTaken": 90,
+          "comments": "Solid transactional outbox explanation with deduplication guarantees."
+        }
+      ],
+      "profile_image_url": null,
+      "created_at": "2026-09-13T03:48:24.286Z",
+      "updated_at": "2026-09-20T06:48:12.722Z"
+    },
+    {
+      "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "name": "Sarah Jenkins",
+      "email": "sarah.j@frontend.dev",
+      "phone": "+1 (555) 876-5432",
+      "role": "Senior Frontend Architect",
+      "interview_id": "33333333-3333-3333-3333-333333333333",
+      "status": "Completed",
+      "overall_score": 92,
+      "completion_date": "2026-09-16",
+      "avatar_initials": "SJ",
+      "skills": [
+        {
+          "name": "React Internals",
+          "score": 95
+        },
+        {
+          "name": "State Architecture",
+          "score": 92
+        },
+        {
+          "name": "Web Performance",
+          "score": 90
+        },
+        {
+          "name": "Communication",
+          "score": 91
+        }
+      ],
+      "education": [
+        {
+          "degree": "M.S. in Software Systems",
+          "institution": "Georgia Tech",
+          "year": "2019"
+        }
+      ],
+      "experience": [
+        {
+          "title": "Lead Frontend Engineer",
+          "company": "Apex Interactive",
+          "duration": "2020 - Present"
+        }
+      ],
+      "projects": [
+        {
+          "name": "Fluid Streaming UI Canvas",
+          "description": "Real-time multi-track audio-visualizer built on WebGL and AudioContext"
+        }
+      ],
+      "recommendation": "STRONG HIRE",
+      "summary": "Outstanding architectural mastery across modern component lifecycles, memory leak isolation, and WebRTC streaming.",
+      "strengths": [
+        "Mastery over browser rendering pipelines, reflow triggers, and micro-optimizations.",
+        "Demonstrated clean, well-tested code implementation in the IDE sandbox."
+      ],
+      "weaknesses": [
+        "Minimal reservations; excellent candidate."
+      ],
+      "timeline": [],
+      "profile_image_url": null,
+      "created_at": "2026-09-12T03:48:24.286Z",
+      "updated_at": "2026-09-16T03:48:24.286Z"
+    },
+    {
+      "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "name": "Marcus Vance",
+      "email": "m.vance@systems.io",
+      "phone": "+1 (555) 456-7890",
+      "role": "Principal Cloud Systems Engineer",
+      "interview_id": "22222222-2222-2222-2222-222222222222",
+      "status": "Invited",
+      "overall_score": null,
+      "completion_date": null,
+      "avatar_initials": "MV",
+      "skills": [
+        {
+          "name": "System Design",
+          "score": 85
+        },
+        {
+          "name": "Cloud Topology",
+          "score": 82
+        }
+      ],
+      "education": [],
+      "experience": [],
+      "projects": [],
+      "recommendation": null,
+      "summary": "Scheduled for real-time live AI conversational interview.",
+      "strengths": [],
+      "weaknesses": [],
+      "timeline": [],
+      "profile_image_url": null,
+      "created_at": "2026-09-15T03:48:24.286Z",
+      "updated_at": "2026-09-15T03:48:24.286Z"
+    },
+    {
+      "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+      "name": "Priya Sharma",
+      "email": "priya.sharma@cloudtech.com",
+      "phone": "+1 (555) 345-6789",
+      "role": "Senior Distributed Systems Engineer",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "status": "Invited",
+      "overall_score": null,
+      "completion_date": null,
+      "avatar_initials": "PS",
+      "skills": [
+        {
+          "name": "Microservices",
+          "score": 80
+        },
+        {
+          "name": "Kafka",
+          "score": 78
+        }
+      ],
+      "education": [],
+      "experience": [],
+      "projects": [],
+      "recommendation": null,
+      "summary": "Candidate invited to async technical assessment.",
+      "strengths": [],
+      "weaknesses": [],
+      "timeline": [],
+      "profile_image_url": null,
+      "created_at": "2026-09-16T03:48:24.286Z",
+      "updated_at": "2026-09-16T03:48:24.286Z"
+    },
+    {
+      "id": "f644e696-a9d0-4eb6-89e4-43e671cdac97",
+      "name": "llll",
+      "email": "lll@gamil.com",
+      "phone": null,
+      "role": "ll",
+      "interview_id": "5ecf36e3-f1a4-42c5-86df-7b670f033123",
+      "status": "Completed",
+      "skills": [],
+      "education": [],
+      "experience": [],
+      "projects": [],
+      "created_at": "2026-09-20T06:46:41.694Z",
+      "updated_at": "2026-09-20T06:47:22.387Z",
+      "completion_date": "2026-09-20"
+    },
+    {
+      "id": "644284c5-5d29-4849-aaf5-d2b9f894151f",
+      "name": "la",
+      "email": "aaaaa@gmail.com",
+      "phone": null,
+      "role": "la",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "status": "Invited",
+      "skills": [],
+      "education": [],
+      "experience": [],
+      "projects": [],
+      "created_at": "2026-09-20T06:48:32.228Z",
+      "updated_at": "2026-09-20T06:48:32.228Z"
+    },
+    {
+      "id": "9362cfa2-2120-4761-9e82-2214e6a83012",
+      "name": "Screening Candidate",
+      "email": "candidate.1790083157347@example.com",
+      "phone": null,
+      "role": "frontend",
+      "interview_id": "98fcae39-7f05-4abb-91b6-5acb5ebad79c",
+      "status": "Completed",
+      "skills": [],
+      "education": [],
+      "experience": [],
+      "projects": [],
+      "created_at": "2026-09-22T13:19:17.359Z",
+      "updated_at": "2026-09-22T13:28:13.190Z",
+      "completion_date": "2026-09-22"
+    },
+    {
+      "id": "c5544580-bbe7-4e55-904f-c43ae228c875",
+      "name": "ak",
+      "email": "ak@gmail.com",
+      "phone": null,
+      "role": "ijsi",
+      "interview_id": "120dba1b-04bb-48c1-8d50-6813a322f512",
+      "status": "Invited",
+      "skills": [],
+      "education": [],
+      "experience": [],
+      "projects": [],
+      "created_at": "2026-10-13T05:59:10.509Z",
+      "updated_at": "2026-10-13T05:59:10.509Z"
+    }
+  ],
+  "interviews": [
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "title": "Senior Distributed Systems Engineer (Async)",
+      "job_role": "Senior Distributed Systems Engineer",
+      "job_id": "00000000-0000-0000-0000-000000000101",
+      "company": "InterviewX Technologies",
+      "candidate_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "type": "async",
+      "status": "Active",
+      "duration": 45,
+      "settings": {
+        "assessmentType": "Hybrid (Coding + Audio)",
+        "proctoringEnabled": true,
+        "fullScreenEnforced": true,
+        "tabSwitchLimit": 3
+      },
+      "started_at": "2026-09-15T03:48:24.286Z",
+      "completed_at": "2026-09-15T04:33:24.286Z",
+      "created_at": "2026-09-11T03:48:24.286Z",
+      "updated_at": "2026-09-15T03:48:24.286Z"
+    },
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "title": "Principal Cloud Systems Live Interview",
+      "job_role": "Principal Cloud Systems Engineer",
+      "job_id": "00000000-0000-0000-0000-000000000102",
+      "company": "InterviewX Technologies",
+      "candidate_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "type": "live",
+      "status": "Active",
+      "duration": 30,
+      "settings": {
+        "assessmentType": "Live AI Conversational",
+        "interviewerVoice": "kavya",
+        "aiPersona": "Ava",
+        "adaptiveFollowups": true
+      },
+      "started_at": null,
+      "completed_at": null,
+      "created_at": "2026-09-14T03:48:24.286Z",
+      "updated_at": "2026-09-16T03:48:24.286Z"
+    },
+    {
+      "id": "33333333-3333-3333-3333-333333333333",
+      "title": "Senior Frontend Architect Assessment",
+      "job_role": "Senior Frontend Architect",
+      "job_id": "00000000-0000-0000-0000-000000000103",
+      "company": "InterviewX Technologies",
+      "candidate_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "type": "async",
+      "status": "Active",
+      "duration": 40,
+      "settings": {
+        "assessmentType": "Coding & Architecture",
+        "proctoringEnabled": true
+      },
+      "started_at": "2026-09-16T03:48:24.286Z",
+      "completed_at": "2026-09-16T04:28:24.286Z",
+      "created_at": "2026-09-12T03:48:24.286Z",
+      "updated_at": "2026-09-16T03:48:24.286Z"
+    },
+    {
+      "id": "e01a44a1-62fc-4981-9cc1-a5c19ca0e127",
+      "title": "Full Stack Engineer (Tamil)",
+      "job_id": null,
+      "candidate_id": null,
+      "type": "live",
+      "status": "Active",
+      "duration": 30,
+      "company": "",
+      "job_role": "Full Stack Engineer (Tamil)",
+      "settings": {
+        "language": {
+          "code": "ta-IN",
+          "name": "Tamil + English",
+          "mode": "codemix"
+        },
+        "proctorTabSwitch": true,
+        "proctorBlockCopyPaste": true,
+        "proctorScreenShare": true,
+        "voiceGuide": true,
+        "department": "Engineering",
+        "templateId": null,
+        "assessmentType": "Hybrid (Video + Coding Sandbox)"
+      },
+      "created_at": "2026-09-17T07:46:58.041Z",
+      "updated_at": "2026-09-17T07:46:58.041Z"
+    },
+    {
+      "id": "5ecf36e3-f1a4-42c5-86df-7b670f033123",
+      "title": "ll",
+      "job_id": null,
+      "candidate_id": "f644e696-a9d0-4eb6-89e4-43e671cdac97",
+      "type": "live",
+      "status": "Completed",
+      "duration": 30,
+      "company": "",
+      "job_role": "ll",
+      "settings": {
+        "language": {
+          "code": "en-IN",
+          "name": "English",
+          "mode": "native"
+        },
+        "proctorTabSwitch": true,
+        "proctorBlockCopyPaste": true,
+        "proctorScreenShare": true,
+        "voiceGuide": true,
+        "department": "Engineering",
+        "templateId": null,
+        "assessmentType": "Hybrid (Video + Coding Sandbox)",
+        "proctoringEvents": [
+          {
+            "eventType": "FULLSCREEN_ENTERED",
+            "timestamp": "2026-09-20T06:47:13.160Z",
+            "sessionId": "session-5ecf36e3-f1a4-42c5-86df-7b670f033123",
+            "candidateId": "f644e696-a9d0-4eb6-89e4-43e671cdac97",
+            "details": {}
+          }
+        ],
+        "proctoringSummary": {
+          "tabHiddenCount": 0,
+          "fullscreenExits": 0,
+          "screenShareStopped": 0,
+          "copyAttempts": 0,
+          "totalObservations": 1,
+          "integrityRiskScore": 0,
+          "evidenceSummaryText": "No suspicious browser actions observed during the assessment.",
+          "lastObservedAt": "2026-09-20T06:47:17.499Z"
+        }
+      },
+      "created_at": "2026-09-20T06:46:25.492Z",
+      "updated_at": "2026-09-20T06:47:22.454Z"
+    },
+    {
+      "id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "title": "la",
+      "job_id": null,
+      "candidate_id": "644284c5-5d29-4849-aaf5-d2b9f894151f",
+      "type": "async",
+      "status": "Active",
+      "duration": 30,
+      "company": "",
+      "job_role": "la",
+      "settings": {
+        "language": {
+          "code": "ta-IN",
+          "name": "Tamil + English",
+          "mode": "codemix"
+        },
+        "proctorTabSwitch": true,
+        "proctorBlockCopyPaste": true,
+        "proctorScreenShare": true,
+        "voiceGuide": true,
+        "department": "Engineering",
+        "templateId": null,
+        "assessmentType": "Hybrid (Video + Coding Sandbox)"
+      },
+      "created_at": "2026-09-20T06:48:12.664Z",
+      "updated_at": "2026-09-20T06:48:32.235Z"
+    },
+    {
+      "id": "98fcae39-7f05-4abb-91b6-5acb5ebad79c",
+      "title": "frontend",
+      "job_id": null,
+      "candidate_id": "9362cfa2-2120-4761-9e82-2214e6a83012",
+      "type": "live",
+      "status": "Active",
+      "duration": 30,
+      "company": "",
+      "job_role": "frontend",
+      "settings": {
+        "language": {
+          "code": "ta-IN",
+          "name": "Tamil + English",
+          "mode": "codemix"
+        },
+        "proctorTabSwitch": true,
+        "proctorBlockCopyPaste": true,
+        "proctorScreenShare": true,
+        "voiceGuide": true,
+        "department": "Engineering",
+        "templateId": null,
+        "assessmentType": "Hybrid (Video + Coding Sandbox)",
+        "proctoringEvents": [
+          {
+            "eventType": "FULLSCREEN_ENTERED",
+            "timestamp": "2026-09-22T13:27:04.123Z",
+            "sessionId": "session-1790083624168",
+            "candidateId": "9362cfa2-2120-4761-9e82-2214e6a83012",
+            "details": {
+              "reason": "Entered fullscreen mode"
+            }
+          },
+          {
+            "eventType": "FULLSCREEN_ENTERED",
+            "timestamp": "2026-09-22T13:27:04.115Z",
+            "sessionId": "session-98fcae39-7f05-4abb-91b6-5acb5ebad79c",
+            "candidateId": "9362cfa2-2120-4761-9e82-2214e6a83012",
+            "details": {}
+          },
+          {
+            "eventType": "WINDOW_BLUR",
+            "timestamp": "2026-09-22T13:27:38.242Z",
+            "sessionId": "session-1790083658282",
+            "candidateId": "9362cfa2-2120-4761-9e82-2214e6a83012",
+            "details": {
+              "violationNumber": 1,
+              "maxViolations": 3
+            }
+          },
+          {
+            "eventType": "WINDOW_BLUR",
+            "timestamp": "2026-09-22T13:27:47.339Z",
+            "sessionId": "session-1790083667393",
+            "candidateId": "9362cfa2-2120-4761-9e82-2214e6a83012",
+            "details": {
+              "violationNumber": 3,
+              "maxViolations": 3
+            }
+          }
+        ],
+        "proctoringSummary": {
+          "tabHiddenCount": 2,
+          "fullscreenExits": 0,
+          "screenShareStopped": 0,
+          "copyAttempts": 0,
+          "totalObservations": 4,
+          "integrityRiskScore": 30,
+          "evidenceSummaryText": "Candidate switched tabs/windows 2 times.",
+          "lastObservedAt": "2026-09-22T13:27:47.394Z"
+        }
+      },
+      "created_at": "2026-09-22T13:25:27.494Z",
+      "updated_at": "2026-09-22T13:27:47.394Z"
+    },
+    {
+      "id": "c0bcf889-09fd-4e89-964b-048f93516dcf",
+      "title": "Senior Frontend Engineer (React) Assessment",
+      "job_id": null,
+      "candidate_id": null,
+      "type": "async",
+      "status": "Active",
+      "duration": 45,
+      "company": "",
+      "job_role": "Senior Frontend Engineer (React) Assessment",
+      "settings": {
+        "proctorTabSwitch": true,
+        "proctorBlockCopyPaste": true,
+        "proctorScreenShare": true,
+        "voiceGuide": true,
+        "department": "Engineering",
+        "templateId": "tpl-react-senior",
+        "assessmentType": "Hybrid (Video + Coding Sandbox)",
+        "language": {
+          "code": "en-IN",
+          "name": "English",
+          "mode": "native"
+        }
+      },
+      "created_at": "2026-09-22T13:32:42.832Z",
+      "updated_at": "2026-09-22T13:32:42.832Z"
+    },
+    {
+      "id": "120dba1b-04bb-48c1-8d50-6813a322f512",
+      "title": "ijsi",
+      "job_id": null,
+      "candidate_id": "c5544580-bbe7-4e55-904f-c43ae228c875",
+      "type": "async",
+      "status": "Active",
+      "duration": 30,
+      "company": "",
+      "job_role": "ijsi",
+      "settings": {
+        "language": {
+          "code": "en-IN",
+          "name": "English",
+          "mode": "native"
+        },
+        "proctorTabSwitch": true,
+        "proctorBlockCopyPaste": true,
+        "proctorScreenShare": true,
+        "voiceGuide": true,
+        "department": "Engineering",
+        "templateId": null,
+        "assessmentType": "Hybrid (Video + Coding Sandbox)"
+      },
+      "created_at": "2026-10-13T05:58:50.081Z",
+      "updated_at": "2026-10-13T05:59:10.513Z"
+    }
+  ],
+  "questions": [
+    {
+      "id": "10000000-0000-0000-0000-000000000001",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "text": "Explain how the Raft consensus algorithm handles leader election and log replication during network partitions.",
+      "question": "Explain how the Raft consensus algorithm handles leader election and log replication during network partitions.",
+      "category": "Distributed Systems",
+      "type": "verbal",
+      "question_type": "verbal",
+      "difficulty": "Hard",
+      "order_index": 0,
+      "time_limit": 180,
+      "description": "Focus on randomized election timeouts, majority quorums, split brain avoidance, and uncommitted log entry truncations.",
+      "criteria": "Evaluates deep understanding of distributed consensus mechanics.",
+      "created_at": "2026-09-11T03:48:24.286Z"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000002",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "text": "How do you design an idempotent payment processing pipeline with at-least-once message delivery?",
+      "question": "How do you design an idempotent payment processing pipeline with at-least-once message delivery?",
+      "category": "System Architecture",
+      "type": "verbal",
+      "question_type": "verbal",
+      "difficulty": "Hard",
+      "order_index": 1,
+      "time_limit": 180,
+      "description": "Discuss idempotency keys, database unique constraint locking, caching with TTL, and outbox transactional event patterns.",
+      "criteria": "Evaluates resilience patterns for critical financial transactions.",
+      "created_at": "2026-09-11T03:48:24.286Z"
+    },
+    {
+      "id": "10000000-0000-0000-0000-000000000003",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "text": "Implement a thread-safe LRU Cache with O(1) get and put time complexity.",
+      "question": "Implement a thread-safe LRU Cache with O(1) get and put time complexity.",
+      "category": "Coding",
+      "type": "code",
+      "question_type": "code",
+      "difficulty": "Medium",
+      "order_index": 2,
+      "time_limit": 300,
+      "description": "Write a JavaScript class or function that maintains an LRU eviction policy using a Hash Map and Doubly Linked List.",
+      "boilerplate": "function createLRUCache(capacity) {\n  const map = new Map();\n  return {\n    get: function(key) {\n      if (!map.has(key)) return -1;\n      const val = map.get(key);\n      map.delete(key);\n      map.set(key, val);\n      return val;\n    },\n    put: function(key, val) {\n      if (map.has(key)) map.delete(key);\n      map.set(key, val);\n      if (map.size > capacity) {\n        const oldest = map.keys().next().value;\n        map.delete(oldest);\n      }\n    }\n  };\n}",
+      "test_cases": [
+        {
+          "input": "{\"capacity\": 2, \"ops\": [[\"put\", 1, 1], [\"put\", 2, 2], [\"get\", 1]]}",
+          "expected": "1"
+        }
+      ],
+      "criteria": "Evaluates clean data structure design and execution.",
+      "created_at": "2026-09-11T03:48:24.286Z"
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000001",
+      "interview_id": "22222222-2222-2222-2222-222222222222",
+      "text": "How do you structure microservices with low-latency caching and handle database connection pool saturation?",
+      "question": "How do you structure microservices with low-latency caching and handle database connection pool saturation?",
+      "category": "System Design",
+      "type": "verbal",
+      "question_type": "verbal",
+      "difficulty": "Hard",
+      "order_index": 0,
+      "time_limit": 180,
+      "description": "Address read-through caching with Redis clusters, stampede prevention via distributed locks, and connection poolers like PgBouncer.",
+      "criteria": "Assesses high-scale cloud database design.",
+      "created_at": "2026-09-14T03:48:24.286Z"
+    },
+    {
+      "id": "20000000-0000-0000-0000-000000000002",
+      "interview_id": "22222222-2222-2222-2222-222222222222",
+      "text": "Explain concurrency controls and idempotency in distributed transaction systems.",
+      "question": "Explain concurrency controls and idempotency in distributed transaction systems.",
+      "category": "Backend Engineering",
+      "type": "verbal",
+      "question_type": "verbal",
+      "difficulty": "Hard",
+      "order_index": 1,
+      "time_limit": 180,
+      "description": "Contrast optimistic locking (version numbers) with pessimistic locking, and detail 2-Phase Commit vs Saga patterns.",
+      "criteria": "Assesses transactional consistency in distributed environments.",
+      "created_at": "2026-09-14T03:48:24.286Z"
+    },
+    {
+      "id": "4cc73eb0-a9a9-4380-9a72-8d65bd7923a1",
+      "interview_id": "a6cc951f-d590-4ade-9337-8416d4d792bc",
+      "text": "Explain how Raft consensus algorithm handles leader election and log replication during network partitions.",
+      "category": "Distributed Systems",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-17T03:50:22.021Z",
+      "updated_at": "2026-09-17T03:50:22.022Z"
+    },
+    {
+      "id": "48d1bf53-9106-4200-8a9f-87b2712b3845",
+      "interview_id": "a6cc951f-d590-4ade-9337-8416d4d792bc",
+      "text": "How do you design an idempotent payment processing pipeline with at-least-once message delivery?",
+      "category": "System Architecture",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 1,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-17T03:50:22.023Z",
+      "updated_at": "2026-09-17T03:50:22.023Z"
+    },
+    {
+      "id": "12456d26-7a99-4386-9ac4-98e91258e3e4",
+      "interview_id": "ac9e3c76-e253-4b77-83fa-3f6c4faaec7f",
+      "text": "How do you structure microservices with low-latency caching and handle database connection pool saturation?",
+      "category": "System Design",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-17T03:51:05.681Z",
+      "updated_at": "2026-09-17T03:51:05.681Z"
+    },
+    {
+      "id": "1f5a5933-2c19-4d2f-812a-f3b619152f43",
+      "interview_id": "ac9e3c76-e253-4b77-83fa-3f6c4faaec7f",
+      "text": "Explain concurrency controls and idempotency in distributed transaction systems.",
+      "category": "Backend Engineering",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 1,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-17T03:51:05.690Z",
+      "updated_at": "2026-09-17T03:51:05.690Z"
+    },
+    {
+      "id": "8169660d-8433-49e4-a907-e6ac377a7f1e",
+      "interview_id": "e01a44a1-62fc-4981-9cc1-a5c19ca0e127",
+      "text": "Explain the difference between useMemo and useCallback in React. In what real-world scenarios does improper memoization actually hurt performance?",
+      "category": "React Architecture",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-17T07:46:58.053Z",
+      "updated_at": "2026-09-17T07:46:58.053Z"
+    },
+    {
+      "id": "4771aed1-3cdf-44b5-a0b0-346514cd73f8",
+      "interview_id": "e01a44a1-62fc-4981-9cc1-a5c19ca0e127",
+      "text": "How would you architect a reusable, fully accessible design system component library supporting dark mode and keyboard navigation?",
+      "category": "UI & Accessibility",
+      "duration": 240,
+      "time_limit": 240,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 1,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-17T07:46:58.053Z",
+      "updated_at": "2026-09-17T07:46:58.053Z"
+    },
+    {
+      "id": "e8611d78-ca2b-4ef7-9ad4-60d2c3c93a7d",
+      "interview_id": "e01a44a1-62fc-4981-9cc1-a5c19ca0e127",
+      "text": "Describe how the browser Critical Rendering Path works and what strategies you use to optimize Largest Contentful Paint (LCP).",
+      "category": "Web Performance",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 2,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-17T07:46:58.053Z",
+      "updated_at": "2026-09-17T07:46:58.053Z"
+    },
+    {
+      "id": "63aa0772-7260-45d7-8af5-1f14669f8998",
+      "interview_id": "e01a44a1-62fc-4981-9cc1-a5c19ca0e127",
+      "text": "Compare Zustand with Redux Toolkit and the React Context API for enterprise state management. When would you choose one over the others?",
+      "category": "State Management",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 3,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-17T07:46:58.053Z",
+      "updated_at": "2026-09-17T07:46:58.053Z"
+    },
+    {
+      "id": "727e0e09-4f58-44b6-aee4-e59b3299ae05",
+      "interview_id": "c1c70175-e37b-4a3c-ab3d-cbe346d65c34",
+      "text": "Explain how Raft consensus algorithm handles leader election and log replication during network partitions.",
+      "category": "Distributed Systems",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:10:09.775Z",
+      "updated_at": "2026-09-20T06:10:09.775Z"
+    },
+    {
+      "id": "4e1f9c1d-6343-49ca-ad93-5ea52a0c267b",
+      "interview_id": "c1c70175-e37b-4a3c-ab3d-cbe346d65c34",
+      "text": "How do you design an idempotent payment processing pipeline with at-least-once message delivery?",
+      "category": "System Architecture",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 1,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:10:09.777Z",
+      "updated_at": "2026-09-20T06:10:09.777Z"
+    },
+    {
+      "id": "8f4ddd1d-210a-45d5-acbb-ef34c6f626bc",
+      "interview_id": "02108f51-fe5b-41b0-b399-acd5cc835db8",
+      "text": "How do you structure microservices with low-latency caching and handle database connection pool saturation?",
+      "category": "System Design",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:10:17.088Z",
+      "updated_at": "2026-09-20T06:10:17.088Z"
+    },
+    {
+      "id": "bf9f0b99-9ca6-4bee-beff-0a1dc0f1ded6",
+      "interview_id": "02108f51-fe5b-41b0-b399-acd5cc835db8",
+      "text": "Explain concurrency controls and idempotency in distributed transaction systems.",
+      "category": "Backend Engineering",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 1,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:10:17.089Z",
+      "updated_at": "2026-09-20T06:10:17.089Z"
+    },
+    {
+      "id": "82119221-e56e-4144-95aa-c464082c592f",
+      "interview_id": "5ecf36e3-f1a4-42c5-86df-7b670f033123",
+      "text": "Explain the difference between useMemo and useCallback in React. In what real-world scenarios does improper memoization actually hurt performance?",
+      "category": "React Architecture",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:46:25.495Z",
+      "updated_at": "2026-09-20T06:46:25.495Z"
+    },
+    {
+      "id": "9c3e82f7-aeac-4329-a1fa-4d1d6f2de093",
+      "interview_id": "5ecf36e3-f1a4-42c5-86df-7b670f033123",
+      "text": "How would you architect a reusable, fully accessible design system component library supporting dark mode and keyboard navigation?",
+      "category": "UI & Accessibility",
+      "duration": 240,
+      "time_limit": 240,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 1,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:46:25.495Z",
+      "updated_at": "2026-09-20T06:46:25.495Z"
+    },
+    {
+      "id": "8ec92c31-cc67-4ce8-87b8-afa93e2e94fc",
+      "interview_id": "5ecf36e3-f1a4-42c5-86df-7b670f033123",
+      "text": "Describe how the browser Critical Rendering Path works and what strategies you use to optimize Largest Contentful Paint (LCP).",
+      "category": "Web Performance",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 2,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:46:25.495Z",
+      "updated_at": "2026-09-20T06:46:25.495Z"
+    },
+    {
+      "id": "a155af7e-b84a-4591-985c-6444387cc399",
+      "interview_id": "5ecf36e3-f1a4-42c5-86df-7b670f033123",
+      "text": "Compare Zustand with Redux Toolkit and the React Context API for enterprise state management. When would you choose one over the others?",
+      "category": "State Management",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 3,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:46:25.495Z",
+      "updated_at": "2026-09-20T06:46:25.495Z"
+    },
+    {
+      "id": "5399ab33-50a3-4bf1-b91d-eb32c7decff3",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "text": "Explain the difference between useMemo and useCallback in React. In what real-world scenarios does improper memoization actually hurt performance?",
+      "category": "React Architecture",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:48:12.667Z",
+      "updated_at": "2026-09-20T06:48:12.667Z"
+    },
+    {
+      "id": "3e7f3eb2-8185-4518-964e-3f2514959655",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "text": "How would you architect a reusable, fully accessible design system component library supporting dark mode and keyboard navigation?",
+      "category": "UI & Accessibility",
+      "duration": 240,
+      "time_limit": 240,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 1,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:48:12.667Z",
+      "updated_at": "2026-09-20T06:48:12.667Z"
+    },
+    {
+      "id": "d914d1d5-4cb3-401a-bd3e-9af6d36e52bf",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "text": "Describe how the browser Critical Rendering Path works and what strategies you use to optimize Largest Contentful Paint (LCP).",
+      "category": "Web Performance",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 2,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:48:12.667Z",
+      "updated_at": "2026-09-20T06:48:12.667Z"
+    },
+    {
+      "id": "e1f26250-d0e8-4786-a1bd-4e24d9917211",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "text": "Compare Zustand with Redux Toolkit and the React Context API for enterprise state management. When would you choose one over the others?",
+      "category": "State Management",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 3,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-20T06:48:12.667Z",
+      "updated_at": "2026-09-20T06:48:12.667Z"
+    },
+    {
+      "id": "24ebe5c4-8130-46d2-9462-dc76bbfd0da1",
+      "interview_id": "98fcae39-7f05-4abb-91b6-5acb5ebad79c",
+      "text": "explain the hook concept",
+      "category": "React",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-22T13:25:27.498Z",
+      "updated_at": "2026-09-22T13:25:27.498Z"
+    },
+    {
+      "id": "95f111f9-e0fb-4232-b680-640f2dfe9f55",
+      "interview_id": "c0bcf889-09fd-4e89-964b-048f93516dcf",
+      "text": "Explain the difference between useMemo and useCallback in React. In what real-world scenarios does improper memoization actually hurt performance?",
+      "category": "React Architecture",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-22T13:32:42.836Z",
+      "updated_at": "2026-09-22T13:32:42.836Z"
+    },
+    {
+      "id": "458caf7f-67dc-40bd-89c8-7e28b1816269",
+      "interview_id": "c0bcf889-09fd-4e89-964b-048f93516dcf",
+      "text": "How would you architect a reusable, fully accessible design system component library supporting dark mode and keyboard navigation?",
+      "category": "UI & Accessibility",
+      "duration": 240,
+      "time_limit": 240,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 1,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-22T13:32:42.836Z",
+      "updated_at": "2026-09-22T13:32:42.836Z"
+    },
+    {
+      "id": "c3b6d7d4-c97c-4021-a24e-46d917ecf253",
+      "interview_id": "c0bcf889-09fd-4e89-964b-048f93516dcf",
+      "text": "Describe how the browser Critical Rendering Path works and what strategies you use to optimize Largest Contentful Paint (LCP).",
+      "category": "Web Performance",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 2,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-22T13:32:42.836Z",
+      "updated_at": "2026-09-22T13:32:42.836Z"
+    },
+    {
+      "id": "de01176a-f2d6-4bfa-bcb0-c4c8da70279c",
+      "interview_id": "c0bcf889-09fd-4e89-964b-048f93516dcf",
+      "text": "Compare Zustand with Redux Toolkit and the React Context API for enterprise state management. When would you choose one over the others?",
+      "category": "State Management",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 3,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-09-22T13:32:42.836Z",
+      "updated_at": "2026-09-22T13:32:42.836Z"
+    },
+    {
+      "id": "b547451e-c498-4790-97c4-6154bb5f7107",
+      "interview_id": "120dba1b-04bb-48c1-8d50-6813a322f512",
+      "text": "Explain the difference between useMemo and useCallback in React. In what real-world scenarios does improper memoization actually hurt performance?",
+      "category": "React Architecture",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 0,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-10-13T05:58:50.085Z",
+      "updated_at": "2026-10-13T05:58:50.085Z"
+    },
+    {
+      "id": "548faf1d-53ea-4f90-8abe-108adeeefc0b",
+      "interview_id": "120dba1b-04bb-48c1-8d50-6813a322f512",
+      "text": "How would you architect a reusable, fully accessible design system component library supporting dark mode and keyboard navigation?",
+      "category": "UI & Accessibility",
+      "duration": 240,
+      "time_limit": 240,
+      "difficulty": "Hard",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 1,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-10-13T05:58:50.085Z",
+      "updated_at": "2026-10-13T05:58:50.085Z"
+    },
+    {
+      "id": "eb52fac3-96f2-4d1a-a7aa-65b99516020b",
+      "interview_id": "120dba1b-04bb-48c1-8d50-6813a322f512",
+      "text": "Describe how the browser Critical Rendering Path works and what strategies you use to optimize Largest Contentful Paint (LCP).",
+      "category": "Web Performance",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 2,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-10-13T05:58:50.085Z",
+      "updated_at": "2026-10-13T05:58:50.085Z"
+    },
+    {
+      "id": "11634e64-106a-4e7f-a63c-9af6e5d3787a",
+      "interview_id": "120dba1b-04bb-48c1-8d50-6813a322f512",
+      "text": "Compare Zustand with Redux Toolkit and the React Context API for enterprise state management. When would you choose one over the others?",
+      "category": "State Management",
+      "duration": 180,
+      "time_limit": 180,
+      "difficulty": "Medium",
+      "boilerplate": "",
+      "test_cases": [],
+      "question_order": 3,
+      "expected_topics": [],
+      "question_type": "text",
+      "created_at": "2026-10-13T05:58:50.085Z",
+      "updated_at": "2026-10-13T05:58:50.085Z"
+    }
+  ],
+  "answers": [
+    {
+      "id": "a2193ba3-766b-40be-91da-b87fcc48500b",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "candidate_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "question_id": "10000000-0000-0000-0000-000000000001",
+      "transcript": "Raft uses randomized election timers to avoid split votes. When a follower does not hear heartbeats, it transitions to candidate, increments term, votes for itself, and requests votes from peers.",
+      "answer_text": "Raft uses randomized election timers to avoid split votes. When a follower does not hear heartbeats, it transitions to candidate, increments term, votes for itself, and requests votes from peers.",
+      "time_taken": 75,
+      "score": 92,
+      "feedback": "Accurately covered term incrementing and peer quorum votes.",
+      "submitted_at": "2026-09-15T03:48:24.287Z",
+      "created_at": "2026-09-15T03:48:24.287Z"
+    },
+    {
+      "id": "7d303669-39ce-447a-ad3c-0893b6ef8370",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "candidate_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "question_id": "10000000-0000-0000-0000-000000000002",
+      "transcript": "We assign unique idempotency keys to each transaction, store processed keys in Redis with TTL and PostgreSQL unique constraints, and employ transactional outbox with Kafka.",
+      "answer_text": "We assign unique idempotency keys to each transaction, store processed keys in Redis with TTL and PostgreSQL unique constraints, and employ transactional outbox with Kafka.",
+      "time_taken": 90,
+      "score": 84,
+      "feedback": "Well-structured design preventing duplicate charges.",
+      "submitted_at": "2026-09-15T03:48:24.287Z",
+      "created_at": "2026-09-15T03:48:24.287Z"
+    },
+    {
+      "id": "d4f83b18-8785-403b-8c23-143e0b3fcc84",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "candidate_id": "644284c5-5d29-4849-aaf5-d2b9f894151f",
+      "question_id": "5399ab33-50a3-4bf1-b91d-eb32c7decff3",
+      "question_id_str": "5399ab33-50a3-4bf1-b91d-eb32c7decff3",
+      "answer_text": "Response recorded.",
+      "transcript": "Response recorded.",
+      "recording_url": "",
+      "duration": 0,
+      "submitted_at": "2026-09-20T06:49:34.887Z",
+      "evaluation_status": "pending",
+      "score": 85,
+      "feedback": "Good structured response with relevant points.",
+      "code": "",
+      "language": "javascript",
+      "test_cases_result": [],
+      "compile_time": null,
+      "status": "Completed",
+      "time_taken": 0,
+      "comments": "",
+      "created_at": "2026-09-20T06:49:34.887Z",
+      "updated_at": "2026-09-20T06:49:34.887Z"
+    },
+    {
+      "id": "983fe8f7-3e7e-40c6-a9b1-6f03fbafbb97",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "candidate_id": "644284c5-5d29-4849-aaf5-d2b9f894151f",
+      "question_id": "3e7f3eb2-8185-4518-964e-3f2514959655",
+      "question_id_str": "3e7f3eb2-8185-4518-964e-3f2514959655",
+      "answer_text": "Response recorded.",
+      "transcript": "Response recorded.",
+      "recording_url": "",
+      "duration": 0,
+      "submitted_at": "2026-09-20T06:49:34.922Z",
+      "evaluation_status": "pending",
+      "score": 85,
+      "feedback": "Good structured response with relevant points.",
+      "code": "",
+      "language": "javascript",
+      "test_cases_result": [],
+      "compile_time": null,
+      "status": "Completed",
+      "time_taken": 0,
+      "comments": "",
+      "created_at": "2026-09-20T06:49:34.923Z",
+      "updated_at": "2026-09-20T06:49:34.923Z"
+    },
+    {
+      "id": "c5178888-c94b-4365-9863-6ba90138ea5a",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "candidate_id": "644284c5-5d29-4849-aaf5-d2b9f894151f",
+      "question_id": "d914d1d5-4cb3-401a-bd3e-9af6d36e52bf",
+      "question_id_str": "d914d1d5-4cb3-401a-bd3e-9af6d36e52bf",
+      "answer_text": "Response recorded.",
+      "transcript": "Response recorded.",
+      "recording_url": "",
+      "duration": 0,
+      "submitted_at": "2026-09-20T06:49:34.936Z",
+      "evaluation_status": "pending",
+      "score": 85,
+      "feedback": "Good structured response with relevant points.",
+      "code": "",
+      "language": "javascript",
+      "test_cases_result": [],
+      "compile_time": null,
+      "status": "Completed",
+      "time_taken": 0,
+      "comments": "",
+      "created_at": "2026-09-20T06:49:34.936Z",
+      "updated_at": "2026-09-20T06:49:34.936Z"
+    },
+    {
+      "id": "0983a781-51da-4715-8afb-a2de2beeb1da",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "candidate_id": "644284c5-5d29-4849-aaf5-d2b9f894151f",
+      "question_id": "e1f26250-d0e8-4786-a1bd-4e24d9917211",
+      "question_id_str": "e1f26250-d0e8-4786-a1bd-4e24d9917211",
+      "answer_text": "Response recorded.",
+      "transcript": "Response recorded.",
+      "recording_url": "",
+      "duration": 0,
+      "submitted_at": "2026-09-20T06:49:34.943Z",
+      "evaluation_status": "pending",
+      "score": 85,
+      "feedback": "Good structured response with relevant points.",
+      "code": "",
+      "language": "javascript",
+      "test_cases_result": [],
+      "compile_time": null,
+      "status": "Completed",
+      "time_taken": 0,
+      "comments": "",
+      "created_at": "2026-09-20T06:49:34.943Z",
+      "updated_at": "2026-09-20T06:49:34.943Z"
+    },
+    {
+      "id": "958c3fda-7550-4e96-8ccc-04db2404d941",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "candidate_id": "644284c5-5d29-4849-aaf5-d2b9f894151f",
+      "question_id": "5399ab33-50a3-4bf1-b91d-eb32c7decff3",
+      "question_id_str": "5399ab33-50a3-4bf1-b91d-eb32c7decff3",
+      "answer_text": "Response recorded.",
+      "transcript": "Response recorded.",
+      "recording_url": "",
+      "duration": 0,
+      "submitted_at": "2026-09-20T06:50:50.026Z",
+      "evaluation_status": "pending",
+      "score": 85,
+      "feedback": "Good structured response with relevant points.",
+      "code": "",
+      "language": "javascript",
+      "test_cases_result": [],
+      "compile_time": null,
+      "status": "Completed",
+      "time_taken": 0,
+      "comments": "",
+      "created_at": "2026-09-20T06:50:50.026Z",
+      "updated_at": "2026-09-20T06:50:50.026Z"
+    },
+    {
+      "id": "2b7ab1d2-6129-493f-a00c-d6e810f26af6",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "candidate_id": "644284c5-5d29-4849-aaf5-d2b9f894151f",
+      "question_id": "3e7f3eb2-8185-4518-964e-3f2514959655",
+      "question_id_str": "3e7f3eb2-8185-4518-964e-3f2514959655",
+      "answer_text": "Response recorded.",
+      "transcript": "Response recorded.",
+      "recording_url": "",
+      "duration": 0,
+      "submitted_at": "2026-09-20T06:50:50.052Z",
+      "evaluation_status": "pending",
+      "score": 85,
+      "feedback": "Good structured response with relevant points.",
+      "code": "",
+      "language": "javascript",
+      "test_cases_result": [],
+      "compile_time": null,
+      "status": "Completed",
+      "time_taken": 0,
+      "comments": "",
+      "created_at": "2026-09-20T06:50:50.052Z",
+      "updated_at": "2026-09-20T06:50:50.052Z"
+    },
+    {
+      "id": "7c85ee19-e1b7-40b5-8cc2-f678e7c7b412",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "candidate_id": "644284c5-5d29-4849-aaf5-d2b9f894151f",
+      "question_id": "d914d1d5-4cb3-401a-bd3e-9af6d36e52bf",
+      "question_id_str": "d914d1d5-4cb3-401a-bd3e-9af6d36e52bf",
+      "answer_text": "Response recorded.",
+      "transcript": "Response recorded.",
+      "recording_url": "",
+      "duration": 0,
+      "submitted_at": "2026-09-20T06:50:50.058Z",
+      "evaluation_status": "pending",
+      "score": 85,
+      "feedback": "Good structured response with relevant points.",
+      "code": "",
+      "language": "javascript",
+      "test_cases_result": [],
+      "compile_time": null,
+      "status": "Completed",
+      "time_taken": 0,
+      "comments": "",
+      "created_at": "2026-09-20T06:50:50.058Z",
+      "updated_at": "2026-09-20T06:50:50.058Z"
+    },
+    {
+      "id": "b2c04d6b-ac02-4fad-9d30-7df006e28621",
+      "interview_id": "af50f6db-e218-4613-9d13-1dcbe5280e5c",
+      "candidate_id": "644284c5-5d29-4849-aaf5-d2b9f894151f",
+      "question_id": "e1f26250-d0e8-4786-a1bd-4e24d9917211",
+      "question_id_str": "e1f26250-d0e8-4786-a1bd-4e24d9917211",
+      "answer_text": "Response recorded.",
+      "transcript": "Response recorded.",
+      "recording_url": "",
+      "duration": 0,
+      "submitted_at": "2026-09-20T06:50:50.065Z",
+      "evaluation_status": "pending",
+      "score": 85,
+      "feedback": "Good structured response with relevant points.",
+      "code": "",
+      "language": "javascript",
+      "test_cases_result": [],
+      "compile_time": null,
+      "status": "Completed",
+      "time_taken": 0,
+      "comments": "",
+      "created_at": "2026-09-20T06:50:50.065Z",
+      "updated_at": "2026-09-20T06:50:50.065Z"
+    }
+  ],
+  "reports": [
+    {
+      "id": "2aa3de3a-a592-46ee-ad0d-c949a39ba0aa",
+      "interview_id": "11111111-1111-1111-1111-111111111111",
+      "candidate_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "overall_score": 88,
+      "technical_score": 90,
+      "communication_score": 85,
+      "problem_solving_score": 88,
+      "recommendation": "STRONG HIRE",
+      "summary": "Alexander demonstrated mastery of distributed consensus, state machine replication, and idempotent processing architectures.",
+      "strengths": [
+        "Thorough explanation of Raft leader election invariants.",
+        "Pragmatic deduplication with Redis and database unique constraints.",
+        "Calm, highly structured communication."
+      ],
+      "weaknesses": [
+        "Could elaborate on multi-datacenter cross-region consensus latency."
+      ],
+      "competency_scores": {
+        "Distributed Systems": 92,
+        "System Architecture": 88,
+        "Problem Solving": 86,
+        "Communication": 85
+      },
+      "question_breakdown": [
+        {
+          "questionText": "Explain how the Raft consensus algorithm handles leader election...",
+          "score": 92,
+          "feedback": "Strong explanation."
+        },
+        {
+          "questionText": "How do you design an idempotent payment processing pipeline...",
+          "score": 84,
+          "feedback": "Good handling of idempotency keys."
+        }
+      ],
+      "proctoring_summary": {
+        "tabHiddenCount": 0,
+        "tabVisibleCount": 1,
+        "fullscreenEnteredCount": 1,
+        "fullscreenExitedCount": 0,
+        "violationCount": 0,
+        "integrityScore": 100,
+        "suspicionLevel": "LOW"
+      },
+      "proctoring_logs": [],
+      "candidate_meta": {
+        "name": "Alexander Wright",
+        "email": "alex.wright@infra.io",
+        "role": "Senior Distributed Systems Engineer"
+      },
+      "created_at": "2026-09-15T03:48:24.287Z",
+      "updated_at": "2026-09-15T03:48:24.287Z"
+    }
+  ],
+  "resumes": [
+    {
+      "id": "aa5d0ea7-d167-403f-ab0f-6b01579dcb1a",
+      "candidate_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "original_file_name": "ajay.pdf",
+      "storage_path": "http://localhost:5000/uploads/resumes/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/1790050115974-ajay.pdf",
+      "file_type": "application/pdf",
+      "file_size": 104077,
+      "parsed_text": "AJAY KANNAN R\nSOFTWARE DEVELOPER\n8973476060kannanajay104@gmail.com\nLinked InGitHub\nABOUT ME\nA dedicated and passionate aspiring Full Stack Developer with a keen interest in both front-end and back-end\ntechnologies. Driven to learn new frameworks and tools, improve problem-solving skills, and build responsive,\nscalable web applications while contributing to innovative projects.\nEDUCATION\nSRM EASWARI EANGINEERING COLLEGE\nBachelor of Technology - Information Technology\nCurrently pursuing 3rd Year (2024–2028) with hands-on experience in\nJava,  Web  Development,  and  Database  Management  through\nacademic and personal projects.\n2024-2028\nTECHNICAL SKILL\nHTML, CSS\nJavaC/C++Python(basic)\nJava Script\nPROJECTS\nHostel Complaint Management System\nDeveloped a responsive Hostel Complaint Management System frontend using React and Vite with role-\nbased dashboards.\nImplemented protected routing and complaint submission forms with image upload and resolution time\nfeatures.\nBuilt real-time complaint tracking and intuitive interfaces for managing and updating complaint statuses.\nDesigned an automated escalation workflow for unresolved complaints with responsive and user-friendly\nUI.\nMental Wellness Journal (Java OOP with GUI)\nDeveloped  a  desktop-based  Mental  Wellness  Journal  application  using  Java  GUI  and  Object-Oriented\nProgramming concepts.\nImplemented  mood  tracking  with  personalized  suggestions  and  automatic  start/end  time  duration\ncalculation.\nBuilt feedback and inactivity handling features, including auto logout and pending feedback submission on\nnext login.\nManaged  mood  logs,  suggestions,  feedback,  and  duration  records  efficiently  using  file  handling  and\nmodular design.\nProgramming Languages\nReact.jsNode.jsExpress.js\nWeb Development\nDatabase\nMySQL\nTools & Platforms\nGit & GitHubVS CodeFigma\nCanva",
+      "parsing_status": "Completed",
+      "screening_status": "Pending",
+      "created_at": "2026-09-20T06:44:52.797Z",
+      "updated_at": "2026-09-22T04:08:37.367Z",
+      "uploaded_at": "2026-09-22T04:08:37.367Z"
+    }
+  ],
+  "proctoring_observations": []
+}

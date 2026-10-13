@@ -7,9 +7,16 @@ venv2/
 __pycache__/
 **/__pycache__/
 *.pyc
-.env.local
+.pytest_cache/
 dist/
 **/dist/
 build/
 **/build/
 .cache/
+.nx/
+*.log
+scratch/
+.env
+*.env
+.env.local
+
